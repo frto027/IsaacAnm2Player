@@ -8,10 +8,10 @@
         <canvas id="cvs" width="200" height="200" style="margin: 100px; transform: scale(1); image-rendering: pixelated;"></canvas>
         <script src="player.js"></script>
         <script>
-            
+
             var cvs = document.getElementById("cvs")
             var ctx = cvs.getContext("2d")
-            var root = '/anm2resources/'
+            var root = '' //相对于当前目录
             var names_select = document.getElementById("anmnames")
 
             ctx.imageSmoothingEnabled = false
