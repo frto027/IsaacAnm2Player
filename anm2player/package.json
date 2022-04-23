@@ -1,0 +1,14 @@
+{
+  "name": "anm2player",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "npx tsc && node player.js"
+  },
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "@types/node": "^17.0.25"
+  }
+}

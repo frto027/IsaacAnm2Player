@@ -1,0 +1,94 @@
+<html>
+    <body>
+        <select id="animations">
+            <option value="">None</option>
+        </select><br>
+        <select id="anmnames"></select><br>
+        <button id="replay">Replay</button><br>
+        <canvas id="cvs" width="200" height="200" style="margin: 100px; transform: scale(1); image-rendering: pixelated;"></canvas>
+        <script src="player.js"></script>
+        <script>
+            
+            var cvs = document.getElementById("cvs")
+            var ctx = cvs.getContext("2d")
+            var root = '/anm2resources/'
+            var names_select = document.getElementById("anmnames")
+
+            ctx.imageSmoothingEnabled = false
+            //load manifest
+
+            var req = new XMLHttpRequest()
+            req.addEventListener("load",function(){
+                loadManifest(JSON.parse(this.responseText))
+            })
+            req.open("GET",root + "manifest.json")
+            req.send()
+
+            function loadManifest(anmlists){
+                var selects = document.getElementById('animations')
+                selects.children.length = 1
+
+                for(var i=0;i<anmlists.length;i++){
+                    var option = document.createElement("option")
+                    option.value = anmlists[i]
+                    option.innerText = anmlists[i]
+                    selects.appendChild(option)
+                }
+                selects.addEventListener('change',function(e){
+                    if(e.target.value != ''){
+                        downloadAnm(e.target.value)
+                    }
+                })
+            }
+
+            var anm = undefined
+
+            function downloadAnm(anmname){
+                var req = new XMLHttpRequest()
+                req.addEventListener("load",function(){
+                    loadAnm(this.responseText)
+                })
+                req.open("GET",root + anmname)
+                req.send()
+            }
+
+            function loadAnm(json){
+                console.log(json)
+                anm = new AnmPlayer(json, root)
+
+                anm.forceLoop = true
+
+                names_select.innerHTML = ''
+                var anames = anm.getAnmNames()
+                for(var i=0;i<anames.length;i++){
+                    var opt = document.createElement('option')
+                    opt.value = anames[i]
+                    opt.innerText = anames[i]
+                    names_select.appendChild(opt)
+                }
+            }
+
+            names_select.addEventListener("change",function(e){
+                if(anm){
+                    anm.setFrame(e.target.value,0)
+                }
+            })
+
+            document.getElementById('replay').addEventListener('click',function(){
+                if(anm){
+                    anm.play(0)
+                }
+            })
+            function draw(){
+                if(anm != undefined){
+                    anm.update()
+                    anm.drawCanvas(ctx,cvs, cvs.width/2,cvs.height*0.8,2)
+                    setTimeout(draw, 1000/anm.getFps())
+                }else{
+                    setTimeout(draw,1000/30)
+                }
+            }
+            draw()
+        </script>
+    </body>
+</html>
