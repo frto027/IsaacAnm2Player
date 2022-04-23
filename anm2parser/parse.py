@@ -100,6 +100,8 @@ def makeFrame(xml):
     ]:
         if k in r:
             r[k] = float(r[k])
+            if r[k] == int(r[k]):
+                r[k] = int(r[k])
     for k in ["Visible","Interpolated"]:
         if k in r:
             r[k] = r[k] == "true"

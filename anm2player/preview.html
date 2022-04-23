@@ -5,10 +5,9 @@
         </select><br>
         <select id="anmnames"></select><br>
         <button id="replay">Replay</button><br>
-        <canvas id="cvs" width="200" height="200" style="margin: 100px; transform: scale(1); image-rendering: pixelated;"></canvas>
+        <canvas id="cvs" width="1000" height="1000" style="margin: 100px; transform: scale(1); image-rendering: pixelated;"></canvas>
         <script src="player.js"></script>
         <script>
-
             var cvs = document.getElementById("cvs")
             var ctx = cvs.getContext("2d")
             var root = '' //相对于当前目录
@@ -24,7 +23,13 @@
             req.open("GET",root + "manifest.json")
             req.send()
 
-            function loadManifest(anmlists){
+            var usekeymap = false
+            var keymap = undefined
+            function loadManifest(anm_manifest){
+                var anmlists = anm_manifest.list
+                usekeymap = anm_manifest.keymap
+                keymap = anm_manifest.map
+
                 var selects = document.getElementById('animations')
                 selects.children.length = 1
 
@@ -53,7 +58,10 @@
             }
 
             function loadAnm(json){
-                console.log(json)
+                json = JSON.parse(json)
+                if(usekeymap){
+                    AnmPlayer.expandActor(json,keymap)
+                }
                 anm = new AnmPlayer(json, root)
 
                 anm.forceLoop = true
@@ -82,7 +90,7 @@
             function draw(){
                 if(anm != undefined){
                     anm.update()
-                    anm.drawCanvas(ctx,cvs, cvs.width/2,cvs.height*0.8,2)
+                    anm.drawCanvas(ctx,cvs, cvs.width * 0.5,cvs.height*0.5,2)
                     setTimeout(draw, 1000/anm.getFps())
                 }else{
                     setTimeout(draw,1000/30)

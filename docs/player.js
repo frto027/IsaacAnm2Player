@@ -22,6 +22,9 @@ class FrameStatus {
         this.BlueOffset = 0;
         this.Rotation = 0;
         this.Interpolated = false;
+        //我们通过imageBitmap来实现Timt和Offset的功能
+        //null means it doesn't need image data
+        this.bufferedImageBitmapParsed = false;
     }
     copyFrom(other) {
         this.XPivot = other.XPivot;
@@ -90,7 +93,7 @@ class AnmPlayer {
         this.frames = new Map();
         this.forceLoop = false;
         this.debug_anchor = false;
-        this.anm2 = JSON.parse(json);
+        this.anm2 = json; //JSON.parse(json)
         for (let sheet of ((_a = this.anm2.content) === null || _a === void 0 ? void 0 : _a.Spritesheets) || []) {
             this.sprites[sheet.Id] = sheet.Path || 'unknown';
         }
@@ -132,6 +135,56 @@ class AnmPlayer {
             fi++;
         }
         return ret;
+    }
+    loadImageData(root, layer, img, ctx) {
+        if (img.getAttribute("img_loaded") != "true") {
+            return;
+        }
+        if (layer.bufferedImageBitmapParsed)
+            return;
+        if ((!root || (root.AlphaTint == 255 &&
+            root.RedTint == 255 &&
+            root.BlueTint == 255 &&
+            root.GreenTint == 255 &&
+            root.RedOffset == 0 &&
+            root.BlueOffset == 0 &&
+            root.GreenOffset == 0)) &&
+            layer.AlphaTint == 255 &&
+            layer.RedTint == 255 &&
+            layer.BlueTint == 255 &&
+            layer.GreenTint == 255 &&
+            layer.RedOffset == 0 &&
+            layer.BlueOffset == 0 &&
+            layer.GreenOffset == 0) {
+            layer.bufferedImageBitmapParsed = true;
+            //no need to load image bitmap
+            return;
+        }
+        let olddata = ctx.getImageData(0, 0, layer.Width, layer.Height);
+        ctx.save();
+        ctx.setTransform(1, 0, 0, 1, 0, 0);
+        ctx.clearRect(0, 0, layer.Width, layer.Height);
+        ctx.drawImage(img, layer.XCrop, layer.YCrop, layer.Width, layer.Height, 0, 0, layer.Width, layer.Height);
+        let idata = ctx.getImageData(0, 0, layer.Width, layer.Height);
+        ctx.restore();
+        ctx.putImageData(olddata, 0, 0);
+        let ATint = ((root === null || root === void 0 ? void 0 : root.AlphaTint) || 255) * layer.AlphaTint / (255 * 255);
+        let RTint = ((root === null || root === void 0 ? void 0 : root.RedTint) || 255) * layer.RedTint / (255 * 255);
+        let GTint = ((root === null || root === void 0 ? void 0 : root.GreenTint) || 255) * layer.GreenTint / (255 * 255);
+        let BTint = ((root === null || root === void 0 ? void 0 : root.BlueTint) || 255) * layer.RedTint / (255 * 255);
+        let Roff = ((root === null || root === void 0 ? void 0 : root.RedOffset) || 0) + layer.RedOffset;
+        let Goff = ((root === null || root === void 0 ? void 0 : root.GreenOffset) || 0) + layer.GreenOffset;
+        let Boff = ((root === null || root === void 0 ? void 0 : root.BlueOffset) || 0) + layer.BlueOffset;
+        for (let i = 0; i < idata.width * idata.height; i++) {
+            idata.data[i * 4 + 0] = Math.min((Math.floor(idata.data[i * 4 + 0] * RTint) + Roff), 255);
+            idata.data[i * 4 + 1] = Math.min((Math.floor(idata.data[i * 4 + 1] * GTint) + Goff), 255);
+            idata.data[i * 4 + 2] = Math.min((Math.floor(idata.data[i * 4 + 2] * BTint) + Boff), 255);
+            idata.data[i * 4 + 3] = Math.floor(idata.data[i * 4 + 3] * ATint);
+        }
+        layer.bufferedImageBitmapParsed = true; //接下来的转换是异步的，为防止重入，此后不处理这一帧的数据
+        window.createImageBitmap(idata).then(function (bitmap) {
+            layer.bufferedImageBitmap = bitmap;
+        });
     }
     loadAnmObject(anm) {
         let rootframes = this.loadAnimationFrames(anm.RootAnimation, anm.FrameNum);
@@ -212,6 +265,9 @@ class AnmPlayer {
             img = document.createElement("img");
             img.src = (this.img_root_url || '') + imgpath;
             img.setAttribute('style', "image-rendering: pixelated; display:none;");
+            img.onload = function () {
+                img.setAttribute("img_loaded", "true");
+            };
             this.sprites_htmlimg[i] = img;
             document.body.appendChild(img);
         }
@@ -220,8 +276,9 @@ class AnmPlayer {
     drawCanvas(ctx, canvas, centerX, centerY, rootScale) {
         var _a, _b, _c;
         ctx.save();
-        ctx.transform(1, 0, 0, 1, 0, 0);
+        ctx.setTransform(1, 0, 0, 1, 0, 0);
         ctx.clearRect(0, 0, canvas.width, canvas.height);
+        // ctx.beginPath()
         ctx.strokeRect(0, 0, canvas.width, canvas.height);
         //root transform
         if (centerX == undefined) {
@@ -263,8 +320,17 @@ class AnmPlayer {
                     ctx.translate(-frame.XPivot, -frame.YPivot);
                     //apply root transform
                     //draw frame
-                    ctx.globalAlpha = frame.AlphaTint / 255;
-                    ctx.drawImage(img, frame.XCrop, frame.YCrop, frame.Width, frame.Height, 0, 0, frame.Width, frame.Height);
+                    if (!frame.bufferedImageBitmapParsed) {
+                        this.loadImageData(rootframe, frame, img, ctx);
+                    }
+                    if (frame.bufferedImageBitmap) {
+                        ctx.globalAlpha = 1;
+                        ctx.drawImage(frame.bufferedImageBitmap, 0, 0, frame.Width, frame.Height, 0, 0, frame.Width, frame.Height);
+                    }
+                    else {
+                        ctx.globalAlpha = frame.AlphaTint / 255;
+                        ctx.drawImage(img, frame.XCrop, frame.YCrop, frame.Width, frame.Height, 0, 0, frame.Width, frame.Height);
+                    }
                     if (this.debug_anchor) {
                         ctx.beginPath();
                         ctx.arc(frame.XPivot, frame.YPivot, 5, 0, Math.PI / 2);
@@ -288,5 +354,20 @@ class AnmPlayer {
     getFps() {
         var _a;
         return ((_a = this.anm2.info) === null || _a === void 0 ? void 0 : _a.Fps) || 30;
+    }
+    static expandActor(target, keymap) {
+        if (typeof (target) != "object") {
+            return;
+        }
+        for (let i = 0; i < target.length; i++) {
+            this.expandActor(target[i], keymap);
+        }
+        for (let k in keymap) {
+            if (k.length == 1 && typeof (keymap[k]) == "string" && target[k] != undefined) {
+                this.expandActor(target[k], keymap);
+                target[keymap[k]] = target[k];
+                target[k] = undefined;
+            }
+        }
     }
 }

@@ -24,6 +24,10 @@ preview.html是一个demo
 - 此外，需要把anm2parser/run.py里面的folder路径换一下
 - 然后，docs文件夹里面的东西可以清空掉
 
+# compress_png.py
+
+可以提高docs目录下png图像的压缩等级（无损）
+
 # License
 
 MIT License

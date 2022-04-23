@@ -7,6 +7,8 @@ import parse
 import keymapper
 import pathlib
 
+KEY_MAPPER = True
+
 res_sequence = ['resources-dlc3.zh', 'resources-dlc3', 'resources']
 
 def replace_relative_path(obj, relative):
@@ -19,7 +21,6 @@ def replace_relative_path(obj, relative):
         newpath = pathlib.Path(relative).parent / content["Spritesheets"][i]["Path"]
         
         # 处理资源覆盖
-        
         
         res_folder = newpath.parts[0]
         later_path = newpath.relative_to(res_folder)
@@ -38,13 +39,17 @@ def replace_relative_path(obj, relative):
 
 
 def copy_sprite(obj, frompath, topath):
-    if not "content" in obj:
+    content_str = "content" if not KEY_MAPPER else keymapper.kmap["content"]
+    spritesheet_str = "Spritesheets" if not KEY_MAPPER else keymapper.kmap["Spritesheets"]
+    path_str = "Path" if not KEY_MAPPER else keymapper.kmap["Path"]
+
+    if not content_str in obj:
         return
-    content = obj["content"]
-    if not "Spritesheets" in content:
+    content = obj[content_str]
+    if not spritesheet_str in content:
         return
-    for i in range(len(content["Spritesheets"])):
-        path = content["Spritesheets"][i]["Path"]
+    for i in range(len(content[spritesheet_str])):
+        path = content[spritesheet_str][i][path_str]
         fromp = pathlib.Path(frompath) / path
         top = pathlib.Path(topath) / path
         if not fromp.exists():
@@ -65,8 +70,11 @@ for f in glob(folder + "**\\*.anm2",recursive=True):
     relative_path = f[len(folder):]
     # print(f)
     fulljson[relative_path] = parse.parseFile(f)
-    # keymapper.keymap(fulljson[relative_path])
     replace_relative_path(fulljson[relative_path],relative_path)
+
+    if KEY_MAPPER:
+        keymapper.keymap(fulljson[relative_path])
+
 
 # with open("anm2.json","w") as f:
 #     f.write(json.dumps({
@@ -100,11 +108,21 @@ if len(sys.argv) == 2:
 
     # generate manifest
 
-    manifest = []
+    manifest_list = []
     for k in fulljson:
-        manifest.append(k.replace('\\','/').replace('.anm2','.json'))
+        manifest_list.append(k.replace('\\','/').replace('.anm2','.json'))
+    manifest = {
+        "keymap":KEY_MAPPER,
+        "list":manifest_list
+    }
+    if KEY_MAPPER:
+        manifest["map"] = keymapper.kmap_r
+
     with open(str(output/"manifest.json"), 'w') as f:
         f.write(dumpjson(manifest))
+    with open(str(output/"keymaps.json"), 'w') as f:
+        f.write(dumpjson(keymapper.kmap_r))
+    
 else:
     print("usage: \n\tpython " + sys.argv[0] + " <output folder>")
     print(len(sys.argv))
