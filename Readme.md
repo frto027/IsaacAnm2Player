@@ -15,3 +15,7 @@ preview.html是一个demo
 
 这是生成好的预览页面
 构架的话执行build.bat，需要提前安装TypeScript
+
+# License
+
+MIT License
