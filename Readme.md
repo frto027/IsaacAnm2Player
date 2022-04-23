@@ -14,7 +14,7 @@
 
 preview.html是一个demo
 
-# web
+# docs
 
 这是生成好的预览页面
 构架的话执行build.bat
@@ -22,7 +22,7 @@ preview.html是一个demo
 - 还需要安装python
 - 另外还需要解包游戏，且删掉中文之外的语言资源
 - 此外，需要把anm2parser/run.py里面的folder路径换一下
-- 然后，web文件夹里面的东西可以清空掉
+- 然后，docs文件夹里面的东西可以清空掉
 
 # License
 
