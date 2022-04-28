@@ -62,7 +62,7 @@
                 if(usekeymap){
                     AnmPlayer.expandActor(json,keymap)
                 }
-                anm = new AnmPlayer(json, root)
+                anm = new AnmPlayer(json, function(url){return root + url})
 
                 anm.forceLoop = true
 
@@ -90,7 +90,11 @@
             function draw(){
                 if(anm != undefined){
                     anm.update()
+                    ctx.save()
+                    ctx.setTransform(1,0,0,1,0,0)
+                    ctx.clearRect(0,0,cvs.width, cvs.height)
                     anm.drawCanvas(ctx,cvs, cvs.width * 0.5,cvs.height*0.5,2)
+                    ctx.restore()
                     setTimeout(draw, 1000/anm.getFps())
                 }else{
                     setTimeout(draw,1000/30)

@@ -83,7 +83,7 @@ class LayerStatus {
     }
 }
 class AnmPlayer {
-    constructor(json, img_root_url) {
+    constructor(json, img_url_builder) {
         var _a, _b, _c, _d, _e, _f, _g;
         this.sprites = new Array(); /* spriteid -> sprite path */
         this.sprites_htmlimg = new Array();
@@ -107,7 +107,7 @@ class AnmPlayer {
             this.loadAnmObject(anm);
         }
         this.setFrame(((_e = this.anm2.animations) === null || _e === void 0 ? void 0 : _e.DefaultAnimation) || '', 0);
-        this.img_root_url = img_root_url;
+        this.img_url_builder = img_url_builder;
         for (let i = 0; i < (((_g = (_f = this.anm2.content) === null || _f === void 0 ? void 0 : _f.Spritesheets) === null || _g === void 0 ? void 0 : _g.length) || 0); i++) {
             this.loadSpritesheet(i);
         }
@@ -255,15 +255,12 @@ class AnmPlayer {
             (_c = this.eventListener) === null || _c === void 0 ? void 0 : _c.call(undefined, eventname);
         }
     }
-    setImgRootUrl(root_url) {
-        this.img_root_url = root_url;
-    }
     loadSpritesheet(i) {
         let img = this.sprites_htmlimg[i];
         if (img == undefined) {
             let imgpath = this.sprites[i];
             img = document.createElement("img");
-            img.src = (this.img_root_url || '') + imgpath;
+            img.src = this.img_url_builder(imgpath);
             img.setAttribute('style', "image-rendering: pixelated; display:none;");
             img.onload = function () {
                 img.setAttribute("img_loaded", "true");
@@ -277,7 +274,7 @@ class AnmPlayer {
         var _a, _b, _c;
         ctx.save();
         ctx.setTransform(1, 0, 0, 1, 0, 0);
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        //ctx.clearRect(0,0,canvas.width, canvas.height)
         // ctx.beginPath()
         ctx.strokeRect(0, 0, canvas.width, canvas.height);
         //root transform

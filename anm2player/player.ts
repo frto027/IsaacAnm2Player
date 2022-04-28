@@ -106,7 +106,7 @@ class AnmPlayer{
 
     eventListener?:(eventName:string)=>void
 
-    constructor(json:Actor, img_root_url?:string){
+    constructor(json:Actor, img_url_builder:(url:string)=>string){
         this.anm2 = json//JSON.parse(json)
 
         for(let sheet of this.anm2.content?.Spritesheets || []){
@@ -127,7 +127,7 @@ class AnmPlayer{
         }
         this.setFrame(this.anm2.animations?.DefaultAnimation || '', 0)
 
-        this.img_root_url = img_root_url
+        this.img_url_builder = img_url_builder
         for(let i=0;i<(this.anm2.content?.Spritesheets?.length || 0);i++){
             this.loadSpritesheet(i)
         }
@@ -299,18 +299,14 @@ class AnmPlayer{
         }
     }
 
-    img_root_url?:string
-
-    public setImgRootUrl(root_url:string){
-        this.img_root_url = root_url
-    }
+    img_url_builder:(name:string)=>string
 
     private loadSpritesheet(i:number){
         let img = this.sprites_htmlimg[i]
         if(img == undefined){
             let imgpath = this.sprites[i]
             img = document.createElement("img")
-            img.src = (this.img_root_url || '') + imgpath
+            img.src = this.img_url_builder(imgpath)
             img.setAttribute('style',"image-rendering: pixelated; display:none;")
             img.onload = function(){
                 img.setAttribute("img_loaded","true")
@@ -328,7 +324,7 @@ class AnmPlayer{
         ctx.save()
 
         ctx.setTransform(1,0,0,1,0,0)
-        ctx.clearRect(0,0,canvas.width, canvas.height)
+        //ctx.clearRect(0,0,canvas.width, canvas.height)
         // ctx.beginPath()
         ctx.strokeRect(0,0,canvas.width,canvas.height)
 
