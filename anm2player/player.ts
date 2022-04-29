@@ -21,10 +21,9 @@ class FrameStatus implements Frame{
     Rotation: number = 0
     Interpolated: boolean = false
 
-    //我们通过imageBitmap来实现Timt和Offset的功能
-    //null means it doesn't need image data
-    bufferedImageBitmapParsed:boolean = false
-    bufferedImageBitmap?:ImageBitmap
+    //通过SVG Filter实现颜色偏移
+    filterGenerated:boolean = false
+    filterId?:string
 
     copyFrom(other:Frame){
         this.XPivot = other.XPivot
@@ -91,6 +90,7 @@ interface LoadedAnms{
 
 
 class AnmPlayer{
+    static svgfilter_incrid:number = 0
     anm2:Actor
     
     sprites:string[] = new Array() /* spriteid -> sprite path */
@@ -133,6 +133,8 @@ class AnmPlayer{
         for(let i=0;i<(this.anm2.content?.Spritesheets?.length || 0);i++){
             this.loadSpritesheet(i)
         }
+
+
         
     }
 
@@ -160,6 +162,31 @@ class AnmPlayer{
         return ret
     }
 
+    static svgRoot?:Element
+    private createSvgFilterElement(R:number,G:number,B:number,A:number,RO:number,GO:number,BO:number){
+        let NS = "http://www.w3.org/2000/svg"
+        if(AnmPlayer.svgRoot == undefined){
+            AnmPlayer.svgRoot = document.createElementNS(NS,"svg")
+            document.body.appendChild(AnmPlayer.svgRoot)
+        }
+        let filter = document.createElementNS(NS,"filter")
+        let id = "AnmPlayerSvgFilter_"+(AnmPlayer.svgfilter_incrid++)
+        filter.setAttribute("id", id)
+        let colormat = document.createElementNS(NS,"feColorMatrix")
+        colormat.setAttribute("in","SourceGraphic")
+        colormat.setAttribute("type","matrix")
+        colormat.setAttribute("color-interpolation-filters","sRGB")
+        let mat = ""
+        mat += R + " 0 0 0 " + RO + "\n"
+        mat += "0 " + G + " 0 0 " + GO + "\n"
+        mat += "0 0 " + B + " 0 " + BO + "\n"
+        mat += "0 0 0 " + A + " 0"
+        colormat.setAttribute("values",mat)
+        filter.appendChild(colormat)
+        AnmPlayer.svgRoot.appendChild(filter)
+        return id
+    }
+/*
     private loadImageData(root:FrameStatus | undefined, layer:FrameStatus, img:HTMLImageElement, ctx:CanvasRenderingContext2D){
         if(img.getAttribute("img_loaded") != "true"){
             return
@@ -227,7 +254,7 @@ class AnmPlayer{
             layer.bufferedImageBitmap = bitmap
         })
     }
-
+*/
     private loadAnmObject(anm:PAnimation){
         let rootframes = this.loadAnimationFrames(anm.RootAnimation, anm.FrameNum)
         let layerframes:LayerStatus[] = new Array(anm.LayerAnimations.length)
@@ -409,17 +436,31 @@ class AnmPlayer{
                     //apply root transform
 
                     //draw frame
-                    if(!frame.bufferedImageBitmapParsed){
-                        this.loadImageData(rootframe, frame, img, ctx)
+                    if(!frame.filterGenerated){
+                        frame.filterGenerated = true
+                        frame.filterId = 'url(#' + this.createSvgFilterElement(
+                            (rootframe?.RedTint || 255) * frame.RedTint     /(255*255),
+                            (rootframe?.GreenTint || 255) * frame.GreenTint     /(255*255),
+                            (rootframe?.BlueTint || 255) * frame.BlueTint       /(255*255),
+                            (rootframe?.AlphaTint || 255) * frame.AlphaTint     /(255*255),
+                            frame.RedOffset/255,
+                            frame.GreenOffset/255,
+                            frame.BlueOffset/255
+                        ) + ')'
                     }
 
+                    ctx.filter = frame.filterId || ''
+                    ctx.globalAlpha = 1
+                    ctx.drawImage(img,frame.XCrop,frame.YCrop, frame.Width, frame.Height,0,0, frame.Width, frame.Height)
+
+                    /*
                     if(frame.bufferedImageBitmap){
                         ctx.globalAlpha = 1
                         ctx.drawImage(frame.bufferedImageBitmap,0,0, frame.Width, frame.Height,0,0, frame.Width, frame.Height)
                     }else{
                         ctx.globalAlpha = frame.AlphaTint / 255
                         ctx.drawImage(img,frame.XCrop,frame.YCrop, frame.Width, frame.Height,0,0, frame.Width, frame.Height)
-                    }
+                    }*/
                     if(this.debug_anchor){
                         ctx.beginPath()
                         ctx.arc(frame.XPivot,frame.YPivot,5,0,Math.PI/2)

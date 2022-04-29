@@ -24,9 +24,8 @@ RLQ.push(function () {
             this.BlueOffset = 0;
             this.Rotation = 0;
             this.Interpolated = false;
-            //我们通过imageBitmap来实现Timt和Offset的功能
-            //null means it doesn't need image data
-            this.bufferedImageBitmapParsed = false;
+            //通过SVG Filter实现颜色偏移
+            this.filterGenerated = false;
         }
         FrameStatus.prototype.copyFrom = function (other) {
             this.XPivot = other.XPivot;
@@ -144,56 +143,98 @@ RLQ.push(function () {
             }
             return ret;
         };
-        AnmPlayer.prototype.loadImageData = function (root, layer, img, ctx) {
-            if (img.getAttribute("img_loaded") != "true") {
-                return;
+        AnmPlayer.prototype.createSvgFilterElement = function (R, G, B, A, RO, GO, BO) {
+            var NS = "http://www.w3.org/2000/svg";
+            if (AnmPlayer.svgRoot == undefined) {
+                AnmPlayer.svgRoot = document.createElementNS(NS, "svg");
+                document.body.appendChild(AnmPlayer.svgRoot);
             }
-            if (layer.bufferedImageBitmapParsed)
-                return;
-            if ((!root || (root.AlphaTint == 255 &&
-                root.RedTint == 255 &&
-                root.BlueTint == 255 &&
-                root.GreenTint == 255 &&
-                root.RedOffset == 0 &&
-                root.BlueOffset == 0 &&
-                root.GreenOffset == 0)) &&
-                layer.AlphaTint == 255 &&
-                layer.RedTint == 255 &&
-                layer.BlueTint == 255 &&
-                layer.GreenTint == 255 &&
-                layer.RedOffset == 0 &&
-                layer.BlueOffset == 0 &&
-                layer.GreenOffset == 0) {
-                layer.bufferedImageBitmapParsed = true;
-                //no need to load image bitmap
-                return;
-            }
-            var olddata = ctx.getImageData(0, 0, layer.Width, layer.Height);
-            ctx.save();
-            ctx.setTransform(1, 0, 0, 1, 0, 0);
-            ctx.clearRect(0, 0, layer.Width, layer.Height);
-            ctx.drawImage(img, layer.XCrop, layer.YCrop, layer.Width, layer.Height, 0, 0, layer.Width, layer.Height);
-            var idata = ctx.getImageData(0, 0, layer.Width, layer.Height);
-            ctx.restore();
-            ctx.putImageData(olddata, 0, 0);
-            var ATint = ((root === null || root === void 0 ? void 0 : root.AlphaTint) || 255) * layer.AlphaTint / (255 * 255);
-            var RTint = ((root === null || root === void 0 ? void 0 : root.RedTint) || 255) * layer.RedTint / (255 * 255);
-            var GTint = ((root === null || root === void 0 ? void 0 : root.GreenTint) || 255) * layer.GreenTint / (255 * 255);
-            var BTint = ((root === null || root === void 0 ? void 0 : root.BlueTint) || 255) * layer.RedTint / (255 * 255);
-            var Roff = ((root === null || root === void 0 ? void 0 : root.RedOffset) || 0) + layer.RedOffset;
-            var Goff = ((root === null || root === void 0 ? void 0 : root.GreenOffset) || 0) + layer.GreenOffset;
-            var Boff = ((root === null || root === void 0 ? void 0 : root.BlueOffset) || 0) + layer.BlueOffset;
-            for (var i = 0; i < idata.width * idata.height; i++) {
-                idata.data[i * 4 + 0] = Math.min((Math.floor(idata.data[i * 4 + 0] * RTint) + Roff), 255);
-                idata.data[i * 4 + 1] = Math.min((Math.floor(idata.data[i * 4 + 1] * GTint) + Goff), 255);
-                idata.data[i * 4 + 2] = Math.min((Math.floor(idata.data[i * 4 + 2] * BTint) + Boff), 255);
-                idata.data[i * 4 + 3] = Math.floor(idata.data[i * 4 + 3] * ATint);
-            }
-            layer.bufferedImageBitmapParsed = true; //接下来的转换是异步的，为防止重入，此后不处理这一帧的数据
-            window.createImageBitmap(idata).then(function (bitmap) {
-                layer.bufferedImageBitmap = bitmap;
-            });
+            var filter = document.createElementNS(NS, "filter");
+            var id = "AnmPlayerSvgFilter_" + (AnmPlayer.svgfilter_incrid++);
+            filter.setAttribute("id", id);
+            var colormat = document.createElementNS(NS, "feColorMatrix");
+            colormat.setAttribute("in", "SourceGraphic");
+            colormat.setAttribute("type", "matrix");
+            colormat.setAttribute("color-interpolation-filters", "sRGB");
+            var mat = "";
+            mat += R + " 0 0 0 " + RO + "\n";
+            mat += "0 " + G + " 0 0 " + GO + "\n";
+            mat += "0 0 " + B + " 0 " + BO + "\n";
+            mat += "0 0 0 " + A + " 0";
+            colormat.setAttribute("values", mat);
+            filter.appendChild(colormat);
+            AnmPlayer.svgRoot.appendChild(filter);
+            return id;
         };
+        /*
+            private loadImageData(root:FrameStatus | undefined, layer:FrameStatus, img:HTMLImageElement, ctx:CanvasRenderingContext2D){
+                if(img.getAttribute("img_loaded") != "true"){
+                    return
+                }
+        
+                if(layer.bufferedImageBitmapParsed)
+                    return
+                
+                if(
+                    (
+                        !root || (
+                        root.AlphaTint == 255 &&
+                        root.RedTint == 255 &&
+                        root.BlueTint == 255 &&
+                        root.GreenTint == 255 &&
+                        root.RedOffset == 0 &&
+                        root.BlueOffset == 0 &&
+                        root.GreenOffset == 0
+                        )
+                    )&&
+        
+                    layer.AlphaTint == 255 &&
+                    layer.RedTint == 255 &&
+                    layer.BlueTint == 255 &&
+                    layer.GreenTint == 255 &&
+                    layer.RedOffset == 0 &&
+                    layer.BlueOffset == 0 &&
+                    layer.GreenOffset == 0
+                    ){
+                        layer.bufferedImageBitmapParsed = true
+                        //no need to load image bitmap
+                        return
+                }
+        
+                let olddata = ctx.getImageData(0,0,layer.Width,layer.Height)
+                ctx.save()
+        
+                ctx.setTransform(1,0,0,1,0,0)
+                
+                ctx.clearRect(0,0,layer.Width,layer.Height)
+                ctx.drawImage(img, layer.XCrop, layer.YCrop, layer.Width, layer.Height, 0,0,layer.Width, layer.Height)
+                let idata = ctx.getImageData(0,0,layer.Width,layer.Height)
+        
+                ctx.restore()
+                ctx.putImageData(olddata, 0,0)
+        
+                let ATint = (root?.AlphaTint || 255) * layer.AlphaTint / (255 * 255)
+                let RTint = (root?.RedTint || 255) * layer.RedTint / (255 * 255)
+                let GTint = (root?.GreenTint || 255) * layer.GreenTint / (255 * 255)
+                let BTint = (root?.BlueTint || 255) * layer.RedTint / (255 * 255)
+                let Roff = (root?.RedOffset || 0) + layer.RedOffset
+                let Goff = (root?.GreenOffset || 0) + layer.GreenOffset
+                let Boff = (root?.BlueOffset || 0) + layer.BlueOffset
+        
+                for(let i=0;i<idata.width * idata.height;i++){
+                    idata.data[i*4 + 0] = Math.min((Math.floor(idata.data[i*4+0] * RTint) + Roff), 255)
+                    idata.data[i*4 + 1] = Math.min((Math.floor(idata.data[i*4+1] * GTint) + Goff), 255)
+                    idata.data[i*4 + 2] = Math.min((Math.floor(idata.data[i*4+2] * BTint) + Boff), 255)
+                    idata.data[i*4 + 3] = Math.floor(idata.data[i*4+3] * ATint)
+                }
+        
+                layer.bufferedImageBitmapParsed = true //接下来的转换是异步的，为防止重入，此后不处理这一帧的数据
+        
+                window.createImageBitmap(idata).then(function(bitmap){
+                    layer.bufferedImageBitmap = bitmap
+                })
+            }
+        */
         AnmPlayer.prototype.loadAnmObject = function (anm) {
             var rootframes = this.loadAnimationFrames(anm.RootAnimation, anm.FrameNum);
             var layerframes = new Array(anm.LayerAnimations.length);
@@ -351,17 +392,21 @@ RLQ.push(function () {
                         ctx.translate(-frame.XPivot, -frame.YPivot);
                         //apply root transform
                         //draw frame
-                        if (!frame.bufferedImageBitmapParsed) {
-                            this.loadImageData(rootframe, frame, img, ctx);
+                        if (!frame.filterGenerated) {
+                            frame.filterGenerated = true;
+                            frame.filterId = 'url(#' + this.createSvgFilterElement(((rootframe === null || rootframe === void 0 ? void 0 : rootframe.RedTint) || 255) * frame.RedTint / (255 * 255), ((rootframe === null || rootframe === void 0 ? void 0 : rootframe.GreenTint) || 255) * frame.GreenTint / (255 * 255), ((rootframe === null || rootframe === void 0 ? void 0 : rootframe.BlueTint) || 255) * frame.BlueTint / (255 * 255), ((rootframe === null || rootframe === void 0 ? void 0 : rootframe.AlphaTint) || 255) * frame.AlphaTint / (255 * 255), frame.RedOffset / 255, frame.GreenOffset / 255, frame.BlueOffset / 255) + ')';
                         }
-                        if (frame.bufferedImageBitmap) {
-                            ctx.globalAlpha = 1;
-                            ctx.drawImage(frame.bufferedImageBitmap, 0, 0, frame.Width, frame.Height, 0, 0, frame.Width, frame.Height);
-                        }
-                        else {
-                            ctx.globalAlpha = frame.AlphaTint / 255;
-                            ctx.drawImage(img, frame.XCrop, frame.YCrop, frame.Width, frame.Height, 0, 0, frame.Width, frame.Height);
-                        }
+                        ctx.filter = frame.filterId || '';
+                        ctx.globalAlpha = 1;
+                        ctx.drawImage(img, frame.XCrop, frame.YCrop, frame.Width, frame.Height, 0, 0, frame.Width, frame.Height);
+                        /*
+                        if(frame.bufferedImageBitmap){
+                            ctx.globalAlpha = 1
+                            ctx.drawImage(frame.bufferedImageBitmap,0,0, frame.Width, frame.Height,0,0, frame.Width, frame.Height)
+                        }else{
+                            ctx.globalAlpha = frame.AlphaTint / 255
+                            ctx.drawImage(img,frame.XCrop,frame.YCrop, frame.Width, frame.Height,0,0, frame.Width, frame.Height)
+                        }*/
                         if (this.debug_anchor) {
                             ctx.beginPath();
                             ctx.arc(frame.XPivot, frame.YPivot, 5, 0, Math.PI / 2);
@@ -406,9 +451,10 @@ RLQ.push(function () {
                 }
             }
         };
+        AnmPlayer.svgfilter_incrid = 0;
         return AnmPlayer;
     }());
-        /* ===================================== */
+    /* ===================================== */
     function md5(md5str) {
         var createMD5String = function (string) {
             var x = Array();
@@ -626,23 +672,23 @@ RLQ.push(function () {
 
             var rule = []
             //parse rule
-            for(var j=0;j<anm.children.length;j++){
+            for (var j = 0; j < anm.children.length; j++) {
                 var rules_str = anm.children[j].getAttribute("data-rule")
-                if(rules_str && rules_str.length > 0){
+                if (rules_str && rules_str.length > 0) {
                     rules_str = rules_str.split('|')
-                    for(var k=0;k<rules_str.length;k++){
+                    for (var k = 0; k < rules_str.length; k++) {
                         var rule_str = rules_str[k] // xxx:xxx,xxx:xxx
                         var newrule = new Map()
-                        if(rule_str.length > 0){
+                        if (rule_str.length > 0) {
                             rule_str = rule_str.split(',')
-                            for(var l=0;l<rule_str.length;l++){
+                            for (var l = 0; l < rule_str.length; l++) {
                                 var rule_kv = rule_str[l]// xxx:xxx
-                                if(rule_kv.length > 0){
+                                if (rule_kv.length > 0) {
                                     rule_kv = rule_kv.split(':')
-                                    if(rule_kv.length == 2){
+                                    if (rule_kv.length == 2) {
                                         var rule_k = rule_kv[0], rule_v = rule_kv[1]
-                                        if(rule_k.length > 0 && rule_v.length > 0){
-                                            newrule.set(rule_k,rule_v)
+                                        if (rule_k.length > 0 && rule_v.length > 0) {
+                                            newrule.set(rule_k, rule_v)
                                         }
                                     }
                                 }
@@ -658,26 +704,26 @@ RLQ.push(function () {
                 name: anm.getAttribute("data-name") || "",
                 x: +anm.getAttribute("data-x"),
                 y: +anm.getAttribute("data-y"),
-                rule:rule,
+                rule: rule,
             }
             players.push(anmobj)
         }
-        
-        function apply_rule(ename, rule, anmplayer,player){
-            for(var i=0;i<rule.length;i++){
+
+        function apply_rule(ename, rule, anmplayer, player) {
+            for (var i = 0; i < rule.length; i++) {
                 var r = rule[i]
-                if(r.has("when") && r.get("when") != player.name)
+                if (r.has("when") && r.get("when") != player.name)
                     continue
-                if(r.has("rate") && Math.random() > +r.get("rate"))
+                if (r.has("rate") && Math.random() > +r.get("rate"))
                     continue
-                if(r.has(ename)){
+                if (r.has(ename)) {
                     var rename = r.get(ename)
                     player.name = rename
-                    if(anmplayer.getAnmNames().indexOf(rename.split('.')[0]) != -1){
-                        anmplayer.setFrame(rename.split('.')[0],0)
+                    if (anmplayer.getAnmNames().indexOf(rename.split('.')[0]) != -1) {
+                        anmplayer.setFrame(rename.split('.')[0], 0)
                     }
-                    if(true){
-                        console.log("apply rule",rule[i])
+                    if (true) {
+                        console.log("apply rule", rule[i])
                     }
                     return true
                 }
@@ -698,11 +744,11 @@ RLQ.push(function () {
         console.log(apply_rule)
 
 
-        function loadAnm(resources){
+        function loadAnm(resources) {
             for (var i = 0; i < players.length; i++) {
                 anms[i] = new AnmPlayer(resources.get(players[i].anm2), function (url) {
                     /* 注意过滤url */
-                    url = ("Anm2/" + url).replaceAll("/", "_").replaceAll(' ','_').replaceAll("?", "").replaceAll("&", "")
+                    url = ("Anm2/" + url).replaceAll("/", "_").replaceAll(' ', '_').replaceAll("?", "").replaceAll("&", "")
                     url = url[0].toUpperCase() + url.substr(1)
                     var hash = md5(url)
                     url = "https://huiji-public.huijistatic.com/isaac/uploads/" + hash[0] + "/" + hash[0] + hash[1] + "/" + url
@@ -734,26 +780,26 @@ RLQ.push(function () {
             var currentFps = 0
 
             var canvas_clicked = []
-            canvas.onclick = function(){
-                for(var i=0;i<players.length;i++){
-                    if(!apply_rule("click",players[i].rule,anms[i],players[i])){
+            canvas.onclick = function () {
+                for (var i = 0; i < players.length; i++) {
+                    if (!apply_rule("click", players[i].rule, anms[i], players[i])) {
                         canvas_clicked[i] = true
                     }
                 }
             }
             //设置结束事件
-            for(var i=0;i<players.length;i++){
-                (function(tanm,trule,i,tplayer){
-                    anms[i].setEndEventListener(function(){
-                        if(canvas_clicked[i]){
+            for (var i = 0; i < players.length; i++) {
+                (function (tanm, trule, i, tplayer) {
+                    anms[i].setEndEventListener(function () {
+                        if (canvas_clicked[i]) {
                             canvas_clicked[i] = false
-                            if(apply_rule("clicknext",trule,tanm,tplayer)){
+                            if (apply_rule("clicknext", trule, tanm, tplayer)) {
                                 return
                             }
                         }
-                        apply_rule("next",trule,tanm,tplayer)
+                        apply_rule("next", trule, tanm, tplayer)
                     })
-                })(anms[i],players[i].rule,i,players[i])
+                })(anms[i], players[i].rule, i, players[i])
             }
 
             function draw() {
@@ -780,7 +826,7 @@ RLQ.push(function () {
             draw()
         }
 
-        function downloadJson(){
+        function downloadJson() {
             $.ajax({
                 url: "/api/rest_v1/namespace/data",
                 method: "GET",
@@ -792,13 +838,13 @@ RLQ.push(function () {
                     AnmPlayer.expandActor(msg._embedded[i], keymap)
                     resources.set(msg._embedded[i]._id, msg._embedded[i])
                 }
-                
+
                 // console.log(resources)
                 loadAnm(resources)
             }).fail(function (jqXHR, textStatus) {
                 console.log("anm2 json download failed.", textStatus, jqXHR)
             })
-    
+
         }
         //TODO:IndexedDB cache json
         downloadJson()
