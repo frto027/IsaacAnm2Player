@@ -86,6 +86,7 @@ interface LoadedAnms{
     rootframes:FrameStatus[/* frame id */],frames:LayerStatus[/* layer id */], Loop:boolean,
     FrameNum:number
     events:(string|null)[]
+    name:string
 }
 
 
@@ -105,6 +106,7 @@ class AnmPlayer{
     forceLoop:boolean = false
 
     eventListener?:(eventName:string)=>void
+    anmEndEventListener?:()=>void
 
     constructor(json:Actor, img_url_builder:(url:string)=>string){
         this.anm2 = json//JSON.parse(json)
@@ -243,7 +245,12 @@ class AnmPlayer{
         }
 
         this.frames.set(anm.Name || "", {
-            rootframes:rootframes,frames:layerframes,Loop:anm.Loop,FrameNum:anm.FrameNum,events:events
+            rootframes:rootframes,
+            frames:layerframes,
+            Loop:anm.Loop,
+            FrameNum:anm.FrameNum,
+            events:events,
+            name:anm.Name || ''
         })
     }
 
@@ -282,8 +289,27 @@ class AnmPlayer{
         }
     }
 
+    public setEndEventListener(listener:()=>void){
+        this.anmEndEventListener = listener
+    }
 
     public update(){
+        if(this.currentAnm){
+            this.currentFrame++
+            if(this.currentFrame >= this.currentAnm.FrameNum){
+                if(this.currentAnm.Loop || this.forceLoop){
+                    this.currentFrame = 0
+                }else{
+                    this.currentFrame--
+                }
+                if(this.anmEndEventListener){
+                    this.anmEndEventListener()
+                }
+            }
+        }else{
+            return
+        }
+        /*
         if(this.currentAnm && (this.currentAnm.Loop || this.forceLoop)){
             this.currentFrame = (this.currentFrame + 1) % this.currentAnm.FrameNum
         }else if(this.currentFrame < (this.currentAnm?.FrameNum || 0)){
@@ -291,6 +317,7 @@ class AnmPlayer{
         }else{
             return
         }
+        */
 
         //handle event
         let eventname = this.currentAnm?.events[this.currentFrame]
@@ -414,6 +441,9 @@ class AnmPlayer{
             ret.push(anm.Name || '')
         }
         return ret
+    }
+    public getCurrentAnmName():string{
+        return this.currentAnm?.name || ''
     }
     public getFps():number{
         return this.anm2.info?.Fps || 30

@@ -1,8 +1,8 @@
 RLQ.push(function () {
 
     /* ========= */
-    class FrameStatus {
-        constructor() {
+    var FrameStatus = /** @class */ (function () {
+        function FrameStatus() {
             this.XPivot = 0;
             this.YPivot = 0;
             this.XCrop = 0;
@@ -28,7 +28,7 @@ RLQ.push(function () {
             //null means it doesn't need image data
             this.bufferedImageBitmapParsed = false;
         }
-        copyFrom(other) {
+        FrameStatus.prototype.copyFrom = function (other) {
             this.XPivot = other.XPivot;
             this.YPivot = other.YPivot;
             this.XCrop = other.XCrop;
@@ -50,9 +50,9 @@ RLQ.push(function () {
             this.BlueOffset = other.BlueOffset;
             this.Rotation = other.Rotation;
             this.Interpolated = other.Interpolated;
-        }
-        static Interp(a, b, r) {
-            let ret = new FrameStatus();
+        };
+        FrameStatus.Interp = function (a, b, r) {
+            var ret = new FrameStatus();
             ret.XPivot = a.XPivot;
             ret.YPivot = a.YPivot;
             ret.XCrop = a.XCrop;
@@ -75,17 +75,19 @@ RLQ.push(function () {
             ret.Rotation = (b.Rotation - a.Rotation) * r + a.Rotation;
             ret.Interpolated = a.Interpolated;
             return ret;
-        }
-    }
-    class LayerStatus {
-        constructor() {
+        };
+        return FrameStatus;
+    }());
+    var LayerStatus = /** @class */ (function () {
+        function LayerStatus() {
             this.LayerId = 0;
             this.Visible = false;
             this.frames = [];
         }
-    }
-    class AnmPlayer {
-        constructor(json, img_url_builder) {
+        return LayerStatus;
+    }());
+    var AnmPlayer = /** @class */ (function () {
+        function AnmPlayer(json, img_url_builder) {
             var _a, _b, _c, _d, _e, _f, _g;
             this.sprites = new Array(); /* spriteid -> sprite path */
             this.sprites_htmlimg = new Array();
@@ -96,38 +98,42 @@ RLQ.push(function () {
             this.forceLoop = false;
             this.debug_anchor = false;
             this.anm2 = json; //JSON.parse(json)
-            for (let sheet of ((_a = this.anm2.content) === null || _a === void 0 ? void 0 : _a.Spritesheets) || []) {
+            for (var _i = 0, _h = ((_a = this.anm2.content) === null || _a === void 0 ? void 0 : _a.Spritesheets) || []; _i < _h.length; _i++) {
+                var sheet = _h[_i];
                 this.sprites[sheet.Id] = sheet.Path || 'unknown';
             }
-            for (let layer of ((_b = this.anm2.content) === null || _b === void 0 ? void 0 : _b.Layers) || []) {
+            for (var _j = 0, _k = ((_b = this.anm2.content) === null || _b === void 0 ? void 0 : _b.Layers) || []; _j < _k.length; _j++) {
+                var layer = _k[_j];
                 this.layers[layer.Id] = layer;
             }
-            for (let evt of ((_c = this.anm2.content) === null || _c === void 0 ? void 0 : _c.Events) || []) {
+            for (var _l = 0, _m = ((_c = this.anm2.content) === null || _c === void 0 ? void 0 : _c.Events) || []; _l < _m.length; _l++) {
+                var evt = _m[_l];
                 this.events[evt.Id] = evt.Name;
             }
-            for (let anm of ((_d = this.anm2.animations) === null || _d === void 0 ? void 0 : _d.animation) || []) {
+            for (var _o = 0, _p = ((_d = this.anm2.animations) === null || _d === void 0 ? void 0 : _d.animation) || []; _o < _p.length; _o++) {
+                var anm = _p[_o];
                 this.loadAnmObject(anm);
             }
             this.setFrame(((_e = this.anm2.animations) === null || _e === void 0 ? void 0 : _e.DefaultAnimation) || '', 0);
             this.img_url_builder = img_url_builder;
-            for (let i = 0; i < (((_g = (_f = this.anm2.content) === null || _f === void 0 ? void 0 : _f.Spritesheets) === null || _g === void 0 ? void 0 : _g.length) || 0); i++) {
+            for (var i = 0; i < (((_g = (_f = this.anm2.content) === null || _f === void 0 ? void 0 : _f.Spritesheets) === null || _g === void 0 ? void 0 : _g.length) || 0); i++) {
                 this.loadSpritesheet(i);
             }
         }
-        loadAnimationFrames(anms, length) {
-            let ret = new Array(length);
-            let fi = 0;
-            for (let findex = 0; findex < anms.length; findex++) {
-                let frame = anms[findex];
+        AnmPlayer.prototype.loadAnimationFrames = function (anms, length) {
+            var ret = new Array(length);
+            var fi = 0;
+            for (var findex = 0; findex < anms.length; findex++) {
+                var frame = anms[findex];
                 if (frame.Interpolated && findex + 1 < anms.length) {
-                    for (let d = 0; d < frame.Delay; d++) {
+                    for (var d = 0; d < frame.Delay; d++) {
                         ret[fi++] = FrameStatus.Interp(frame, anms[findex + 1], d / frame.Delay);
                     }
                 }
                 else {
-                    let temp = new FrameStatus();
+                    var temp = new FrameStatus();
                     temp.copyFrom(frame);
-                    for (let d = 0; d < frame.Delay; d++) {
+                    for (var d = 0; d < frame.Delay; d++) {
                         ret[fi++] = temp;
                     }
                 }
@@ -137,8 +143,8 @@ RLQ.push(function () {
                 fi++;
             }
             return ret;
-        }
-        loadImageData(root, layer, img, ctx) {
+        };
+        AnmPlayer.prototype.loadImageData = function (root, layer, img, ctx) {
             if (img.getAttribute("img_loaded") != "true") {
                 return;
             }
@@ -162,22 +168,22 @@ RLQ.push(function () {
                 //no need to load image bitmap
                 return;
             }
-            let olddata = ctx.getImageData(0, 0, layer.Width, layer.Height);
+            var olddata = ctx.getImageData(0, 0, layer.Width, layer.Height);
             ctx.save();
             ctx.setTransform(1, 0, 0, 1, 0, 0);
             ctx.clearRect(0, 0, layer.Width, layer.Height);
             ctx.drawImage(img, layer.XCrop, layer.YCrop, layer.Width, layer.Height, 0, 0, layer.Width, layer.Height);
-            let idata = ctx.getImageData(0, 0, layer.Width, layer.Height);
+            var idata = ctx.getImageData(0, 0, layer.Width, layer.Height);
             ctx.restore();
             ctx.putImageData(olddata, 0, 0);
-            let ATint = ((root === null || root === void 0 ? void 0 : root.AlphaTint) || 255) * layer.AlphaTint / (255 * 255);
-            let RTint = ((root === null || root === void 0 ? void 0 : root.RedTint) || 255) * layer.RedTint / (255 * 255);
-            let GTint = ((root === null || root === void 0 ? void 0 : root.GreenTint) || 255) * layer.GreenTint / (255 * 255);
-            let BTint = ((root === null || root === void 0 ? void 0 : root.BlueTint) || 255) * layer.RedTint / (255 * 255);
-            let Roff = ((root === null || root === void 0 ? void 0 : root.RedOffset) || 0) + layer.RedOffset;
-            let Goff = ((root === null || root === void 0 ? void 0 : root.GreenOffset) || 0) + layer.GreenOffset;
-            let Boff = ((root === null || root === void 0 ? void 0 : root.BlueOffset) || 0) + layer.BlueOffset;
-            for (let i = 0; i < idata.width * idata.height; i++) {
+            var ATint = ((root === null || root === void 0 ? void 0 : root.AlphaTint) || 255) * layer.AlphaTint / (255 * 255);
+            var RTint = ((root === null || root === void 0 ? void 0 : root.RedTint) || 255) * layer.RedTint / (255 * 255);
+            var GTint = ((root === null || root === void 0 ? void 0 : root.GreenTint) || 255) * layer.GreenTint / (255 * 255);
+            var BTint = ((root === null || root === void 0 ? void 0 : root.BlueTint) || 255) * layer.RedTint / (255 * 255);
+            var Roff = ((root === null || root === void 0 ? void 0 : root.RedOffset) || 0) + layer.RedOffset;
+            var Goff = ((root === null || root === void 0 ? void 0 : root.GreenOffset) || 0) + layer.GreenOffset;
+            var Boff = ((root === null || root === void 0 ? void 0 : root.BlueOffset) || 0) + layer.BlueOffset;
+            for (var i = 0; i < idata.width * idata.height; i++) {
                 idata.data[i * 4 + 0] = Math.min((Math.floor(idata.data[i * 4 + 0] * RTint) + Roff), 255);
                 idata.data[i * 4 + 1] = Math.min((Math.floor(idata.data[i * 4 + 1] * GTint) + Goff), 255);
                 idata.data[i * 4 + 2] = Math.min((Math.floor(idata.data[i * 4 + 2] * BTint) + Boff), 255);
@@ -187,31 +193,37 @@ RLQ.push(function () {
             window.createImageBitmap(idata).then(function (bitmap) {
                 layer.bufferedImageBitmap = bitmap;
             });
-        }
-        loadAnmObject(anm) {
-            let rootframes = this.loadAnimationFrames(anm.RootAnimation, anm.FrameNum);
-            let layerframes = new Array(anm.LayerAnimations.length);
-            for (let j = 0; j < anm.LayerAnimations.length; j++) {
-                let layer = new LayerStatus();
+        };
+        AnmPlayer.prototype.loadAnmObject = function (anm) {
+            var rootframes = this.loadAnimationFrames(anm.RootAnimation, anm.FrameNum);
+            var layerframes = new Array(anm.LayerAnimations.length);
+            for (var j = 0; j < anm.LayerAnimations.length; j++) {
+                var layer = new LayerStatus();
                 layer.Visible = anm.LayerAnimations[j].Visible;
                 layer.frames = this.loadAnimationFrames(anm.LayerAnimations[j].frames, anm.FrameNum);
                 layer.LayerId = anm.LayerAnimations[j].LayerId;
                 layerframes[j] = layer;
             }
-            let events = new Array(anm.FrameNum);
-            for (let trig of anm.Triggers) {
+            var events = new Array(anm.FrameNum);
+            for (var _i = 0, _a = anm.Triggers; _i < _a.length; _i++) {
+                var trig = _a[_i];
                 events[trig.AtFrame] = this.events[trig.EventId];
             }
             this.frames.set(anm.Name || "", {
-                rootframes: rootframes, frames: layerframes, Loop: anm.Loop, FrameNum: anm.FrameNum, events: events
+                rootframes: rootframes,
+                frames: layerframes,
+                Loop: anm.Loop,
+                FrameNum: anm.FrameNum,
+                events: events,
+                name: anm.Name || ''
             });
-        }
-        loadAnm(name) {
+        };
+        AnmPlayer.prototype.loadAnm = function (name) {
             var _a;
             if (!this.frames.has(name)) {
-                let anms = (_a = this.anm2.animations) === null || _a === void 0 ? void 0 : _a.animation;
+                var anms = (_a = this.anm2.animations) === null || _a === void 0 ? void 0 : _a.animation;
                 if (anms) {
-                    for (let i = 0; i < anms.length; i++) {
+                    for (var i = 0; i < anms.length; i++) {
                         if (anms[i].Name == name) {
                             // load
                             this.loadAnmObject(anms[i]);
@@ -219,12 +231,12 @@ RLQ.push(function () {
                     }
                 }
             }
-        }
-        setFrame(name, frame) {
+        };
+        AnmPlayer.prototype.setFrame = function (name, frame) {
             this.currentAnm = this.frames.get(name);
             this.play(frame);
-        }
-        play(frame) {
+        };
+        AnmPlayer.prototype.play = function (frame) {
             if (this.currentAnm) {
                 this.currentFrame = frame;
                 if (this.currentFrame < 0) {
@@ -239,28 +251,48 @@ RLQ.push(function () {
                     }
                 }
             }
-        }
-        update() {
-            var _a, _b, _c;
-            if (this.currentAnm && (this.currentAnm.Loop || this.forceLoop)) {
-                this.currentFrame = (this.currentFrame + 1) % this.currentAnm.FrameNum;
-            }
-            else if (this.currentFrame < (((_a = this.currentAnm) === null || _a === void 0 ? void 0 : _a.FrameNum) || 0)) {
-                this.currentFrame = this.currentFrame + 1;
+        };
+        AnmPlayer.prototype.setEndEventListener = function (listener) {
+            this.anmEndEventListener = listener;
+        };
+        AnmPlayer.prototype.update = function () {
+            var _a, _b;
+            if (this.currentAnm) {
+                this.currentFrame++;
+                if (this.currentFrame >= this.currentAnm.FrameNum) {
+                    if (this.currentAnm.Loop || this.forceLoop) {
+                        this.currentFrame = 0;
+                    }
+                    else {
+                        this.currentFrame--;
+                    }
+                    if (this.anmEndEventListener) {
+                        this.anmEndEventListener();
+                    }
+                }
             }
             else {
                 return;
             }
-            //handle event
-            let eventname = (_b = this.currentAnm) === null || _b === void 0 ? void 0 : _b.events[this.currentFrame];
-            if (eventname) {
-                (_c = this.eventListener) === null || _c === void 0 ? void 0 : _c.call(undefined, eventname);
+            /*
+            if(this.currentAnm && (this.currentAnm.Loop || this.forceLoop)){
+                this.currentFrame = (this.currentFrame + 1) % this.currentAnm.FrameNum
+            }else if(this.currentFrame < (this.currentAnm?.FrameNum || 0)){
+                this.currentFrame = this.currentFrame + 1
+            }else{
+                return
             }
-        }
-        loadSpritesheet(i) {
-            let img = this.sprites_htmlimg[i];
+            */
+            //handle event
+            var eventname = (_a = this.currentAnm) === null || _a === void 0 ? void 0 : _a.events[this.currentFrame];
+            if (eventname) {
+                (_b = this.eventListener) === null || _b === void 0 ? void 0 : _b.call(undefined, eventname);
+            }
+        };
+        AnmPlayer.prototype.loadSpritesheet = function (i) {
+            var img = this.sprites_htmlimg[i];
             if (img == undefined) {
-                let imgpath = this.sprites[i];
+                var imgpath = this.sprites[i];
                 img = document.createElement("img");
                 img.src = this.img_url_builder(imgpath);
                 img.setAttribute('style', "image-rendering: pixelated; display:none;");
@@ -271,8 +303,8 @@ RLQ.push(function () {
                 document.body.appendChild(img);
             }
             return img;
-        }
-        drawCanvas(ctx, canvas, centerX, centerY, rootScale) {
+        };
+        AnmPlayer.prototype.drawCanvas = function (ctx, canvas, centerX, centerY, rootScale) {
             var _a, _b, _c;
             ctx.save();
             ctx.setTransform(1, 0, 0, 1, 0, 0);
@@ -289,7 +321,7 @@ RLQ.push(function () {
             if (rootScale == undefined) {
                 rootScale = 1;
             }
-            let rootframe = (_a = this.currentAnm) === null || _a === void 0 ? void 0 : _a.rootframes[this.currentFrame];
+            var rootframe = (_a = this.currentAnm) === null || _a === void 0 ? void 0 : _a.rootframes[this.currentFrame];
             ctx.translate(centerX, centerY);
             ctx.scale(rootScale, rootScale);
             if (rootframe) {
@@ -304,13 +336,13 @@ RLQ.push(function () {
                 ctx.fill();
             }
             //layer transform
-            for (let i = 0; i < (((_b = this.currentAnm) === null || _b === void 0 ? void 0 : _b.frames.length) || 0); i++) {
-                let layer = (_c = this.currentAnm) === null || _c === void 0 ? void 0 : _c.frames[i];
+            for (var i = 0; i < (((_b = this.currentAnm) === null || _b === void 0 ? void 0 : _b.frames.length) || 0); i++) {
+                var layer = (_c = this.currentAnm) === null || _c === void 0 ? void 0 : _c.frames[i];
                 if (layer === null || layer === void 0 ? void 0 : layer.Visible) {
-                    let frame = layer.frames[this.currentFrame];
+                    var frame = layer.frames[this.currentFrame];
                     if (frame && frame.Visible) {
                         ctx.save();
-                        let img = this.loadSpritesheet(this.layers[layer.LayerId].SpritesheetId);
+                        var img = this.loadSpritesheet(this.layers[layer.LayerId].SpritesheetId);
                         ctx.translate(frame.XPosition, frame.YPosition);
                         ctx.rotate(frame.Rotation * Math.PI / 180);
                         // ctx.translate(-canvas.width/2,-canvas.height/2)
@@ -341,37 +373,42 @@ RLQ.push(function () {
                 }
             }
             ctx.restore();
-        }
-        getAnmNames() {
+        };
+        AnmPlayer.prototype.getAnmNames = function () {
             var _a;
-            let ret = [];
-            for (let anm of ((_a = this.anm2.animations) === null || _a === void 0 ? void 0 : _a.animation) || []) {
+            var ret = [];
+            for (var _i = 0, _b = ((_a = this.anm2.animations) === null || _a === void 0 ? void 0 : _a.animation) || []; _i < _b.length; _i++) {
+                var anm = _b[_i];
                 ret.push(anm.Name || '');
             }
             return ret;
-        }
-        getFps() {
+        };
+        AnmPlayer.prototype.getCurrentAnmName = function () {
+            var _a;
+            return ((_a = this.currentAnm) === null || _a === void 0 ? void 0 : _a.name) || '';
+        };
+        AnmPlayer.prototype.getFps = function () {
             var _a;
             return ((_a = this.anm2.info) === null || _a === void 0 ? void 0 : _a.Fps) || 30;
-        }
-        static expandActor(target, keymap) {
+        };
+        AnmPlayer.expandActor = function (target, keymap) {
             if (typeof (target) != "object") {
                 return;
             }
-            for (let i = 0; i < target.length; i++) {
+            for (var i = 0; i < target.length; i++) {
                 this.expandActor(target[i], keymap);
             }
-            for (let k in keymap) {
+            for (var k in keymap) {
                 if (k.length == 1 && typeof (keymap[k]) == "string" && target[k] != undefined) {
                     this.expandActor(target[k], keymap);
                     target[keymap[k]] = target[k];
                     target[k] = undefined;
                 }
             }
-        }
-    }
-
-    /* ===================================== */
+        };
+        return AnmPlayer;
+    }());
+        /* ===================================== */
     function md5(md5str) {
         var createMD5String = function (string) {
             var x = Array();
@@ -586,12 +623,66 @@ RLQ.push(function () {
 
         for (var i = 0; i < canvasdiv.children.length; i++) {
             var anm = canvasdiv.children[i]
-            players.push({
+
+            var rule = []
+            //parse rule
+            for(var j=0;j<anm.children.length;j++){
+                var rules_str = anm.children[j].getAttribute("data-rule")
+                if(rules_str && rules_str.length > 0){
+                    rules_str = rules_str.split('|')
+                    for(var k=0;k<rules_str.length;k++){
+                        var rule_str = rules_str[k] // xxx:xxx,xxx:xxx
+                        var newrule = new Map()
+                        if(rule_str.length > 0){
+                            rule_str = rule_str.split(',')
+                            for(var l=0;l<rule_str.length;l++){
+                                var rule_kv = rule_str[l]// xxx:xxx
+                                if(rule_kv.length > 0){
+                                    rule_kv = rule_kv.split(':')
+                                    if(rule_kv.length == 2){
+                                        var rule_k = rule_kv[0], rule_v = rule_kv[1]
+                                        if(rule_k.length > 0 && rule_v.length > 0){
+                                            newrule.set(rule_k,rule_v)
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                        rule.push(newrule)
+                    }
+                }
+            }
+
+            var anmobj = {
                 anm2: "Data:" + (anm.getAttribute("data-anm2").replaceAll('&', '').replaceAll('?', '') || ""),
                 name: anm.getAttribute("data-name") || "",
                 x: +anm.getAttribute("data-x"),
                 y: +anm.getAttribute("data-y"),
-            })
+                rule:rule,
+            }
+            players.push(anmobj)
+        }
+        
+        function apply_rule(ename, rule, anmplayer,player){
+            for(var i=0;i<rule.length;i++){
+                var r = rule[i]
+                if(r.has("when") && r.get("when") != player.name)
+                    continue
+                if(r.has("rate") && Math.random() > +r.get("rate"))
+                    continue
+                if(r.has(ename)){
+                    var rename = r.get(ename)
+                    player.name = rename
+                    if(anmplayer.getAnmNames().indexOf(rename.split('.')[0]) != -1){
+                        anmplayer.setFrame(rename.split('.')[0],0)
+                    }
+                    if(true){
+                        console.log("apply rule",rule[i])
+                    }
+                    return true
+                }
+            }
+            return false
         }
 
         canvasdiv.innerHTML = ''
@@ -604,32 +695,20 @@ RLQ.push(function () {
         for (var i = 0; i < players.length; i++) {
             filter["$or"].push({ "_id": players[i].anm2 })
         }
-        console.log(filter)
+        console.log(apply_rule)
 
-        //download anm2
-        $.ajax({
-            url: "/api/rest_v1/namespace/data",
-            method: "GET",
-            data: { filter: JSON.stringify(filter) },
-            dataType: "json"
-        }).done(function (msg) {
-            var resources = new Map()
-            for (var i = 0; i < msg._embedded.length; i++) {
-                AnmPlayer.expandActor(msg._embedded[i], keymap)
-                resources.set(msg._embedded[i]._id, msg._embedded[i])
-            }
-            // console.log(resources)
+
+        function loadAnm(resources){
             for (var i = 0; i < players.length; i++) {
                 anms[i] = new AnmPlayer(resources.get(players[i].anm2), function (url) {
                     /* 注意过滤url */
-                    url = ("Anm2/" + url).replaceAll("/", "_").replaceAll("?", "").replaceAll("&", "")
+                    url = ("Anm2/" + url).replaceAll("/", "_").replaceAll(' ','_').replaceAll("?", "").replaceAll("&", "")
                     url = url[0].toUpperCase() + url.substr(1)
                     var hash = md5(url)
                     url = "https://huiji-public.huijistatic.com/isaac/uploads/" + hash[0] + "/" + hash[0] + hash[1] + "/" + url
                     return url
                 })
                 anms[i].setFrame(players[i].name, 0)
-                // anms[i].forceLoop = true
             }
 
             var commonFps = 1
@@ -653,6 +732,30 @@ RLQ.push(function () {
             }
 
             var currentFps = 0
+
+            var canvas_clicked = []
+            canvas.onclick = function(){
+                for(var i=0;i<players.length;i++){
+                    if(!apply_rule("click",players[i].rule,anms[i],players[i])){
+                        canvas_clicked[i] = true
+                    }
+                }
+            }
+            //设置结束事件
+            for(var i=0;i<players.length;i++){
+                (function(tanm,trule,i,tplayer){
+                    anms[i].setEndEventListener(function(){
+                        if(canvas_clicked[i]){
+                            canvas_clicked[i] = false
+                            if(apply_rule("clicknext",trule,tanm,tplayer)){
+                                return
+                            }
+                        }
+                        apply_rule("next",trule,tanm,tplayer)
+                    })
+                })(anms[i],players[i].rule,i,players[i])
+            }
+
             function draw() {
                 //update
                 for (var i = 0; i < anms.length; i++) {
@@ -675,10 +778,30 @@ RLQ.push(function () {
                 setTimeout(draw, 1000 / commonFps)
             }
             draw()
-        }).fail(function (jqXHR, textStatus) {
-            console.log("anm2 json download failed.", textStatus, jqXHR)
-        })
+        }
 
+        function downloadJson(){
+            $.ajax({
+                url: "/api/rest_v1/namespace/data",
+                method: "GET",
+                data: { filter: JSON.stringify(filter) },
+                dataType: "json"
+            }).done(function (msg) {
+                var resources = new Map()
+                for (var i = 0; i < msg._embedded.length; i++) {
+                    AnmPlayer.expandActor(msg._embedded[i], keymap)
+                    resources.set(msg._embedded[i]._id, msg._embedded[i])
+                }
+                
+                // console.log(resources)
+                loadAnm(resources)
+            }).fail(function (jqXHR, textStatus) {
+                console.log("anm2 json download failed.", textStatus, jqXHR)
+            })
+    
+        }
+        //TODO:IndexedDB cache json
+        downloadJson()
     }
 
     var canvases = $('.anm2player')
