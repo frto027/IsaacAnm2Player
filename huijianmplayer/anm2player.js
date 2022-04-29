@@ -166,75 +166,6 @@ RLQ.push(function () {
             AnmPlayer.svgRoot.appendChild(filter);
             return id;
         };
-        /*
-            private loadImageData(root:FrameStatus | undefined, layer:FrameStatus, img:HTMLImageElement, ctx:CanvasRenderingContext2D){
-                if(img.getAttribute("img_loaded") != "true"){
-                    return
-                }
-        
-                if(layer.bufferedImageBitmapParsed)
-                    return
-                
-                if(
-                    (
-                        !root || (
-                        root.AlphaTint == 255 &&
-                        root.RedTint == 255 &&
-                        root.BlueTint == 255 &&
-                        root.GreenTint == 255 &&
-                        root.RedOffset == 0 &&
-                        root.BlueOffset == 0 &&
-                        root.GreenOffset == 0
-                        )
-                    )&&
-        
-                    layer.AlphaTint == 255 &&
-                    layer.RedTint == 255 &&
-                    layer.BlueTint == 255 &&
-                    layer.GreenTint == 255 &&
-                    layer.RedOffset == 0 &&
-                    layer.BlueOffset == 0 &&
-                    layer.GreenOffset == 0
-                    ){
-                        layer.bufferedImageBitmapParsed = true
-                        //no need to load image bitmap
-                        return
-                }
-        
-                let olddata = ctx.getImageData(0,0,layer.Width,layer.Height)
-                ctx.save()
-        
-                ctx.setTransform(1,0,0,1,0,0)
-                
-                ctx.clearRect(0,0,layer.Width,layer.Height)
-                ctx.drawImage(img, layer.XCrop, layer.YCrop, layer.Width, layer.Height, 0,0,layer.Width, layer.Height)
-                let idata = ctx.getImageData(0,0,layer.Width,layer.Height)
-        
-                ctx.restore()
-                ctx.putImageData(olddata, 0,0)
-        
-                let ATint = (root?.AlphaTint || 255) * layer.AlphaTint / (255 * 255)
-                let RTint = (root?.RedTint || 255) * layer.RedTint / (255 * 255)
-                let GTint = (root?.GreenTint || 255) * layer.GreenTint / (255 * 255)
-                let BTint = (root?.BlueTint || 255) * layer.RedTint / (255 * 255)
-                let Roff = (root?.RedOffset || 0) + layer.RedOffset
-                let Goff = (root?.GreenOffset || 0) + layer.GreenOffset
-                let Boff = (root?.BlueOffset || 0) + layer.BlueOffset
-        
-                for(let i=0;i<idata.width * idata.height;i++){
-                    idata.data[i*4 + 0] = Math.min((Math.floor(idata.data[i*4+0] * RTint) + Roff), 255)
-                    idata.data[i*4 + 1] = Math.min((Math.floor(idata.data[i*4+1] * GTint) + Goff), 255)
-                    idata.data[i*4 + 2] = Math.min((Math.floor(idata.data[i*4+2] * BTint) + Boff), 255)
-                    idata.data[i*4 + 3] = Math.floor(idata.data[i*4+3] * ATint)
-                }
-        
-                layer.bufferedImageBitmapParsed = true //接下来的转换是异步的，为防止重入，此后不处理这一帧的数据
-        
-                window.createImageBitmap(idata).then(function(bitmap){
-                    layer.bufferedImageBitmap = bitmap
-                })
-            }
-        */
         AnmPlayer.prototype.loadAnmObject = function (anm) {
             var rootframes = this.loadAnimationFrames(anm.RootAnimation, anm.FrameNum);
             var layerframes = new Array(anm.LayerAnimations.length);
@@ -315,15 +246,6 @@ RLQ.push(function () {
             else {
                 return;
             }
-            /*
-            if(this.currentAnm && (this.currentAnm.Loop || this.forceLoop)){
-                this.currentFrame = (this.currentFrame + 1) % this.currentAnm.FrameNum
-            }else if(this.currentFrame < (this.currentAnm?.FrameNum || 0)){
-                this.currentFrame = this.currentFrame + 1
-            }else{
-                return
-            }
-            */
             //handle event
             var eventname = (_a = this.currentAnm) === null || _a === void 0 ? void 0 : _a.events[this.currentFrame];
             if (eventname) {
@@ -349,9 +271,9 @@ RLQ.push(function () {
             var _a, _b, _c;
             ctx.save();
             ctx.setTransform(1, 0, 0, 1, 0, 0);
-            //ctx.clearRect(0,0,canvas.width, canvas.height)
+            // ctx.clearRect(0,0,canvas.width, canvas.height)
             // ctx.beginPath()
-            ctx.strokeRect(0, 0, canvas.width, canvas.height);
+            // ctx.strokeRect(0,0,canvas.width,canvas.height)
             //root transform
             if (centerX == undefined) {
                 centerX = canvas.width / 2;
@@ -396,17 +318,9 @@ RLQ.push(function () {
                             frame.filterGenerated = true;
                             frame.filterId = 'url(#' + this.createSvgFilterElement(((rootframe === null || rootframe === void 0 ? void 0 : rootframe.RedTint) || 255) * frame.RedTint / (255 * 255), ((rootframe === null || rootframe === void 0 ? void 0 : rootframe.GreenTint) || 255) * frame.GreenTint / (255 * 255), ((rootframe === null || rootframe === void 0 ? void 0 : rootframe.BlueTint) || 255) * frame.BlueTint / (255 * 255), ((rootframe === null || rootframe === void 0 ? void 0 : rootframe.AlphaTint) || 255) * frame.AlphaTint / (255 * 255), frame.RedOffset / 255, frame.GreenOffset / 255, frame.BlueOffset / 255) + ')';
                         }
-                        ctx.filter = frame.filterId || '';
+                        ctx.filter = frame.filterId || 'none';
                         ctx.globalAlpha = 1;
                         ctx.drawImage(img, frame.XCrop, frame.YCrop, frame.Width, frame.Height, 0, 0, frame.Width, frame.Height);
-                        /*
-                        if(frame.bufferedImageBitmap){
-                            ctx.globalAlpha = 1
-                            ctx.drawImage(frame.bufferedImageBitmap,0,0, frame.Width, frame.Height,0,0, frame.Width, frame.Height)
-                        }else{
-                            ctx.globalAlpha = frame.AlphaTint / 255
-                            ctx.drawImage(img,frame.XCrop,frame.YCrop, frame.Width, frame.Height,0,0, frame.Width, frame.Height)
-                        }*/
                         if (this.debug_anchor) {
                             ctx.beginPath();
                             ctx.arc(frame.XPivot, frame.YPivot, 5, 0, Math.PI / 2);
@@ -436,6 +350,10 @@ RLQ.push(function () {
             var _a;
             return ((_a = this.anm2.info) === null || _a === void 0 ? void 0 : _a.Fps) || 30;
         };
+        AnmPlayer.prototype.getDefaultAnmName = function () {
+            var _a;
+            return ((_a = this.anm2.animations) === null || _a === void 0 ? void 0 : _a.DefaultAnimation) || '';
+        };
         AnmPlayer.expandActor = function (target, keymap) {
             if (typeof (target) != "object") {
                 return;
@@ -454,6 +372,7 @@ RLQ.push(function () {
         AnmPlayer.svgfilter_incrid = 0;
         return AnmPlayer;
     }());
+
     /* ===================================== */
     function md5(md5str) {
         var createMD5String = function (string) {
@@ -660,7 +579,14 @@ RLQ.push(function () {
     }
     /*====================================== */
     var keymap = { "a": "info", "b": "CreatedBy", "c": "CreatedOn", "d": "Fps", "e": "Version", "f": "content", "g": "Spritesheets", "h": "Id", "i": "Path", "j": "Layers", "k": "Name", "l": "SpritesheetId", "m": "Nulls", "n": "Events", "o": "animations", "p": "DefaultAnimation", "q": "animation", "r": "FrameNum", "s": "Loop", "t": "RootAnimation", "u": "XPosition", "v": "YPosition", "w": "Delay", "x": "Visible", "y": "XScale", "z": "YScale", "A": "RedTint", "B": "GreenTint", "C": "BlueTint", "D": "AlphaTint", "E": "RedOffset", "F": "GreenOffset", "G": "BlueOffset", "H": "Rotation", "I": "Interpolated", "J": "LayerAnimations", "K": "frames", "L": "LayerId", "M": "XPivot", "N": "YPivot", "O": "XCrop", "P": "YCrop", "Q": "Width", "R": "Height", "S": "NullAnimations", "T": "NullId", "U": "Triggers", "V": "EventId", "W": "AtFrame" }
-
+    function huijiUrlBuilder(url) {
+        /* 注意过滤url */
+        url = ("Anm2/" + url).replaceAll("/", "_").replaceAll(' ', '_').replaceAll("?", "").replaceAll("&", "")
+        url = url[0].toUpperCase() + url.substr(1)
+        var hash = md5(url)
+        url = "https://huiji-public.huijistatic.com/isaac/uploads/" + hash[0] + "/" + hash[0] + hash[1] + "/" + url
+        return url
+    }
     function initplayer(canvasdiv) {
         //players存储页面描述
         var players = []
@@ -735,9 +661,10 @@ RLQ.push(function () {
         var canvas = document.createElement("canvas")
         canvas.width = +canvasdiv.getAttribute("data-width")
         canvas.height = +canvasdiv.getAttribute("data-height")
+        canvas.style = "vertical-align:middle"
         canvasdiv.appendChild(canvas)
 
-        filter = { "$or": [] }
+        var filter = { "$or": [] }
         for (var i = 0; i < players.length; i++) {
             filter["$or"].push({ "_id": players[i].anm2 })
         }
@@ -746,15 +673,8 @@ RLQ.push(function () {
 
         function loadAnm(resources) {
             for (var i = 0; i < players.length; i++) {
-                anms[i] = new AnmPlayer(resources.get(players[i].anm2), function (url) {
-                    /* 注意过滤url */
-                    url = ("Anm2/" + url).replaceAll("/", "_").replaceAll(' ', '_').replaceAll("?", "").replaceAll("&", "")
-                    url = url[0].toUpperCase() + url.substr(1)
-                    var hash = md5(url)
-                    url = "https://huiji-public.huijistatic.com/isaac/uploads/" + hash[0] + "/" + hash[0] + hash[1] + "/" + url
-                    return url
-                })
-                anms[i].setFrame(players[i].name, 0)
+                anms[i] = new AnmPlayer(resources.get(players[i].anm2), huijiUrlBuilder)
+                anms[i].setFrame((players[i].name || '').split('.')[0], 0)
             }
 
             var commonFps = 1
@@ -817,7 +737,7 @@ RLQ.push(function () {
                 ctx.setTransform(1, 0, 0, 1, 0, 0)
                 ctx.clearRect(0, 0, canvas.width, canvas.height)
                 for (var i = anms.length - 1; i >= 0; i--) {
-                    anms[i].drawCanvas(ctx, canvas, players[i].x, players[i].y, 2)
+                    anms[i].drawCanvas(ctx, canvas, players[i].x, players[i].y, 1)
                 }
 
                 //loop
@@ -854,5 +774,99 @@ RLQ.push(function () {
 
     for (var i = 0; i < canvases.length; i++) {
         initplayer(canvases[i])
+    }
+
+
+    function initJsonPage(path) {
+        var infocard = document.createElement("div")
+        infocard.style = "border:1px solid white;border-radius:8px;padding:10px"
+        infocard.innerHTML = "<h4>Anm2文件</h4>" +
+            '<div class="input-group">' +
+            '<span class="input-group-addon" id="basic-addon1">文件路径：</span>' +
+            '<input type="text" id="anm-previewcard-title" class="form-control" readonly>' +
+            '</div>' +
+
+            "<div style='margin:10px 0 10px 0' id='anm-previewcard-buttons'><button id='anm-previewcard-displayjson' class='btn btn-primary'>显示原始JSON</button><button id='anm-previewcard-loadanm' class='btn btn-success' style='margin-left:10px'>加载动画</button></div>"
+
+        infocard.querySelector('#anm-previewcard-title').value = path
+
+        var wiki_content = $('#mw-content-text')[0]
+        var json_table = wiki_content.querySelector('.mw-jsonconfig')
+        $(json_table).hide()
+
+        wiki_content.appendChild(infocard)
+
+        infocard.querySelector('#anm-previewcard-displayjson').onclick = function () {
+            infocard.remove()
+            $(json_table).show()
+        }
+
+        infocard.querySelector('#anm-previewcard-loadanm').onclick = function () {
+            infocard.querySelector('#anm-previewcard-buttons').remove()
+            var names = document.createElement('select')
+            infocard.appendChild(document.createElement('hr'))
+            infocard.appendChild(names)
+
+            var replay = document.createElement('button')
+            replay.style = "margin-left:10px"
+            replay.classList.add('btn')
+            replay.classList.add('btn-primary')
+            replay.innerText = "重新播放"
+            infocard.appendChild(replay)
+            infocard.appendChild(document.createElement('hr'))
+
+            var canvas = document.createElement('canvas')
+            canvas.width = 800
+            canvas.height = 600
+            canvas.style = 'background:#FFF'
+            infocard.appendChild(canvas)
+
+            $.ajax({
+                url: "/api/rest_v1/namespace/data",
+                method: "GET",
+                data: { filter: JSON.stringify({ _id: "Data:" + path }) },
+                dataType: "json"
+            }).done(function (msg) {
+                if (msg._embedded.length == 1) {
+                    AnmPlayer.expandActor(msg._embedded[0], keymap)
+                    var anm = new AnmPlayer(msg._embedded[0], huijiUrlBuilder)
+
+                    var anmnames = anm.getAnmNames()
+                    for (var i = 0; i < anmnames.length; i++) {
+                        var names_option = document.createElement('option')
+                        names_option.value = anmnames[i]
+                        names_option.innerText = anmnames[i]
+                        names.appendChild(names_option)
+                    }
+                    names.value = anm.getDefaultAnmName()
+
+                    names.onchange = function () {
+                        anm.setFrame(names.value, 0)
+                    }
+                    replay.onclick = function () {
+                        anm.play(0)
+                    }
+
+                    function draw() {
+                        anm.update()
+                        var ctx = canvas.getContext('2d')
+                        ctx.setTransform(1, 0, 0, 1, 0, 0);
+                        ctx.clearRect(0, 0, canvas.width, canvas.height)
+                        anm.drawCanvas(ctx, canvas, canvas.width / 2, canvas.height / 2, 1)
+
+                        setTimeout(draw, 1000 / anm.getFps())
+                    }
+                    draw()
+                }
+            }).fail(function (jqXHR, textStatus) {
+                console.log("anm2 json download failed.", textStatus, jqXHR)
+            })
+
+
+        }
+    }
+    var pageName = mw.config.get("wgPageName")
+    if (pageName && pageName.startsWith("Data:Anm2/") && pageName.endsWith(".json")) {
+        initJsonPage(pageName.substr(5))
     }
 })

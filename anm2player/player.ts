@@ -186,75 +186,7 @@ class AnmPlayer{
         AnmPlayer.svgRoot.appendChild(filter)
         return id
     }
-/*
-    private loadImageData(root:FrameStatus | undefined, layer:FrameStatus, img:HTMLImageElement, ctx:CanvasRenderingContext2D){
-        if(img.getAttribute("img_loaded") != "true"){
-            return
-        }
 
-        if(layer.bufferedImageBitmapParsed)
-            return
-        
-        if(
-            (
-                !root || (
-                root.AlphaTint == 255 &&
-                root.RedTint == 255 &&
-                root.BlueTint == 255 &&
-                root.GreenTint == 255 &&
-                root.RedOffset == 0 &&
-                root.BlueOffset == 0 &&
-                root.GreenOffset == 0  
-                )
-            )&&
-
-            layer.AlphaTint == 255 &&
-            layer.RedTint == 255 &&
-            layer.BlueTint == 255 &&
-            layer.GreenTint == 255 &&
-            layer.RedOffset == 0 &&
-            layer.BlueOffset == 0 &&
-            layer.GreenOffset == 0
-            ){
-                layer.bufferedImageBitmapParsed = true
-                //no need to load image bitmap
-                return
-        }
-
-        let olddata = ctx.getImageData(0,0,layer.Width,layer.Height)
-        ctx.save()
-
-        ctx.setTransform(1,0,0,1,0,0)
-        
-        ctx.clearRect(0,0,layer.Width,layer.Height)
-        ctx.drawImage(img, layer.XCrop, layer.YCrop, layer.Width, layer.Height, 0,0,layer.Width, layer.Height)
-        let idata = ctx.getImageData(0,0,layer.Width,layer.Height)
-
-        ctx.restore()
-        ctx.putImageData(olddata, 0,0)
-
-        let ATint = (root?.AlphaTint || 255) * layer.AlphaTint / (255 * 255)
-        let RTint = (root?.RedTint || 255) * layer.RedTint / (255 * 255)
-        let GTint = (root?.GreenTint || 255) * layer.GreenTint / (255 * 255)
-        let BTint = (root?.BlueTint || 255) * layer.RedTint / (255 * 255)
-        let Roff = (root?.RedOffset || 0) + layer.RedOffset
-        let Goff = (root?.GreenOffset || 0) + layer.GreenOffset
-        let Boff = (root?.BlueOffset || 0) + layer.BlueOffset
-
-        for(let i=0;i<idata.width * idata.height;i++){
-            idata.data[i*4 + 0] = Math.min((Math.floor(idata.data[i*4+0] * RTint) + Roff), 255)
-            idata.data[i*4 + 1] = Math.min((Math.floor(idata.data[i*4+1] * GTint) + Goff), 255)
-            idata.data[i*4 + 2] = Math.min((Math.floor(idata.data[i*4+2] * BTint) + Boff), 255)
-            idata.data[i*4 + 3] = Math.floor(idata.data[i*4+3] * ATint)
-        }
-
-        layer.bufferedImageBitmapParsed = true //接下来的转换是异步的，为防止重入，此后不处理这一帧的数据
-
-        window.createImageBitmap(idata).then(function(bitmap){
-            layer.bufferedImageBitmap = bitmap
-        })
-    }
-*/
     private loadAnmObject(anm:PAnimation){
         let rootframes = this.loadAnimationFrames(anm.RootAnimation, anm.FrameNum)
         let layerframes:LayerStatus[] = new Array(anm.LayerAnimations.length)
@@ -336,15 +268,6 @@ class AnmPlayer{
         }else{
             return
         }
-        /*
-        if(this.currentAnm && (this.currentAnm.Loop || this.forceLoop)){
-            this.currentFrame = (this.currentFrame + 1) % this.currentAnm.FrameNum
-        }else if(this.currentFrame < (this.currentAnm?.FrameNum || 0)){
-            this.currentFrame = this.currentFrame + 1
-        }else{
-            return
-        }
-        */
 
         //handle event
         let eventname = this.currentAnm?.events[this.currentFrame]
@@ -378,9 +301,9 @@ class AnmPlayer{
         ctx.save()
 
         ctx.setTransform(1,0,0,1,0,0)
-        //ctx.clearRect(0,0,canvas.width, canvas.height)
+        // ctx.clearRect(0,0,canvas.width, canvas.height)
         // ctx.beginPath()
-        ctx.strokeRect(0,0,canvas.width,canvas.height)
+        // ctx.strokeRect(0,0,canvas.width,canvas.height)
 
         //root transform
         if(centerX == undefined){
@@ -449,18 +372,10 @@ class AnmPlayer{
                         ) + ')'
                     }
 
-                    ctx.filter = frame.filterId || ''
+                    ctx.filter = frame.filterId || 'none'
                     ctx.globalAlpha = 1
                     ctx.drawImage(img,frame.XCrop,frame.YCrop, frame.Width, frame.Height,0,0, frame.Width, frame.Height)
 
-                    /*
-                    if(frame.bufferedImageBitmap){
-                        ctx.globalAlpha = 1
-                        ctx.drawImage(frame.bufferedImageBitmap,0,0, frame.Width, frame.Height,0,0, frame.Width, frame.Height)
-                    }else{
-                        ctx.globalAlpha = frame.AlphaTint / 255
-                        ctx.drawImage(img,frame.XCrop,frame.YCrop, frame.Width, frame.Height,0,0, frame.Width, frame.Height)
-                    }*/
                     if(this.debug_anchor){
                         ctx.beginPath()
                         ctx.arc(frame.XPivot,frame.YPivot,5,0,Math.PI/2)
@@ -488,6 +403,10 @@ class AnmPlayer{
     }
     public getFps():number{
         return this.anm2.info?.Fps || 30
+    }
+
+    public getDefaultAnmName():string{
+        return this.anm2.animations?.DefaultAnimation || ''
     }
 
     public static expandActor(target:any, keymap:any){
