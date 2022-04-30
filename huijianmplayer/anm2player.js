@@ -648,7 +648,7 @@ RLQ.push(function () {
                     if (anmplayer.getAnmNames().indexOf(rename.split('.')[0]) != -1) {
                         anmplayer.setFrame(rename.split('.')[0], 0)
                     }
-                    if (true) {
+                    if (mw.config.get("debug")) {
                         console.log("apply rule", rule[i])
                     }
                     return true
@@ -668,7 +668,6 @@ RLQ.push(function () {
         for (var i = 0; i < players.length; i++) {
             filter["$or"].push({ "_id": players[i].anm2 })
         }
-        console.log(apply_rule)
 
 
         function loadAnm(resources) {
