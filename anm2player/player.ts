@@ -104,11 +104,13 @@ class AnmPlayer{
     frames:Map</* anim name */string,LoadedAnms> = new Map()
 
     forceLoop:boolean = false
+    flipX:boolean = false
+
 
     eventListener?:(eventName:string)=>void
     anmEndEventListener?:()=>void
 
-    constructor(json:Actor, img_url_builder:(url:string)=>string){
+    constructor(json:Actor, img_url_builder:(url:string,replaced:boolean)=>string,spritesheet_overwrite:(sprite_id:number)=>string){
         this.anm2 = json//JSON.parse(json)
 
         for(let sheet of this.anm2.content?.Spritesheets || []){
@@ -131,10 +133,8 @@ class AnmPlayer{
 
         this.img_url_builder = img_url_builder
         for(let i=0;i<(this.anm2.content?.Spritesheets?.length || 0);i++){
-            this.loadSpritesheet(i)
+            this.loadSpritesheet(i,spritesheet_overwrite)
         }
-
-
         
     }
 
@@ -276,14 +276,15 @@ class AnmPlayer{
         }
     }
 
-    img_url_builder:(name:string)=>string
+    img_url_builder:(name:string,replaced:boolean)=>string
 
-    private loadSpritesheet(i:number){
+    private loadSpritesheet(i:number, overwiter?:(id:number)=>string){
         let img = this.sprites_htmlimg[i]
         if(img == undefined){
-            let imgpath = this.sprites[i]
+            let replaced_url = overwiter && overwiter(i)
+            let imgpath = replaced_url ||this.sprites[i]
             img = document.createElement("img")
-            img.src = this.img_url_builder(imgpath)
+            img.src = this.img_url_builder(imgpath,replaced_url != undefined)
             img.setAttribute('style',"image-rendering: pixelated; display:none;")
             img.onload = function(){
                 img.setAttribute("img_loaded","true")
@@ -315,13 +316,14 @@ class AnmPlayer{
         if(rootScale == undefined){
             rootScale = 1
         }
+        
 
         let rootframe = this.currentAnm?.rootframes[this.currentFrame]
 
 
         ctx.translate(centerX, centerY)
 
-        ctx.scale(rootScale,rootScale)
+        ctx.scale(this.flipX ? -rootScale:rootScale,rootScale)
 
         if(rootframe){
             ctx.translate(rootframe.XPosition, rootframe.YPosition)

@@ -84,7 +84,7 @@ var LayerStatus = /** @class */ (function () {
     return LayerStatus;
 }());
 var AnmPlayer = /** @class */ (function () {
-    function AnmPlayer(json, img_url_builder) {
+    function AnmPlayer(json, img_url_builder, spritesheet_overwrite) {
         var _a, _b, _c, _d, _e, _f, _g;
         this.sprites = new Array(); /* spriteid -> sprite path */
         this.sprites_htmlimg = new Array();
@@ -93,6 +93,7 @@ var AnmPlayer = /** @class */ (function () {
         this.currentFrame = -1;
         this.frames = new Map();
         this.forceLoop = false;
+        this.flipX = false;
         this.debug_anchor = false;
         this.anm2 = json; //JSON.parse(json)
         for (var _i = 0, _h = ((_a = this.anm2.content) === null || _a === void 0 ? void 0 : _a.Spritesheets) || []; _i < _h.length; _i++) {
@@ -114,7 +115,7 @@ var AnmPlayer = /** @class */ (function () {
         this.setFrame(((_e = this.anm2.animations) === null || _e === void 0 ? void 0 : _e.DefaultAnimation) || '', 0);
         this.img_url_builder = img_url_builder;
         for (var i = 0; i < (((_g = (_f = this.anm2.content) === null || _f === void 0 ? void 0 : _f.Spritesheets) === null || _g === void 0 ? void 0 : _g.length) || 0); i++) {
-            this.loadSpritesheet(i);
+            this.loadSpritesheet(i, spritesheet_overwrite);
         }
     }
     AnmPlayer.prototype.loadAnimationFrames = function (anms, length) {
@@ -250,12 +251,13 @@ var AnmPlayer = /** @class */ (function () {
             (_b = this.eventListener) === null || _b === void 0 ? void 0 : _b.call(undefined, eventname);
         }
     };
-    AnmPlayer.prototype.loadSpritesheet = function (i) {
+    AnmPlayer.prototype.loadSpritesheet = function (i, overwiter) {
         var img = this.sprites_htmlimg[i];
         if (img == undefined) {
-            var imgpath = this.sprites[i];
+            var replaced_url = overwiter && overwiter(i);
+            var imgpath = replaced_url || this.sprites[i];
             img = document.createElement("img");
-            img.src = this.img_url_builder(imgpath);
+            img.src = this.img_url_builder(imgpath, replaced_url != undefined);
             img.setAttribute('style', "image-rendering: pixelated; display:none;");
             img.onload = function () {
                 img.setAttribute("img_loaded", "true");
@@ -284,7 +286,7 @@ var AnmPlayer = /** @class */ (function () {
         }
         var rootframe = (_a = this.currentAnm) === null || _a === void 0 ? void 0 : _a.rootframes[this.currentFrame];
         ctx.translate(centerX, centerY);
-        ctx.scale(rootScale, rootScale);
+        ctx.scale(this.flipX ? -rootScale : rootScale, rootScale);
         if (rootframe) {
             ctx.translate(rootframe.XPosition, rootframe.YPosition);
             ctx.rotate(rootframe.Rotation * Math.PI / 180);

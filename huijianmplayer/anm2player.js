@@ -86,7 +86,7 @@ RLQ.push(function () {
         return LayerStatus;
     }());
     var AnmPlayer = /** @class */ (function () {
-        function AnmPlayer(json, img_url_builder) {
+        function AnmPlayer(json, img_url_builder, spritesheet_overwrite) {
             var _a, _b, _c, _d, _e, _f, _g;
             this.sprites = new Array(); /* spriteid -> sprite path */
             this.sprites_htmlimg = new Array();
@@ -95,6 +95,7 @@ RLQ.push(function () {
             this.currentFrame = -1;
             this.frames = new Map();
             this.forceLoop = false;
+            this.flipX = false;
             this.debug_anchor = false;
             this.anm2 = json; //JSON.parse(json)
             for (var _i = 0, _h = ((_a = this.anm2.content) === null || _a === void 0 ? void 0 : _a.Spritesheets) || []; _i < _h.length; _i++) {
@@ -116,7 +117,7 @@ RLQ.push(function () {
             this.setFrame(((_e = this.anm2.animations) === null || _e === void 0 ? void 0 : _e.DefaultAnimation) || '', 0);
             this.img_url_builder = img_url_builder;
             for (var i = 0; i < (((_g = (_f = this.anm2.content) === null || _f === void 0 ? void 0 : _f.Spritesheets) === null || _g === void 0 ? void 0 : _g.length) || 0); i++) {
-                this.loadSpritesheet(i);
+                this.loadSpritesheet(i, spritesheet_overwrite);
             }
         }
         AnmPlayer.prototype.loadAnimationFrames = function (anms, length) {
@@ -252,12 +253,13 @@ RLQ.push(function () {
                 (_b = this.eventListener) === null || _b === void 0 ? void 0 : _b.call(undefined, eventname);
             }
         };
-        AnmPlayer.prototype.loadSpritesheet = function (i) {
+        AnmPlayer.prototype.loadSpritesheet = function (i, overwiter) {
             var img = this.sprites_htmlimg[i];
             if (img == undefined) {
-                var imgpath = this.sprites[i];
+                var replaced_url = overwiter && overwiter(i);
+                var imgpath = replaced_url || this.sprites[i];
                 img = document.createElement("img");
-                img.src = this.img_url_builder(imgpath);
+                img.src = this.img_url_builder(imgpath, replaced_url != undefined);
                 img.setAttribute('style', "image-rendering: pixelated; display:none;");
                 img.onload = function () {
                     img.setAttribute("img_loaded", "true");
@@ -286,7 +288,7 @@ RLQ.push(function () {
             }
             var rootframe = (_a = this.currentAnm) === null || _a === void 0 ? void 0 : _a.rootframes[this.currentFrame];
             ctx.translate(centerX, centerY);
-            ctx.scale(rootScale, rootScale);
+            ctx.scale(this.flipX ? -rootScale : rootScale, rootScale);
             if (rootframe) {
                 ctx.translate(rootframe.XPosition, rootframe.YPosition);
                 ctx.rotate(rootframe.Rotation * Math.PI / 180);
@@ -372,7 +374,7 @@ RLQ.push(function () {
         AnmPlayer.svgfilter_incrid = 0;
         return AnmPlayer;
     }());
-
+    
     /* ===================================== */
     function md5(md5str) {
         var createMD5String = function (string) {
@@ -579,9 +581,12 @@ RLQ.push(function () {
     }
     /*====================================== */
     var keymap = { "a": "info", "b": "CreatedBy", "c": "CreatedOn", "d": "Fps", "e": "Version", "f": "content", "g": "Spritesheets", "h": "Id", "i": "Path", "j": "Layers", "k": "Name", "l": "SpritesheetId", "m": "Nulls", "n": "Events", "o": "animations", "p": "DefaultAnimation", "q": "animation", "r": "FrameNum", "s": "Loop", "t": "RootAnimation", "u": "XPosition", "v": "YPosition", "w": "Delay", "x": "Visible", "y": "XScale", "z": "YScale", "A": "RedTint", "B": "GreenTint", "C": "BlueTint", "D": "AlphaTint", "E": "RedOffset", "F": "GreenOffset", "G": "BlueOffset", "H": "Rotation", "I": "Interpolated", "J": "LayerAnimations", "K": "frames", "L": "LayerId", "M": "XPivot", "N": "YPivot", "O": "XCrop", "P": "YCrop", "Q": "Width", "R": "Height", "S": "NullAnimations", "T": "NullId", "U": "Triggers", "V": "EventId", "W": "AtFrame" }
-    function huijiUrlBuilder(url) {
+    function huijiUrlBuilder(url,replaced) {
         /* 注意过滤url */
-        url = ("Anm2/" + url).replaceAll("/", "_").replaceAll(' ', '_').replaceAll("?", "").replaceAll("&", "")
+        var prefix = 'Anm2/'
+        if(replaced)
+            prefix = ''
+        url = (prefix + url).replaceAll("/", "_").replaceAll(' ', '_').replaceAll("?", "").replaceAll("&", "")
         url = url[0].toUpperCase() + url.substr(1)
         var hash = md5(url)
         url = "https://huiji-public.huijistatic.com/isaac/uploads/" + hash[0] + "/" + hash[0] + hash[1] + "/" + url
@@ -600,6 +605,7 @@ RLQ.push(function () {
             var anm = canvasdiv.children[i]
 
             var rule = []
+            var replace_sheet_map = new Map()
             //parse rule
             for (var j = 0; j < anm.children.length; j++) {
                 var rules_str = anm.children[j].getAttribute("data-rule")
@@ -626,7 +632,7 @@ RLQ.push(function () {
                         rule.push(newrule)
                     }
                 }
-
+                //parse button
                 var btnname_str = anm.children[j].getAttribute("data-btnname")
                 if(btnname_str && btnname_str.length > 0){
                     if(btndiv == undefined){
@@ -649,6 +655,12 @@ RLQ.push(function () {
                         })(btnname_str,nbtn)
                     }
                 }
+                //parse replacesheet
+                var replace_sheet_id = anm.children[j].getAttribute("data-replacesheet-id")
+                var replace_sheet = anm.children[j].getAttribute("data-replacesheet")
+                if(replace_sheet_id && replace_sheet_id.length>0 && replace_sheet && replace_sheet.length>0){
+                    replace_sheet_map.set(+replace_sheet_id,replace_sheet)
+                }
             }
 
             var anmobj = {
@@ -657,6 +669,8 @@ RLQ.push(function () {
                 x: +anm.getAttribute("data-x"),
                 y: +anm.getAttribute("data-y"),
                 rule: rule,
+                replace_sheet_map: replace_sheet_map,
+                played_frame:0 /* 当前动画已经播放过多少帧，在因规则切换动画时会重置 */
             }
             players.push(anmobj)
         }
@@ -666,6 +680,11 @@ RLQ.push(function () {
                 var r = rule[i]
                 if (r.has("when") && r.get("when") != player.name)
                     continue
+                if (r.has("whendelay") && player.played_frame < +r.get("whendelay")){
+                    console.log(player.played_frame)
+                    continue
+                }
+                
                 if (r.has("rate") && Math.random() > +r.get("rate"))
                     continue
                 if (r.has("whenbtn") && !btns.get(r.get("whenbtn"))){
@@ -677,6 +696,7 @@ RLQ.push(function () {
                     if (anmplayer.getAnmNames().indexOf(rename.split('.')[0]) != -1) {
                         anmplayer.setFrame(rename.split('.')[0], 0)
                     }
+                    player.played_frame = 0
 
                     if(r.has("whenbtn")){
                         btns.get(r.get("whenbtn"))()
@@ -686,6 +706,9 @@ RLQ.push(function () {
                     if (mw.config.get("debug")) {
                         console.log("apply rule", rule[i])
                     }
+
+                    anmplayer.flipX = r.has("flipX") && r.get("flipX") == "true"
+
                     return true
                 }
             }
@@ -718,7 +741,13 @@ RLQ.push(function () {
 
         function loadAnm(resources) {
             for (var i = 0; i < players.length; i++) {
-                anms[i] = new AnmPlayer(resources.get(players[i].anm2), huijiUrlBuilder)
+                anms[i] = new AnmPlayer(resources.get(players[i].anm2), huijiUrlBuilder,(function(map){
+                    return function(id){
+                        if(map.has(id))
+                            return map.get(id)
+                        return undefined
+                    }
+                })(players[i].replace_sheet_map))
                 anms[i].setFrame((players[i].name || '').split('.')[0], 0)
             }
 
@@ -772,6 +801,7 @@ RLQ.push(function () {
                 for (var i = 0; i < anms.length; i++) {
                     if (currentFps % (commonFps / anms[i].getFps()) == 0) {
                         anms[i].update()
+                        players[i].played_frame++
                     }
                 }
                 currentFps = (currentFps + 1) % commonFps
