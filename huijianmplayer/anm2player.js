@@ -592,6 +592,9 @@ RLQ.push(function () {
         var players = []
         //anms存储AmpPlayer
         var anms = []
+        //记录当前播放器中所有按钮是否被按下
+        var btndiv = undefined
+        var btns = new Map()
 
         for (var i = 0; i < canvasdiv.children.length; i++) {
             var anm = canvasdiv.children[i]
@@ -623,6 +626,26 @@ RLQ.push(function () {
                         rule.push(newrule)
                     }
                 }
+
+                var btnname_str = anm.children[j].getAttribute("data-btnname")
+                if(btnname_str && btnname_str.length > 0){
+                    if(btndiv == undefined){
+                        btndiv = document.createElement("div")
+                        btndiv.classList.add("btn-group","btn-group-xs")
+                        btndiv.style="margin-bottom:3px"
+                    }
+                    if(!btns.has(btnname_str)){
+                        var nbtn = document.createElement("button")
+                        nbtn.classList.add("btn","btn-primary")
+                        nbtn.innerText = btnname_str
+                        btndiv.appendChild(nbtn)
+                        nbtn.onclick = (function(btnname){/* 用于闭包兼容 */
+                            return function(){/* 实际回调函数 */
+                                btns.set(btnname,true)
+                            }
+                        })(btnname_str)    
+                    }
+                }
             }
 
             var anmobj = {
@@ -642,12 +665,20 @@ RLQ.push(function () {
                     continue
                 if (r.has("rate") && Math.random() > +r.get("rate"))
                     continue
+                if (r.has("whenbtn") && !btns.get(r.get("whenbtn"))){
+                    continue
+                }
                 if (r.has(ename)) {
                     var rename = r.get(ename)
                     player.name = rename
                     if (anmplayer.getAnmNames().indexOf(rename.split('.')[0]) != -1) {
                         anmplayer.setFrame(rename.split('.')[0], 0)
                     }
+
+                    if(r.has("whenbtn")){
+                        btns.set(r.get("whenbtn"),false)
+                    }
+
                     if (mw.config.get("debug")) {
                         console.log("apply rule", rule[i])
                     }
@@ -661,9 +692,20 @@ RLQ.push(function () {
         var canvas = document.createElement("canvas")
         canvas.width = +canvasdiv.getAttribute("data-width")
         canvas.height = +canvasdiv.getAttribute("data-height")
-        canvas.style = "vertical-align:middle"
         canvasdiv.appendChild(canvas)
-
+        var canvas_style = "vertical-align:middle;"
+        if(canvasdiv.getAttribute("data-scale")){
+            var scale = +canvasdiv.getAttribute("data-scale")
+            canvas_style += "transform:scale("+scale+");margin:" + (canvas.height * (scale-1)) + "px " + (canvas.width * (scale-1)) +"px"
+        }
+        canvas.style = canvas_style
+        if(btndiv){
+            var btndiv_contariner = document.createElement("div")
+            btndiv_contariner.style="text-align:center"
+            btndiv_contariner.appendChild(btndiv)
+            // canvasdiv.appendChild(document.createElement("hr"))
+            canvasdiv.appendChild(btndiv_contariner)
+        }
         var filter = { "$or": [] }
         for (var i = 0; i < players.length; i++) {
             filter["$or"].push({ "_id": players[i].anm2 })
