@@ -97,7 +97,7 @@ RLQ.push(function () {
             this.forceLoop = false;
             this.flipX = false;
             this.debug_anchor = false;
-            this.anm2 = json; //JSON.parse(json)
+            this.anm2 = json;
             for (var _i = 0, _h = ((_a = this.anm2.content) === null || _a === void 0 ? void 0 : _a.Spritesheets) || []; _i < _h.length; _i++) {
                 var sheet = _h[_i];
                 this.sprites[sheet.Id] = sheet.Path || 'unknown';
@@ -269,7 +269,7 @@ RLQ.push(function () {
             }
             return img;
         };
-        AnmPlayer.prototype.drawCanvas = function (ctx, canvas, centerX, centerY, rootScale) {
+        AnmPlayer.prototype.drawCanvas = function (ctx, canvas, centerX, centerY, rootScale, layer_name) {
             var _a, _b, _c;
             ctx.save();
             ctx.setTransform(1, 0, 0, 1, 0, 0);
@@ -303,6 +303,11 @@ RLQ.push(function () {
             //layer transform
             for (var i = 0; i < (((_b = this.currentAnm) === null || _b === void 0 ? void 0 : _b.frames.length) || 0); i++) {
                 var layer = (_c = this.currentAnm) === null || _c === void 0 ? void 0 : _c.frames[i];
+                if (layer_name) {
+                    if (this.getLayerName(layer ? layer.LayerId : -1) != layer_name) {
+                        continue;
+                    }
+                }
                 if (layer === null || layer === void 0 ? void 0 : layer.Visible) {
                     var frame = layer.frames[this.currentFrame];
                     if (frame && frame.Visible) {
@@ -356,6 +361,16 @@ RLQ.push(function () {
             var _a;
             return ((_a = this.anm2.animations) === null || _a === void 0 ? void 0 : _a.DefaultAnimation) || '';
         };
+        AnmPlayer.prototype.getLayerName = function (layerId) {
+            var _a;
+            for (var _i = 0, _b = ((_a = this.anm2.content) === null || _a === void 0 ? void 0 : _a.Layers) || []; _i < _b.length; _i++) {
+                var layer = _b[_i];
+                if (layer.Id == layerId) {
+                    return layer.Name || undefined;
+                }
+            }
+            return undefined;
+        };
         AnmPlayer.expandActor = function (target, keymap) {
             if (typeof (target) != "object") {
                 return;
@@ -371,11 +386,36 @@ RLQ.push(function () {
                 }
             }
         };
+        AnmPlayer.renderCostume = function (anm, ctx, canvas, centerX, centerY, rootScale) {
+            var _a, _b;
+            var step_draw_candidates = new Map();
+            for (var _i = 0, _c = this.COSTUME_STEP; _i < _c.length; _i++) {
+                var step = _c[_i];
+                for (var _d = 0, anm_1 = anm; _d < anm_1.length; _d++) {
+                    var info = anm_1[_d];
+                    for (var _e = 0, _f = ((_a = info.player.currentAnm) === null || _a === void 0 ? void 0 : _a.frames) || []; _e < _f.length; _e++) {
+                        var layer = _f[_e];
+                        if (info.player.getLayerName(layer.LayerId) == step) {
+                            //动画中包含目标图层
+                            if (layer.frames[0]) {
+                                step_draw_candidates.set(step, info);
+                            }
+                        }
+                    }
+                }
+            }
+            for (var _g = 0, _h = this.COSTUME_STEP; _g < _h.length; _g++) {
+                var step = _h[_g];
+                if (step_draw_candidates.has(step)) {
+                    (_b = step_draw_candidates.get(step)) === null || _b === void 0 ? void 0 : _b.player.drawCanvas(ctx, canvas, centerX, centerY, rootScale, step);
+                }
+            }
+        };
         AnmPlayer.svgfilter_incrid = 0;
+        AnmPlayer.COSTUME_STEP = ["glow", "body", "body0", "body1", "head", "head0", "head1", "head2", "head3", "head4", "head5", "top0", "extra", "ghost", "back"];
         return AnmPlayer;
     }());
-    
-    /* ===================================== */
+            /* ===================================== */
     function md5(md5str) {
         var createMD5String = function (string) {
             var x = Array();
@@ -601,6 +641,16 @@ RLQ.push(function () {
         var btndiv = undefined
         var btns = new Map() /* 按钮名称到状态的映射，未按下为false，按下为function，此function用于重置按钮状态 */
 
+        var render_as_costume = canvasdiv.getAttribute("data-costume") == "true"
+        var costume_A,costume_B
+        var costumeInfoA,costumeInfoB
+        if(render_as_costume){
+            costume_A = [] /* head */
+            costume_B = [] /* body */
+            costumeInfoA = []
+            costumeInfoB = []
+        }
+
         for (var i = 0; i < canvasdiv.children.length; i++) {
             var anm = canvasdiv.children[i]
 
@@ -674,6 +724,7 @@ RLQ.push(function () {
             }
             players.push(anmobj)
         }
+        
 
         function apply_rule(ename, rule, anmplayer, player) {
             for (var i = 0; i < rule.length; i++) {
@@ -740,79 +791,125 @@ RLQ.push(function () {
 
         function loadAnm(resources) {
             for (var i = 0; i < players.length; i++) {
-                anms[i] = new AnmPlayer(resources.get(players[i].anm2), huijiUrlBuilder,(function(map){
+                var replace_sprite_func = (function(map){
                     return function(id){
                         if(map.has(id))
                             return map.get(id)
                         return undefined
                     }
-                })(players[i].replace_sheet_map))
-                anms[i].setFrame((players[i].name || '').split('.')[0], 0)
+                })(players[i].replace_sheet_map)
+    
+    
+                if(render_as_costume){
+                    var target = resources.get(players[i].anm2)
+                    /* 此处AB共用同一份json，注意确保它们没问题 */
+                    costume_A[i] = new AnmPlayer(target,huijiUrlBuilder,replace_sprite_func)
+                    costume_B[i] = new AnmPlayer(target,huijiUrlBuilder,replace_sprite_func)
+
+                    costume_A[i].forceLoop = true
+                    costume_B[i].forceLoop = true
+
+                    costumeInfoA[i] = {
+                        player:costume_A[i]
+                    }
+                    costumeInfoB[i] = {
+                        player:costume_B[i]
+                    }
+
+                    costume_A[i].setFrame("HeadDown",0)
+                    costume_B[i].setFrame("WalkDown",0)
+                }else{
+                    anms[i] = new AnmPlayer(resources.get(players[i].anm2), huijiUrlBuilder,replace_sprite_func)
+                    anms[i].setFrame((players[i].name || '').split('.')[0], 0)    
+                }
             }
 
             var commonFps = 1
-            for (var i = 0; i < anms.length; i++) {
-                if (commonFps < anms[i].getFps()) {
-                    commonFps = anms[i].getFps()
-                }
-            }
-            for (; ;) {
-                var passed = true
+            if(render_as_costume){
+                commonFps = 30
+            }else{
                 for (var i = 0; i < anms.length; i++) {
-                    if (commonFps % anms[i].getFps() != 0) {
-                        passed = false
-                        break
+                    if (commonFps < anms[i].getFps()) {
+                        commonFps = anms[i].getFps()
                     }
                 }
-                if (passed) {
-                    break
+                for (; ;) {
+                    var passed = true
+                    for (var i = 0; i < anms.length; i++) {
+                        if (commonFps % anms[i].getFps() != 0) {
+                            passed = false
+                            break
+                        }
+                    }
+                    if (passed) {
+                        break
+                    }
+                    commonFps++
                 }
-                commonFps++
+    
             }
+
 
             var currentFps = 0
 
             var canvas_clicked = []
-            canvas.onclick = function () {
-                for (var i = 0; i < players.length; i++) {
-                    if (!apply_rule("click", players[i].rule, anms[i], players[i])) {
-                        canvas_clicked[i] = true
+            if(!render_as_costume){
+                canvas.onclick = function () {
+                    for (var i = 0; i < players.length; i++) {
+                        if (!apply_rule("click", players[i].rule, anms[i], players[i])) {
+                            canvas_clicked[i] = true
+                        }
                     }
                 }
-            }
-            //设置结束事件
-            for (var i = 0; i < players.length; i++) {
-                (function (tanm, trule, i, tplayer) {
-                    anms[i].setEndEventListener(function () {
-                        if (canvas_clicked[i]) {
-                            canvas_clicked[i] = false
-                            if (apply_rule("clicknext", trule, tanm, tplayer)) {
-                                return
+                //设置结束事件
+                for (var i = 0; i < players.length; i++) {
+                    (function (tanm, trule, i, tplayer) {
+                        anms[i].setEndEventListener(function () {
+                            if (canvas_clicked[i]) {
+                                canvas_clicked[i] = false
+                                if (apply_rule("clicknext", trule, tanm, tplayer)) {
+                                    return
+                                }
                             }
-                        }
-                        apply_rule("next", trule, tanm, tplayer)
-                    })
-                })(anms[i], players[i].rule, i, players[i])
+                            apply_rule("next", trule, tanm, tplayer)
+                        })
+                    })(anms[i], players[i].rule, i, players[i])
+                }    
             }
 
             function draw() {
                 //update
-                for (var i = 0; i < anms.length; i++) {
-                    if (currentFps % (commonFps / anms[i].getFps()) == 0) {
-                        anms[i].update()
-                        players[i].played_frame++
+                if(render_as_costume){
+                    for(var i=0;i<costume_A.length;i++){
+                        costume_A[i].update()
+                        costume_B[i].update()
                     }
-                }
-                currentFps = (currentFps + 1) % commonFps
+                    //draw
+                    var ctx = canvas.getContext("2d")
+                    ctx.setTransform(1, 0, 0, 1, 0, 0)
+                    ctx.clearRect(0, 0, canvas.width, canvas.height)
+                    AnmPlayer.renderCostume(costumeInfoB,ctx, canvas, players[0].x, players[0].y, 1)
+                    AnmPlayer.renderCostume(costumeInfoA,ctx, canvas, players[0].x, players[0].y, 1)
+                }else{
+                    for (var i = 0; i < anms.length; i++) {
+                        if (currentFps % (commonFps / anms[i].getFps()) == 0) {
+                            anms[i].update()
+                            players[i].played_frame++
+                        }
+                    }
+                    currentFps = (currentFps + 1) % commonFps
+                    //draw
+                    var ctx = canvas.getContext("2d")
 
-                //draw
-                var ctx = canvas.getContext("2d")
+                    ctx.setTransform(1, 0, 0, 1, 0, 0)
+                    ctx.clearRect(0, 0, canvas.width, canvas.height)
+                    for (var i = anms.length - 1; i >= 0; i--) {
+                        anms[i].drawCanvas(ctx, canvas, players[i].x, players[i].y, 1)
+                    }
 
-                ctx.setTransform(1, 0, 0, 1, 0, 0)
-                ctx.clearRect(0, 0, canvas.width, canvas.height)
-                for (var i = anms.length - 1; i >= 0; i--) {
-                    anms[i].drawCanvas(ctx, canvas, players[i].x, players[i].y, 1)
                 }
+
+
 
                 //loop
                 setTimeout(draw, 1000 / commonFps)
@@ -849,7 +946,6 @@ RLQ.push(function () {
     for (var i = 0; i < canvases.length; i++) {
         initplayer(canvases[i])
     }
-
 
     function initJsonPage(path) {
         var infocard = document.createElement("div")
@@ -935,8 +1031,6 @@ RLQ.push(function () {
             }).fail(function (jqXHR, textStatus) {
                 console.log("anm2 json download failed.", textStatus, jqXHR)
             })
-
-
         }
     }
     var pageName = mw.config.get("wgPageName")

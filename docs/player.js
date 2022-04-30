@@ -95,7 +95,7 @@ var AnmPlayer = /** @class */ (function () {
         this.forceLoop = false;
         this.flipX = false;
         this.debug_anchor = false;
-        this.anm2 = json; //JSON.parse(json)
+        this.anm2 = json;
         for (var _i = 0, _h = ((_a = this.anm2.content) === null || _a === void 0 ? void 0 : _a.Spritesheets) || []; _i < _h.length; _i++) {
             var sheet = _h[_i];
             this.sprites[sheet.Id] = sheet.Path || 'unknown';
@@ -267,7 +267,7 @@ var AnmPlayer = /** @class */ (function () {
         }
         return img;
     };
-    AnmPlayer.prototype.drawCanvas = function (ctx, canvas, centerX, centerY, rootScale) {
+    AnmPlayer.prototype.drawCanvas = function (ctx, canvas, centerX, centerY, rootScale, layer_name) {
         var _a, _b, _c;
         ctx.save();
         ctx.setTransform(1, 0, 0, 1, 0, 0);
@@ -301,6 +301,11 @@ var AnmPlayer = /** @class */ (function () {
         //layer transform
         for (var i = 0; i < (((_b = this.currentAnm) === null || _b === void 0 ? void 0 : _b.frames.length) || 0); i++) {
             var layer = (_c = this.currentAnm) === null || _c === void 0 ? void 0 : _c.frames[i];
+            if (layer_name) {
+                if (this.getLayerName(layer ? layer.LayerId : -1) != layer_name) {
+                    continue;
+                }
+            }
             if (layer === null || layer === void 0 ? void 0 : layer.Visible) {
                 var frame = layer.frames[this.currentFrame];
                 if (frame && frame.Visible) {
@@ -354,6 +359,16 @@ var AnmPlayer = /** @class */ (function () {
         var _a;
         return ((_a = this.anm2.animations) === null || _a === void 0 ? void 0 : _a.DefaultAnimation) || '';
     };
+    AnmPlayer.prototype.getLayerName = function (layerId) {
+        var _a;
+        for (var _i = 0, _b = ((_a = this.anm2.content) === null || _a === void 0 ? void 0 : _a.Layers) || []; _i < _b.length; _i++) {
+            var layer = _b[_i];
+            if (layer.Id == layerId) {
+                return layer.Name || undefined;
+            }
+        }
+        return undefined;
+    };
     AnmPlayer.expandActor = function (target, keymap) {
         if (typeof (target) != "object") {
             return;
@@ -369,6 +384,32 @@ var AnmPlayer = /** @class */ (function () {
             }
         }
     };
+    AnmPlayer.renderCostume = function (anm, ctx, canvas, centerX, centerY, rootScale) {
+        var _a, _b;
+        var step_draw_candidates = new Map();
+        for (var _i = 0, _c = this.COSTUME_STEP; _i < _c.length; _i++) {
+            var step = _c[_i];
+            for (var _d = 0, anm_1 = anm; _d < anm_1.length; _d++) {
+                var info = anm_1[_d];
+                for (var _e = 0, _f = ((_a = info.player.currentAnm) === null || _a === void 0 ? void 0 : _a.frames) || []; _e < _f.length; _e++) {
+                    var layer = _f[_e];
+                    if (info.player.getLayerName(layer.LayerId) == step) {
+                        //动画中包含目标图层
+                        if (layer.frames[0]) {
+                            step_draw_candidates.set(step, info);
+                        }
+                    }
+                }
+            }
+        }
+        for (var _g = 0, _h = this.COSTUME_STEP; _g < _h.length; _g++) {
+            var step = _h[_g];
+            if (step_draw_candidates.has(step)) {
+                (_b = step_draw_candidates.get(step)) === null || _b === void 0 ? void 0 : _b.player.drawCanvas(ctx, canvas, centerX, centerY, rootScale, step);
+            }
+        }
+    };
     AnmPlayer.svgfilter_incrid = 0;
+    AnmPlayer.COSTUME_STEP = ["glow", "body", "body0", "body1", "head", "head0", "head1", "head2", "head3", "head4", "head5", "top0", "extra", "ghost", "back"];
     return AnmPlayer;
 }());

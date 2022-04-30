@@ -111,7 +111,7 @@ class AnmPlayer{
     anmEndEventListener?:()=>void
 
     constructor(json:Actor, img_url_builder:(url:string,replaced:boolean)=>string,spritesheet_overwrite:(sprite_id:number)=>string){
-        this.anm2 = json//JSON.parse(json)
+        this.anm2 = json
 
         for(let sheet of this.anm2.content?.Spritesheets || []){
             this.sprites[sheet.Id] = sheet.Path || 'unknown'
@@ -298,7 +298,7 @@ class AnmPlayer{
     debug_anchor:boolean = false
     
 
-    public drawCanvas(ctx:CanvasRenderingContext2D, canvas:HTMLCanvasElement, centerX?:number, centerY?:number, rootScale?:number){
+    public drawCanvas(ctx:CanvasRenderingContext2D, canvas:HTMLCanvasElement, centerX?:number, centerY?:number, rootScale?:number,layer_name?:string){
         ctx.save()
 
         ctx.setTransform(1,0,0,1,0,0)
@@ -341,7 +341,13 @@ class AnmPlayer{
 
         //layer transform
         for(let i=0;i<(this.currentAnm?.frames.length || 0);i++){
+
             let layer = this.currentAnm?.frames[i]
+            if(layer_name){
+                if(this.getLayerName(layer? layer.LayerId : -1) != layer_name){
+                    continue
+                }
+            }
             if(layer?.Visible){
                 let frame = layer.frames[this.currentFrame]
                 if(frame && frame.Visible){
@@ -410,6 +416,14 @@ class AnmPlayer{
     public getDefaultAnmName():string{
         return this.anm2.animations?.DefaultAnimation || ''
     }
+    public getLayerName(layerId:number):string|undefined{
+        for(let layer of this.anm2.content?.Layers || []){
+            if(layer.Id == layerId){
+                return layer.Name || undefined
+            }
+        }
+        return undefined
+    }
 
     public static expandActor(target:any, keymap:any){
         if(typeof(target) != "object"){
@@ -427,5 +441,31 @@ class AnmPlayer{
             }
         }
     }
+    private static COSTUME_STEP = ["glow","body","body0","body1","head","head0","head1","head2","head3","head4","head5","top0","extra","ghost","back"]
+
+    public static renderCostume(anm:CostumeInfo[],ctx:CanvasRenderingContext2D, canvas:HTMLCanvasElement, centerX?:number, centerY?:number, rootScale?:number){
+        let step_draw_candidates = new Map<string,CostumeInfo>()
+        for(let step of this.COSTUME_STEP){
+            for(let info of anm){
+                for(let layer of info.player.currentAnm?.frames || []){
+                    if(info.player.getLayerName(layer.LayerId) == step){
+                        //动画中包含目标图层
+                        if(layer.frames[0]){
+                            step_draw_candidates.set(step,info)
+                        }
+                    }
+                }
+            }
+        }
+        for(let step of this.COSTUME_STEP){
+            if(step_draw_candidates.has(step)){
+                step_draw_candidates.get(step)?.player.drawCanvas(ctx,canvas,centerX,centerY,rootScale,step)
+            }
+        }
+    }
+}
+interface CostumeInfo{
+    player:AnmPlayer,
+    /* steps[step][layer] == anmarray_index */
 }
 
