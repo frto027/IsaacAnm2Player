@@ -594,7 +594,7 @@ RLQ.push(function () {
         var anms = []
         //记录当前播放器中所有按钮是否被按下
         var btndiv = undefined
-        var btns = new Map()
+        var btns = new Map() /* 按钮名称到状态的映射，未按下为false，按下为function，此function用于重置按钮状态 */
 
         for (var i = 0; i < canvasdiv.children.length; i++) {
             var anm = canvasdiv.children[i]
@@ -631,19 +631,22 @@ RLQ.push(function () {
                 if(btnname_str && btnname_str.length > 0){
                     if(btndiv == undefined){
                         btndiv = document.createElement("div")
-                        btndiv.classList.add("btn-group","btn-group-xs")
                         btndiv.style="margin-bottom:3px"
                     }
                     if(!btns.has(btnname_str)){
-                        var nbtn = document.createElement("button")
-                        nbtn.classList.add("btn","btn-primary")
+                        var nbtn = document.createElement("a")
+                        nbtn.href = 'javascript:void(0)'
                         nbtn.innerText = btnname_str
+                        nbtn.style = 'text-decoration:none;border-radius:4px;'
                         btndiv.appendChild(nbtn)
-                        nbtn.onclick = (function(btnname){/* 用于闭包兼容 */
+                        nbtn.onclick = (function(btnname,btn){/* 用于闭包兼容 */
                             return function(){/* 实际回调函数 */
-                                btns.set(btnname,true)
+                                btn.style = 'text-decoration:none;border-radius:4px;background-color:#d5d4c963'
+                                btns.set(btnname,function(){
+                                    btn.style = 'text-decoration:none;border-radius:4px;'
+                                })
                             }
-                        })(btnname_str)    
+                        })(btnname_str,nbtn)
                     }
                 }
             }
@@ -676,6 +679,7 @@ RLQ.push(function () {
                     }
 
                     if(r.has("whenbtn")){
+                        btns.get(r.get("whenbtn"))()
                         btns.set(r.get("whenbtn"),false)
                     }
 
