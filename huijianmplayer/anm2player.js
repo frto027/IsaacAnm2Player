@@ -681,7 +681,6 @@ RLQ.push(function () {
                 if (r.has("when") && r.get("when") != player.name)
                     continue
                 if (r.has("whendelay") && player.played_frame < +r.get("whendelay")){
-                    console.log(player.played_frame)
                     continue
                 }
                 
