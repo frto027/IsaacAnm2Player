@@ -661,7 +661,7 @@ RLQ.push(function () {
         var costume_A,costume_B
         var costumeInfoA,costumeInfoB
 
-        var costume_status = 'Walk'
+        var costume_status = 'Walk',costume_status_reset = false
         var costume_leg_dir = 'Down',costume_head_dir = 'Down',costume_shooting = {u:false,d:false,l:false,r:false},
             costume_walking = {u:false,d:false,l:false,r:false} ,costume_shooting_frame=0,costume_walking_frame=0
         if(render_as_costume){
@@ -793,7 +793,7 @@ RLQ.push(function () {
         var canvas_style = "vertical-align:middle;"
         if(canvasdiv.getAttribute("data-scale")){
             var scale = +canvasdiv.getAttribute("data-scale")
-            canvas_style += "transform:scale("+scale+");margin:" + (canvas.height * (scale-1)) + "px " + (canvas.width * (scale-1)) +"px"
+            canvas_style += "transform:scale("+scale+");margin:" + (canvas.height * (scale-1)/2) + "px " + (canvas.width * (scale-1)/2) +"px"
         }
         canvas.style = canvas_style
         if(btndiv){
@@ -898,6 +898,35 @@ RLQ.push(function () {
                 }    
             }else{
                 canvas.tabIndex = 1
+                var COSTUME_ANM_KEYS = new Map([
+                    ['p','Pickup'],
+                    ['h','Hit'],
+                    //['A','Appear'],
+                    ['D','Death'],
+                    ['S','Sad'],
+                    ['H','Happy'],
+                    //['t','TeleportUp'],
+                    //['T','TeleportDown'],
+                    ['t','Trapdoor'],
+                    //['M','MinecartEnter'],
+                    ['j','Jump'],
+                    //['G','Glitch'],
+                    //['l','LiftItem'],
+                    //['H','HideItem'],
+                    //['u','UseItem'],
+                    //['L','LostDeath'],
+                    //['f','FallIn'],
+                    //['','HoleDeath'],
+                    //['','JumpOut'],
+                    //['','LightTravel'],
+                    //['','LeapUp'],
+                    //['','SuperLeapUp'],
+                    //['','LeapDown'],
+                    //['','SuperLeapDown'],
+                    //['F','ForgottenDeath'],
+                    //['','DeathTeleport'],
+                    []
+                ])
                 canvas.onkeydown = function(e){
                     // if(e.type == 'click'){
                     //     return
@@ -920,6 +949,7 @@ RLQ.push(function () {
                         costume_shooting.r = true
                     }
                     if(e.key == 'w'){
+                        costume_status = 'Walk'
                         costume_leg_dir = 'Up'
                         costume_walking.u = true
                     }
@@ -935,6 +965,15 @@ RLQ.push(function () {
                         costume_leg_dir = 'Right'
                         costume_walking.r = true
                     }
+                    if(e.key == 'r'){
+                        costume_status = 'Walk'
+                    }
+                    if(COSTUME_ANM_KEYS.has(e.key)){
+                        var target_anm = COSTUME_ANM_KEYS.get(e.key)
+                        costume_status = target_anm
+                        costume_status_reset = true
+                    }
+                    
                 }
                 canvas.onkeyup = function(e){
                     e.preventDefault()
@@ -964,7 +1003,6 @@ RLQ.push(function () {
                     }
                 }
             }
-            console.log(1)
             function draw() {
                 //update
                 if(render_as_costume){
@@ -997,6 +1035,11 @@ RLQ.push(function () {
                             if(costume_A[i].getCurrentAnmName() != costume_status){
                                 costume_A[i].setFrame(costume_status,0)
                             }
+                            if(costume_status_reset){
+                                costume_status_reset = false
+                                costume_A[i].play(0)
+                            }
+                            costume_A[i].update()
                         }
                     }
                     //draw
