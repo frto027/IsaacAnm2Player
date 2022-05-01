@@ -441,6 +441,20 @@ class AnmPlayer{
             }
         }
     }
+
+    private static SKIN_ALT_NAME = ['_white','_black','_blue','_red','_green','_grey']
+    public static processSkinAlt(target:Actor, skinAlt:number, firstOnly:boolean = false){
+        if(skinAlt >=0 && skinAlt < AnmPlayer.SKIN_ALT_NAME.length){
+            for(let sprite of target.content?.Spritesheets || []){
+                if(firstOnly && sprite.Id != 0){
+                    continue
+                }
+                if(sprite.Path && sprite.Path.endsWith('.png')){
+                    sprite.Path = sprite.Path.substring(0,sprite.Path.length - 4) + this.SKIN_ALT_NAME[skinAlt] + '.png'
+                }
+            }
+        }
+    }
     private static COSTUME_STEP = ["glow","body","body0","body1","head","head0","head1","head2","head3","head4","head5","top0","extra","ghost","back"]
 
     public static renderCostume(anm:CostumeInfo[],ctx:CanvasRenderingContext2D, canvas:HTMLCanvasElement, centerX:number, centerY:number, rootScale:number,shootFrame:number,walkFrame:number){

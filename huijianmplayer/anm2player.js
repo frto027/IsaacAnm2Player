@@ -386,6 +386,21 @@ RLQ.push(function () {
                 }
             }
         };
+        AnmPlayer.processSkinAlt = function (target, skinAlt, firstOnly) {
+            var _a;
+            if (firstOnly === void 0) { firstOnly = false; }
+            if (skinAlt >= 0 && skinAlt < AnmPlayer.SKIN_ALT_NAME.length) {
+                for (var _i = 0, _b = ((_a = target.content) === null || _a === void 0 ? void 0 : _a.Spritesheets) || []; _i < _b.length; _i++) {
+                    var sprite = _b[_i];
+                    if (firstOnly && sprite.Id != 0) {
+                        continue;
+                    }
+                    if (sprite.Path && sprite.Path.endsWith('.png')) {
+                        sprite.Path = sprite.Path.substring(0, sprite.Path.length - 4) + this.SKIN_ALT_NAME[skinAlt] + '.png';
+                    }
+                }
+            }
+        };
         AnmPlayer.renderCostume = function (anm, ctx, canvas, centerX, centerY, rootScale, shootFrame, walkFrame) {
             var _a, _b, _c, _d, _e, _f;
             var step_draw_candidates = new Map();
@@ -427,10 +442,11 @@ RLQ.push(function () {
             }
         };
         AnmPlayer.svgfilter_incrid = 0;
+        AnmPlayer.SKIN_ALT_NAME = ['_white', '_black', '_blue', '_red', '_green', '_grey'];
         AnmPlayer.COSTUME_STEP = ["glow", "body", "body0", "body1", "head", "head0", "head1", "head2", "head3", "head4", "head5", "top0", "extra", "ghost", "back"];
         return AnmPlayer;
     }());
-    
+        
                 /* ===================================== */
     function md5(md5str) {
         var createMD5String = function (string) {
@@ -733,6 +749,13 @@ RLQ.push(function () {
                 }
             }
 
+            var skincolor = anm.getAttribute("data-skincolor")
+            if(skincolor != undefined && skincolor.length > 0){
+                skincolor = +skincolor
+            }else{
+                skincolor = undefined
+            }
+
             var anmobj = {
                 anm2: "Data:" + (anm.getAttribute("data-anm2").replaceAll('&', '').replaceAll('?', '') || ""),
                 name: anm.getAttribute("data-name") || "",
@@ -740,7 +763,9 @@ RLQ.push(function () {
                 y: +anm.getAttribute("data-y"),
                 rule: rule,
                 replace_sheet_map: replace_sheet_map,
-                played_frame:0 /* 当前动画已经播放过多少帧，在因规则切换动画时会重置 */
+                played_frame:0, /* 当前动画已经播放过多少帧，在因规则切换动画时会重置 */
+                has_skin_alt:anm.getAttribute("data-has-skin-alt") == "true",
+                skincolor:skincolor
             }
             players.push(anmobj)
         }
@@ -810,6 +835,14 @@ RLQ.push(function () {
 
 
         function loadAnm(resources) {
+            var overwrite_color = undefined
+            if(render_as_costume){
+                for(var i=0;i<players.length;i++){
+                    if(players[i].skincolor != undefined){
+                        overwrite_color = players[i].skincolor
+                    }
+                }
+            }
             for (var i = 0; i < players.length; i++) {
                 var replace_sprite_func = (function(map){
                     return function(id){
@@ -822,6 +855,15 @@ RLQ.push(function () {
     
                 if(render_as_costume){
                     var target = resources.get(players[i].anm2)
+
+                    if(overwrite_color != undefined && i == 0){
+                        AnmPlayer.processSkinAlt(target,overwrite_color,true)
+                    }
+
+                    if(overwrite_color != undefined && players[i].has_skin_alt){
+                        AnmPlayer.processSkinAlt(target,overwrite_color,false)
+                    }
+
                     /* 此处AB共用同一份json，注意确保它们没问题 */
                     costume_A[i] = new AnmPlayer(target,huijiUrlBuilder,replace_sprite_func)
                     costume_B[i] = new AnmPlayer(target,huijiUrlBuilder,replace_sprite_func)
