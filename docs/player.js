@@ -384,15 +384,15 @@ var AnmPlayer = /** @class */ (function () {
             }
         }
     };
-    AnmPlayer.renderCostume = function (anm, ctx, canvas, centerX, centerY, rootScale) {
-        var _a, _b;
+    AnmPlayer.renderCostume = function (anm, ctx, canvas, centerX, centerY, rootScale, shootFrame, walkFrame) {
+        var _a, _b, _c, _d, _e, _f;
         var step_draw_candidates = new Map();
-        for (var _i = 0, _c = this.COSTUME_STEP; _i < _c.length; _i++) {
-            var step = _c[_i];
-            for (var _d = 0, anm_1 = anm; _d < anm_1.length; _d++) {
-                var info = anm_1[_d];
-                for (var _e = 0, _f = ((_a = info.player.currentAnm) === null || _a === void 0 ? void 0 : _a.frames) || []; _e < _f.length; _e++) {
-                    var layer = _f[_e];
+        for (var _i = 0, _g = this.COSTUME_STEP; _i < _g.length; _i++) {
+            var step = _g[_i];
+            for (var _h = 0, anm_1 = anm; _h < anm_1.length; _h++) {
+                var info = anm_1[_h];
+                for (var _j = 0, _k = ((_a = info.player.currentAnm) === null || _a === void 0 ? void 0 : _a.frames) || []; _j < _k.length; _j++) {
+                    var layer = _k[_j];
                     if (info.player.getLayerName(layer.LayerId) == step) {
                         //动画中包含目标图层
                         if (layer.frames[0]) {
@@ -402,10 +402,25 @@ var AnmPlayer = /** @class */ (function () {
                 }
             }
         }
-        for (var _g = 0, _h = this.COSTUME_STEP; _g < _h.length; _g++) {
-            var step = _h[_g];
+        for (var _l = 0, _m = this.COSTUME_STEP; _l < _m.length; _l++) {
+            var step = _m[_l];
             if (step_draw_candidates.has(step)) {
-                (_b = step_draw_candidates.get(step)) === null || _b === void 0 ? void 0 : _b.player.drawCanvas(ctx, canvas, centerX, centerY, rootScale, step);
+                var player = (_b = step_draw_candidates.get(step)) === null || _b === void 0 ? void 0 : _b.player;
+                if (player) {
+                    var old_frame = undefined;
+                    if (step.startsWith("body")) {
+                        old_frame = player.currentFrame;
+                        player.play(walkFrame % (((_c = player.currentAnm) === null || _c === void 0 ? void 0 : _c.FrameNum) || 100000));
+                    }
+                    if (step.startsWith("head") && !((_d = player.currentAnm) === null || _d === void 0 ? void 0 : _d.Loop)) {
+                        old_frame = player.currentFrame;
+                        player.play(shootFrame % (((_e = player.currentAnm) === null || _e === void 0 ? void 0 : _e.FrameNum) || 100000));
+                    }
+                    (_f = step_draw_candidates.get(step)) === null || _f === void 0 ? void 0 : _f.player.drawCanvas(ctx, canvas, centerX, centerY, rootScale, step);
+                    if (old_frame != undefined) {
+                        player.currentFrame = old_frame;
+                    }
+                }
             }
         }
     };

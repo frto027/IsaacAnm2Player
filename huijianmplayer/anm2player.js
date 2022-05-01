@@ -386,15 +386,15 @@ RLQ.push(function () {
                 }
             }
         };
-        AnmPlayer.renderCostume = function (anm, ctx, canvas, centerX, centerY, rootScale) {
-            var _a, _b;
+        AnmPlayer.renderCostume = function (anm, ctx, canvas, centerX, centerY, rootScale, shootFrame, walkFrame) {
+            var _a, _b, _c, _d, _e, _f;
             var step_draw_candidates = new Map();
-            for (var _i = 0, _c = this.COSTUME_STEP; _i < _c.length; _i++) {
-                var step = _c[_i];
-                for (var _d = 0, anm_1 = anm; _d < anm_1.length; _d++) {
-                    var info = anm_1[_d];
-                    for (var _e = 0, _f = ((_a = info.player.currentAnm) === null || _a === void 0 ? void 0 : _a.frames) || []; _e < _f.length; _e++) {
-                        var layer = _f[_e];
+            for (var _i = 0, _g = this.COSTUME_STEP; _i < _g.length; _i++) {
+                var step = _g[_i];
+                for (var _h = 0, anm_1 = anm; _h < anm_1.length; _h++) {
+                    var info = anm_1[_h];
+                    for (var _j = 0, _k = ((_a = info.player.currentAnm) === null || _a === void 0 ? void 0 : _a.frames) || []; _j < _k.length; _j++) {
+                        var layer = _k[_j];
                         if (info.player.getLayerName(layer.LayerId) == step) {
                             //动画中包含目标图层
                             if (layer.frames[0]) {
@@ -404,10 +404,25 @@ RLQ.push(function () {
                     }
                 }
             }
-            for (var _g = 0, _h = this.COSTUME_STEP; _g < _h.length; _g++) {
-                var step = _h[_g];
+            for (var _l = 0, _m = this.COSTUME_STEP; _l < _m.length; _l++) {
+                var step = _m[_l];
                 if (step_draw_candidates.has(step)) {
-                    (_b = step_draw_candidates.get(step)) === null || _b === void 0 ? void 0 : _b.player.drawCanvas(ctx, canvas, centerX, centerY, rootScale, step);
+                    var player = (_b = step_draw_candidates.get(step)) === null || _b === void 0 ? void 0 : _b.player;
+                    if (player) {
+                        var old_frame = undefined;
+                        if (step.startsWith("body")) {
+                            old_frame = player.currentFrame;
+                            player.play(walkFrame % (((_c = player.currentAnm) === null || _c === void 0 ? void 0 : _c.FrameNum) || 100000));
+                        }
+                        if (step.startsWith("head") && !((_d = player.currentAnm) === null || _d === void 0 ? void 0 : _d.Loop)) {
+                            old_frame = player.currentFrame;
+                            player.play(shootFrame % (((_e = player.currentAnm) === null || _e === void 0 ? void 0 : _e.FrameNum) || 100000));
+                        }
+                        (_f = step_draw_candidates.get(step)) === null || _f === void 0 ? void 0 : _f.player.drawCanvas(ctx, canvas, centerX, centerY, rootScale, step);
+                        if (old_frame != undefined) {
+                            player.currentFrame = old_frame;
+                        }
+                    }
                 }
             }
         };
@@ -415,7 +430,8 @@ RLQ.push(function () {
         AnmPlayer.COSTUME_STEP = ["glow", "body", "body0", "body1", "head", "head0", "head1", "head2", "head3", "head4", "head5", "top0", "extra", "ghost", "back"];
         return AnmPlayer;
     }());
-            /* ===================================== */
+    
+                /* ===================================== */
     function md5(md5str) {
         var createMD5String = function (string) {
             var x = Array();
@@ -644,6 +660,10 @@ RLQ.push(function () {
         var render_as_costume = canvasdiv.getAttribute("data-costume") == "true"
         var costume_A,costume_B
         var costumeInfoA,costumeInfoB
+
+        var costume_status = 'Walk'
+        var costume_leg_dir = 'Down',costume_head_dir = 'Down',costume_shooting = {u:false,d:false,l:false,r:false},
+            costume_walking = {u:false,d:false,l:false,r:false} ,costume_shooting_frame=0,costume_walking_frame=0
         if(render_as_costume){
             costume_A = [] /* head */
             costume_B = [] /* body */
@@ -816,6 +836,7 @@ RLQ.push(function () {
                         player:costume_B[i]
                     }
 
+
                     costume_A[i].setFrame("HeadDown",0)
                     costume_B[i].setFrame("WalkDown",0)
                 }else{
@@ -875,21 +896,117 @@ RLQ.push(function () {
                         })
                     })(anms[i], players[i].rule, i, players[i])
                 }    
+            }else{
+                canvas.tabIndex = 1
+                canvas.onkeydown = function(e){
+                    // if(e.type == 'click'){
+                    //     return
+                    // }
+                    e.preventDefault()
+                    if(e.key == 'ArrowUp'){
+                        costume_head_dir = 'Up'
+                        costume_shooting.u = true
+                    }
+                    if(e.key == 'ArrowDown'){
+                        costume_head_dir = 'Down'
+                        costume_shooting.d = true
+                    }
+                    if(e.key == 'ArrowLeft'){
+                        costume_head_dir = 'Left'
+                        costume_shooting.l = true
+                    }
+                    if(e.key == 'ArrowRight'){
+                        costume_head_dir = 'Right'
+                        costume_shooting.r = true
+                    }
+                    if(e.key == 'w'){
+                        costume_leg_dir = 'Up'
+                        costume_walking.u = true
+                    }
+                    if(e.key == 's'){
+                        costume_leg_dir = 'Down'
+                        costume_walking.d = true
+                    }
+                    if(e.key == 'a'){
+                        costume_leg_dir = 'Left'
+                        costume_walking.l = true
+                    }
+                    if(e.key == 'd'){
+                        costume_leg_dir = 'Right'
+                        costume_walking.r = true
+                    }
+                }
+                canvas.onkeyup = function(e){
+                    e.preventDefault()
+                    if(e.key == 'ArrowUp'){
+                        costume_shooting.u = false
+                    }
+                    if(e.key == 'ArrowDown'){
+                        costume_shooting.d = false
+                    }
+                    if(e.key == 'ArrowLeft'){
+                        costume_shooting.l = false
+                    }
+                    if(e.key == 'ArrowRight'){
+                        costume_shooting.r = false
+                    }
+                    if(e.key == 'w'){
+                        costume_walking.u = false
+                    }
+                    if(e.key == 's'){
+                        costume_walking.d = false
+                    }
+                    if(e.key == 'a'){
+                        costume_walking.l = false
+                    }
+                    if(e.key == 'd'){
+                        costume_walking.r = false
+                    }
+                }
             }
-
+            console.log(1)
             function draw() {
                 //update
                 if(render_as_costume){
+                    if(costume_status == "Walk"){
+                        if(costume_shooting.u || costume_shooting.d || costume_shooting.l || costume_shooting.r){
+                            costume_shooting_frame+=0.5
+                        }else{
+                            costume_shooting_frame = 0.5
+                        }
+                        if(costume_walking.u || costume_walking.d || costume_walking.l || costume_walking.r){
+                            costume_walking_frame++
+                        }else{
+                            costume_walking_frame = 0
+                        }
+                    }
+
                     for(var i=0;i<costume_A.length;i++){
-                        costume_A[i].update()
-                        costume_B[i].update()
+                        if(costume_status == 'Walk'){
+                            if(costume_A[i].getCurrentAnmName() != ('Head' + costume_head_dir)){
+                                costume_A[i].setFrame('Head' + costume_head_dir,0)
+                            }else{
+                                costume_A[i].update()
+                            }
+                            if(costume_B[i].getCurrentAnmName() != ('Walk' + costume_leg_dir)){
+                                costume_B[i].setFrame('Walk' + costume_leg_dir,0)
+                            }else{
+                                costume_B[i].update()
+                            }
+                        }else{
+                            if(costume_A[i].getCurrentAnmName() != costume_status){
+                                costume_A[i].setFrame(costume_status,0)
+                            }
+                        }
                     }
                     //draw
                     var ctx = canvas.getContext("2d")
                     ctx.setTransform(1, 0, 0, 1, 0, 0)
                     ctx.clearRect(0, 0, canvas.width, canvas.height)
-                    AnmPlayer.renderCostume(costumeInfoB,ctx, canvas, players[0].x, players[0].y, 1)
-                    AnmPlayer.renderCostume(costumeInfoA,ctx, canvas, players[0].x, players[0].y, 1)
+                    if(costume_status == 'Walk'){
+                        AnmPlayer.renderCostume(costumeInfoB,ctx, canvas, players[0].x, players[0].y, 1,Math.floor(costume_shooting_frame),Math.floor(costume_walking_frame))
+                    }
+                    AnmPlayer.renderCostume(costumeInfoA,ctx, canvas, players[0].x, players[0].y, 1,Math.floor(costume_shooting_frame),Math.floor(costume_walking_frame))
                 }else{
                     for (var i = 0; i < anms.length; i++) {
                         if (currentFps % (commonFps / anms[i].getFps()) == 0) {
