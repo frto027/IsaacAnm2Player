@@ -104,7 +104,7 @@ def makeFrame(xml):
                 r[k] = int(r[k])
     for k in ["Visible","Interpolated"]:
         if k in r:
-            r[k] = r[k] == "true"
+            r[k] = r[k] == "true" or r[k] == "True" or r[k] == "TRUE"
         else:
             if k == "Visible":
                 r[k] = True
@@ -119,14 +119,14 @@ def makeLayerAnimation(xml):
         assert child.tag == "Frame"
         r["frames"].append(makeFrame(child))
     r["LayerId"] = int(xml.attrib["LayerId"])
-    r["Visible"] = xml.attrib["Visible"] == "true"
+    r["Visible"] = xml.attrib["Visible"] == "true" or xml.attrib["Visible"] == "True" or xml.attrib["Visible"] == "TRUE"
     return r
 
 def makeNullAnimation(xml):
     assert xml.tag == "NullAnimation"
     r = {}
     r["NullId"] = int(xml.attrib["NullId"])
-    r["Visible"] = int(xml.attrib["Visible"] == "true")
+    r["Visible"] = xml.attrib["Visible"] == "true" or xml.attrib["Visible"] == "True" or xml.attrib["Visible"] == "TRUE"
 
     r["frames"] = []
     for child in xml:
@@ -141,7 +141,7 @@ def makeAnimation(xml):
     for k in xml.attrib:
         r[k] = xml.attrib[k]
     r["FrameNum"] = int(r["FrameNum"])
-    r["Loop"] = r["Loop"] == "true"
+    r["Loop"] = r["Loop"] == "true" or r["Loop"] == "True" or r["Loop"] == "TRUE"
 
     for child in xml:
         if child.tag == "RootAnimation":
