@@ -177,6 +177,14 @@ RLQ.push(function () {
                 layer.LayerId = anm.LayerAnimations[j].LayerId;
                 layerframes[j] = layer;
             }
+            var nullframes = new Array(anm.NullAnimations.length);
+            for (var j = 0; j < anm.NullAnimations.length; j++) {
+                var layer = new LayerStatus();
+                layer.Visible = anm.NullAnimations[j].Visible;
+                layer.frames = this.loadAnimationFrames(anm.NullAnimations[j].frames, anm.FrameNum);
+                layer.LayerId = anm.NullAnimations[j].NullId;
+                nullframes[j] = layer;
+            }
             var events = new Array(anm.FrameNum);
             for (var _i = 0, _a = anm.Triggers; _i < _a.length; _i++) {
                 var trig = _a[_i];
@@ -188,7 +196,8 @@ RLQ.push(function () {
                 Loop: anm.Loop,
                 FrameNum: anm.FrameNum,
                 events: events,
-                name: anm.Name || ''
+                name: anm.Name || '',
+                nullFrames: nullframes
             });
         };
         AnmPlayer.prototype.loadAnm = function (name) {
@@ -269,7 +278,7 @@ RLQ.push(function () {
             }
             return img;
         };
-        AnmPlayer.prototype.drawCanvas = function (ctx, canvas, centerX, centerY, rootScale, layer_name) {
+        AnmPlayer.prototype.drawCanvas = function (ctx, canvas, centerX, centerY, rootScale, layer_name, transformFrame) {
             var _a, _b, _c;
             ctx.save();
             ctx.setTransform(1, 0, 0, 1, 0, 0);
@@ -293,6 +302,11 @@ RLQ.push(function () {
                 ctx.translate(rootframe.XPosition, rootframe.YPosition);
                 ctx.rotate(rootframe.Rotation * Math.PI / 180);
                 ctx.scale(rootframe.XScale / 100, rootframe.YScale / 100);
+            }
+            if (transformFrame) {
+                ctx.translate(transformFrame.XPosition, transformFrame.YPosition);
+                ctx.rotate(transformFrame.Rotation * Math.PI / 180);
+                ctx.scale(transformFrame.XScale / 100, transformFrame.YScale / 100);
             }
             if (this.debug_anchor) {
                 ctx.beginPath();
@@ -402,16 +416,17 @@ RLQ.push(function () {
             }
         };
         AnmPlayer.renderCostume = function (anmA, anmB, ctx, canvas, centerX, centerY, rootScale, shootFrame, walkFrame) {
-            var _a, _b, _c, _d, _e, _f;
-            //anmA is head,anmB is Leg
+            var _a, _b, _c, _d, _e, _f, _g, _h;
+            //anmA is leg,anmB is head
             var step_draw_candidates = new Map();
+            var headTransformLayer = undefined;
             //setup steps for anmA
-            for (var _i = 0, _g = this.COSTUME_STEP; _i < _g.length; _i++) {
-                var step = _g[_i];
-                for (var _h = 0, anmA_1 = anmA; _h < anmA_1.length; _h++) {
-                    var info = anmA_1[_h];
-                    for (var _j = 0, _k = ((_a = info.player.currentAnm) === null || _a === void 0 ? void 0 : _a.frames) || []; _j < _k.length; _j++) {
-                        var layer = _k[_j];
+            for (var _i = 0, _j = this.COSTUME_STEP; _i < _j.length; _i++) {
+                var step = _j[_i];
+                for (var _k = 0, anmA_1 = anmA; _k < anmA_1.length; _k++) {
+                    var info = anmA_1[_k];
+                    for (var _l = 0, _m = ((_a = info.player.currentAnm) === null || _a === void 0 ? void 0 : _a.frames) || []; _l < _m.length; _l++) {
+                        var layer = _m[_l];
                         if (info.player.getLayerName(layer.LayerId) == step) {
                             //动画中包含目标图层
                             if (layer.frames[0]) {
@@ -419,16 +434,33 @@ RLQ.push(function () {
                             }
                         }
                     }
+                    /** begin:HeadTransform **/
+                    var nulllayer_id = undefined;
+                    for (var _o = 0, _p = ((_b = info.player.anm2.content) === null || _b === void 0 ? void 0 : _b.Nulls) || []; _o < _p.length; _o++) {
+                        var nulllayer = _p[_o];
+                        if (nulllayer.Name == "HeadTransform") {
+                            nulllayer_id = nulllayer.Id;
+                        }
+                    }
+                    if (nulllayer_id != undefined) {
+                        for (var _q = 0, _r = ((_c = info.player.currentAnm) === null || _c === void 0 ? void 0 : _c.nullFrames) || []; _q < _r.length; _q++) {
+                            var nulllayer = _r[_q];
+                            if (nulllayer.LayerId == nulllayer_id) {
+                                headTransformLayer = nulllayer;
+                            }
+                        }
+                    }
+                    /* end:HeadTransform*/
                 }
             }
             //setup steps for anmB
             if (anmB) {
-                for (var _l = 0, _m = this.COSTUME_STEP; _l < _m.length; _l++) {
-                    var step = _m[_l];
-                    for (var _o = 0, anmB_1 = anmB; _o < anmB_1.length; _o++) {
-                        var info = anmB_1[_o];
-                        for (var _p = 0, _q = ((_b = info.player.currentAnm) === null || _b === void 0 ? void 0 : _b.frames) || []; _p < _q.length; _p++) {
-                            var layer = _q[_p];
+                for (var _s = 0, _t = this.COSTUME_STEP; _s < _t.length; _s++) {
+                    var step = _t[_s];
+                    for (var _u = 0, anmB_1 = anmB; _u < anmB_1.length; _u++) {
+                        var info = anmB_1[_u];
+                        for (var _v = 0, _w = ((_d = info.player.currentAnm) === null || _d === void 0 ? void 0 : _d.frames) || []; _v < _w.length; _v++) {
+                            var layer = _w[_v];
                             if (info.player.getLayerName(layer.LayerId) == step) {
                                 //动画中包含目标图层
                                 if (layer.frames[0]) {
@@ -444,23 +476,33 @@ RLQ.push(function () {
                     }
                 }
             }
-            for (var _r = 0, _s = this.COSTUME_STEP; _r < _s.length; _r++) {
-                var step = _s[_r];
+            var head_transform = undefined;
+            for (var _x = 0, _y = this.COSTUME_STEP; _x < _y.length; _x++) {
+                var step = _y[_x];
                 if (step_draw_candidates.has(step)) {
                     var players = step_draw_candidates.get(step);
                     for (var draw_anm = 0; draw_anm <= 1; draw_anm++) {
-                        var player = (_c = (players && players[draw_anm])) === null || _c === void 0 ? void 0 : _c.player;
+                        var player = (_e = (players && players[draw_anm])) === null || _e === void 0 ? void 0 : _e.player;
                         if (player) {
                             var old_frame = undefined;
+                            //let head_transform = undefined
                             if (step.startsWith("body")) {
                                 old_frame = player.currentFrame;
-                                player.play(walkFrame % (((_d = player.currentAnm) === null || _d === void 0 ? void 0 : _d.FrameNum) || 100000));
+                                player.play(walkFrame % (((_f = player.currentAnm) === null || _f === void 0 ? void 0 : _f.FrameNum) || 100000));
+                                if (draw_anm == 0 /* leg */ && headTransformLayer) {
+                                    head_transform = headTransformLayer.frames[player.currentFrame];
+                                }
                             }
-                            if (step.startsWith("head") && !((_e = player.currentAnm) === null || _e === void 0 ? void 0 : _e.Loop)) {
+                            if (step.startsWith("head") && !((_g = player.currentAnm) === null || _g === void 0 ? void 0 : _g.Loop)) {
                                 old_frame = player.currentFrame;
-                                player.play(shootFrame % (((_f = player.currentAnm) === null || _f === void 0 ? void 0 : _f.FrameNum) || 100000));
+                                player.play(shootFrame % (((_h = player.currentAnm) === null || _h === void 0 ? void 0 : _h.FrameNum) || 100000));
                             }
-                            player.drawCanvas(ctx, canvas, centerX, centerY, rootScale, step);
+                            if (step.startsWith("head")) {
+                                player.drawCanvas(ctx, canvas, centerX, centerY, rootScale, step, head_transform);
+                            }
+                            else {
+                                player.drawCanvas(ctx, canvas, centerX, centerY, rootScale, step, undefined);
+                            }
                             if (old_frame != undefined) {
                                 player.currentFrame = old_frame;
                             }
@@ -1154,6 +1196,7 @@ RLQ.push(function () {
                     }
                     //draw
                     var ctx = canvas.getContext("2d")
+                    ctx.imageSmoothingEnabled = false
                     ctx.setTransform(1, 0, 0, 1, 0, 0)
                     ctx.clearRect(0, 0, canvas.width, canvas.height)
                     if(costume_status == 'Walk'){
@@ -1171,6 +1214,7 @@ RLQ.push(function () {
                     currentFps = (currentFps + 1) % commonFps
                     //draw
                     var ctx = canvas.getContext("2d")
+                    ctx.imageSmoothingEnabled = false
 
                     ctx.setTransform(1, 0, 0, 1, 0, 0)
                     ctx.clearRect(0, 0, canvas.width, canvas.height)
@@ -1288,6 +1332,7 @@ RLQ.push(function () {
                     function draw() {
                         anm.update()
                         var ctx = canvas.getContext('2d')
+                        ctx.imageSmoothingEnabled = false
                         ctx.setTransform(1, 0, 0, 1, 0, 0);
                         ctx.clearRect(0, 0, canvas.width, canvas.height)
                         anm.drawCanvas(ctx, canvas, canvas.width / 2, canvas.height / 2, 1)

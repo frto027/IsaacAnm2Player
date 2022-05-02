@@ -86,6 +86,8 @@ interface LoadedAnms{
     FrameNum:number
     events:(string|null)[]
     name:string
+
+    nullFrames:LayerStatus[]
 }
 
 
@@ -197,6 +199,15 @@ class AnmPlayer{
             layer.LayerId = anm.LayerAnimations[j].LayerId
             layerframes[j] = layer
         }
+
+        let nullframes:LayerStatus[] = new Array(anm.NullAnimations.length)
+        for(let j=0;j<anm.NullAnimations.length;j++){
+            let layer = new LayerStatus()
+            layer.Visible = anm.NullAnimations[j].Visible
+            layer.frames = this.loadAnimationFrames(anm.NullAnimations[j].frames, anm.FrameNum)
+            layer.LayerId = anm.NullAnimations[j].NullId
+            nullframes[j] = layer
+        }
         
         let events:(string|null)[] = new Array(anm.FrameNum)
         for(let trig of anm.Triggers){
@@ -209,7 +220,8 @@ class AnmPlayer{
             Loop:anm.Loop,
             FrameNum:anm.FrameNum,
             events:events,
-            name:anm.Name || ''
+            name:anm.Name || '',
+            nullFrames:nullframes
         })
     }
 
@@ -298,7 +310,7 @@ class AnmPlayer{
     debug_anchor:boolean = false
     
 
-    public drawCanvas(ctx:CanvasRenderingContext2D, canvas:HTMLCanvasElement, centerX?:number, centerY?:number, rootScale?:number,layer_name?:string){
+    public drawCanvas(ctx:CanvasRenderingContext2D, canvas:HTMLCanvasElement, centerX?:number, centerY?:number, rootScale?:number,layer_name?:string,transformFrame?:FrameStatus){
         ctx.save()
 
         ctx.setTransform(1,0,0,1,0,0)
@@ -329,6 +341,12 @@ class AnmPlayer{
             ctx.translate(rootframe.XPosition, rootframe.YPosition)
             ctx.rotate(rootframe.Rotation * Math.PI / 180)
             ctx.scale(rootframe.XScale/100, rootframe.YScale/100)
+        }
+
+        if(transformFrame){
+            ctx.translate(transformFrame.XPosition, transformFrame.YPosition)
+            ctx.rotate(transformFrame.Rotation * Math.PI / 180)
+            ctx.scale(transformFrame.XScale/100, transformFrame.YScale/100)
         }
 
         if(this.debug_anchor){
@@ -458,9 +476,10 @@ class AnmPlayer{
     private static COSTUME_STEP = ["glow","body","body0","body1","head","head0","head1","head2","head3","head4","head5","top0","extra","ghost","back"]
 
     public static renderCostume(anmA:CostumeInfo[],anmB:CostumeInfo[]|undefined,ctx:CanvasRenderingContext2D, canvas:HTMLCanvasElement, centerX:number, centerY:number, rootScale:number,shootFrame:number,walkFrame:number){
-        //anmA is head,anmB is Leg
+        //anmA is leg,anmB is head
         let step_draw_candidates = new Map<string,(CostumeInfo|undefined)[]>()
 
+        let headTransformLayer = undefined
         //setup steps for anmA
         for(let step of this.COSTUME_STEP){
             for(let info of anmA){
@@ -472,6 +491,23 @@ class AnmPlayer{
                         }
                     }
                 }
+
+                /** begin:HeadTransform **/
+                let nulllayer_id = undefined
+                for(let nulllayer of info.player.anm2.content?.Nulls || []){
+                    if(nulllayer.Name == "HeadTransform"){
+                        nulllayer_id = nulllayer.Id
+                    }
+                }
+                if(nulllayer_id != undefined){
+                    for(let nulllayer of info.player.currentAnm?.nullFrames ||[]){
+                        if(nulllayer.LayerId == nulllayer_id){
+                            headTransformLayer = nulllayer
+                        }
+                    }
+                }
+                /* end:HeadTransform*/
+
             }
         }
         //setup steps for anmB
@@ -493,22 +529,33 @@ class AnmPlayer{
                 }
             }
         }
+
+        let head_transform = undefined
+
         for(let step of this.COSTUME_STEP){
             if(step_draw_candidates.has(step)){
                 let players = step_draw_candidates.get(step)
                 for(let draw_anm = 0;draw_anm <= 1;draw_anm++){
                     let player = (players && players[draw_anm])?.player
                     if(player){
-                        var old_frame = undefined
+                        let old_frame = undefined
+                        //let head_transform = undefined
                         if(step.startsWith("body")){
                             old_frame = player.currentFrame
                             player.play(walkFrame % (player.currentAnm?.FrameNum || 100000))
+                            if(draw_anm == 0 /* leg */ && headTransformLayer){
+                                head_transform = headTransformLayer.frames[player.currentFrame]
+                            }
                         }
                         if(step.startsWith("head") && !player.currentAnm?.Loop){
                             old_frame = player.currentFrame
                             player.play(shootFrame % (player.currentAnm?.FrameNum || 100000))
                         }
-                        player.drawCanvas(ctx,canvas,centerX,centerY,rootScale,step)
+                        if(step.startsWith("head")){
+                            player.drawCanvas(ctx,canvas,centerX,centerY,rootScale,step,head_transform)
+                        }else{
+                            player.drawCanvas(ctx,canvas,centerX,centerY,rootScale,step,undefined)
+                        }
                         if(old_frame != undefined){
                             player.currentFrame = old_frame
                         }
