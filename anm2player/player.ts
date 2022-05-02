@@ -457,15 +457,37 @@ class AnmPlayer{
     }
     private static COSTUME_STEP = ["glow","body","body0","body1","head","head0","head1","head2","head3","head4","head5","top0","extra","ghost","back"]
 
-    public static renderCostume(anm:CostumeInfo[],ctx:CanvasRenderingContext2D, canvas:HTMLCanvasElement, centerX:number, centerY:number, rootScale:number,shootFrame:number,walkFrame:number){
-        let step_draw_candidates = new Map<string,CostumeInfo>()
+    public static renderCostume(anmA:CostumeInfo[],anmB:CostumeInfo[]|undefined,ctx:CanvasRenderingContext2D, canvas:HTMLCanvasElement, centerX:number, centerY:number, rootScale:number,shootFrame:number,walkFrame:number){
+        //anmA is head,anmB is Leg
+        let step_draw_candidates = new Map<string,(CostumeInfo|undefined)[]>()
+
+        //setup steps for anmA
         for(let step of this.COSTUME_STEP){
-            for(let info of anm){
+            for(let info of anmA){
                 for(let layer of info.player.currentAnm?.frames || []){
                     if(info.player.getLayerName(layer.LayerId) == step){
                         //动画中包含目标图层
                         if(layer.frames[0]){
-                            step_draw_candidates.set(step,info)
+                            step_draw_candidates.set(step,[info])
+                        }
+                    }
+                }
+            }
+        }
+        //setup steps for anmB
+        if(anmB){
+            for(let step of this.COSTUME_STEP){
+                for(let info of anmB){
+                    for(let layer of info.player.currentAnm?.frames || []){
+                        if(info.player.getLayerName(layer.LayerId) == step){
+                            //动画中包含目标图层
+                            if(layer.frames[0]){
+                                if(step_draw_candidates.has(step)){
+                                    (step_draw_candidates.get(step) || [])[1] = info
+                                }else{
+                                    step_draw_candidates.set(step,[undefined, info])
+                                }
+                            }
                         }
                     }
                 }
@@ -473,22 +495,24 @@ class AnmPlayer{
         }
         for(let step of this.COSTUME_STEP){
             if(step_draw_candidates.has(step)){
-                let player = step_draw_candidates.get(step)?.player
-                if(player){
-                    var old_frame = undefined
-                    if(step.startsWith("body")){
-                        old_frame = player.currentFrame
-                        player.play(walkFrame % (player.currentAnm?.FrameNum || 100000))
+                let players = step_draw_candidates.get(step)
+                for(let draw_anm = 0;draw_anm <= 1;draw_anm++){
+                    let player = (players && players[draw_anm])?.player
+                    if(player){
+                        var old_frame = undefined
+                        if(step.startsWith("body")){
+                            old_frame = player.currentFrame
+                            player.play(walkFrame % (player.currentAnm?.FrameNum || 100000))
+                        }
+                        if(step.startsWith("head") && !player.currentAnm?.Loop){
+                            old_frame = player.currentFrame
+                            player.play(shootFrame % (player.currentAnm?.FrameNum || 100000))
+                        }
+                        player.drawCanvas(ctx,canvas,centerX,centerY,rootScale,step)
+                        if(old_frame != undefined){
+                            player.currentFrame = old_frame
+                        }
                     }
-                    if(step.startsWith("head") && !player.currentAnm?.Loop){
-                        old_frame = player.currentFrame
-                        player.play(shootFrame % (player.currentAnm?.FrameNum || 100000))
-                    }
-                    step_draw_candidates.get(step)?.player.drawCanvas(ctx,canvas,centerX,centerY,rootScale,step)
-                    if(old_frame != undefined){
-                        player.currentFrame = old_frame
-                    }
-    
                 }
             }
         }

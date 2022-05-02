@@ -399,41 +399,69 @@ var AnmPlayer = /** @class */ (function () {
             }
         }
     };
-    AnmPlayer.renderCostume = function (anm, ctx, canvas, centerX, centerY, rootScale, shootFrame, walkFrame) {
+    AnmPlayer.renderCostume = function (anmA, anmB, ctx, canvas, centerX, centerY, rootScale, shootFrame, walkFrame) {
         var _a, _b, _c, _d, _e, _f;
+        //anmA is head,anmB is Leg
         var step_draw_candidates = new Map();
+        //setup steps for anmA
         for (var _i = 0, _g = this.COSTUME_STEP; _i < _g.length; _i++) {
             var step = _g[_i];
-            for (var _h = 0, anm_1 = anm; _h < anm_1.length; _h++) {
-                var info = anm_1[_h];
+            for (var _h = 0, anmA_1 = anmA; _h < anmA_1.length; _h++) {
+                var info = anmA_1[_h];
                 for (var _j = 0, _k = ((_a = info.player.currentAnm) === null || _a === void 0 ? void 0 : _a.frames) || []; _j < _k.length; _j++) {
                     var layer = _k[_j];
                     if (info.player.getLayerName(layer.LayerId) == step) {
                         //动画中包含目标图层
                         if (layer.frames[0]) {
-                            step_draw_candidates.set(step, info);
+                            step_draw_candidates.set(step, [info]);
                         }
                     }
                 }
             }
         }
-        for (var _l = 0, _m = this.COSTUME_STEP; _l < _m.length; _l++) {
-            var step = _m[_l];
+        //setup steps for anmB
+        if (anmB) {
+            for (var _l = 0, _m = this.COSTUME_STEP; _l < _m.length; _l++) {
+                var step = _m[_l];
+                for (var _o = 0, anmB_1 = anmB; _o < anmB_1.length; _o++) {
+                    var info = anmB_1[_o];
+                    for (var _p = 0, _q = ((_b = info.player.currentAnm) === null || _b === void 0 ? void 0 : _b.frames) || []; _p < _q.length; _p++) {
+                        var layer = _q[_p];
+                        if (info.player.getLayerName(layer.LayerId) == step) {
+                            //动画中包含目标图层
+                            if (layer.frames[0]) {
+                                if (step_draw_candidates.has(step)) {
+                                    (step_draw_candidates.get(step) || [])[1] = info;
+                                }
+                                else {
+                                    step_draw_candidates.set(step, [undefined, info]);
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        for (var _r = 0, _s = this.COSTUME_STEP; _r < _s.length; _r++) {
+            var step = _s[_r];
             if (step_draw_candidates.has(step)) {
-                var player = (_b = step_draw_candidates.get(step)) === null || _b === void 0 ? void 0 : _b.player;
-                if (player) {
-                    var old_frame = undefined;
-                    if (step.startsWith("body")) {
-                        old_frame = player.currentFrame;
-                        player.play(walkFrame % (((_c = player.currentAnm) === null || _c === void 0 ? void 0 : _c.FrameNum) || 100000));
-                    }
-                    if (step.startsWith("head") && !((_d = player.currentAnm) === null || _d === void 0 ? void 0 : _d.Loop)) {
-                        old_frame = player.currentFrame;
-                        player.play(shootFrame % (((_e = player.currentAnm) === null || _e === void 0 ? void 0 : _e.FrameNum) || 100000));
-                    }
-                    (_f = step_draw_candidates.get(step)) === null || _f === void 0 ? void 0 : _f.player.drawCanvas(ctx, canvas, centerX, centerY, rootScale, step);
-                    if (old_frame != undefined) {
-                        player.currentFrame = old_frame;
+                var players = step_draw_candidates.get(step);
+                for (var draw_anm = 0; draw_anm <= 1; draw_anm++) {
+                    var player = (_c = (players && players[draw_anm])) === null || _c === void 0 ? void 0 : _c.player;
+                    if (player) {
+                        var old_frame = undefined;
+                        if (step.startsWith("body")) {
+                            old_frame = player.currentFrame;
+                            player.play(walkFrame % (((_d = player.currentAnm) === null || _d === void 0 ? void 0 : _d.FrameNum) || 100000));
+                        }
+                        if (step.startsWith("head") && !((_e = player.currentAnm) === null || _e === void 0 ? void 0 : _e.Loop)) {
+                            old_frame = player.currentFrame;
+                            player.play(shootFrame % (((_f = player.currentAnm) === null || _f === void 0 ? void 0 : _f.FrameNum) || 100000));
+                        }
+                        player.drawCanvas(ctx, canvas, centerX, centerY, rootScale, step);
+                        if (old_frame != undefined) {
+                            player.currentFrame = old_frame;
+                        }
                     }
                 }
             }
