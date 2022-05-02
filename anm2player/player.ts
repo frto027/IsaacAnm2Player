@@ -475,7 +475,7 @@ class AnmPlayer{
     }
     private static COSTUME_STEP = ["glow","body","body0","body1","head","head0","head1","head2","head3","head4","head5","top0","extra","ghost","back"]
 
-    public static renderCostume(anmA:CostumeInfo[],anmB:CostumeInfo[]|undefined,ctx:CanvasRenderingContext2D, canvas:HTMLCanvasElement, centerX:number, centerY:number, rootScale:number,shootFrame:number,walkFrame:number){
+    public static renderCostume(anmA:CostumeInfo[],anmB:CostumeInfo[]|undefined,anmC:CostumeInfo[]|undefined,ctx:CanvasRenderingContext2D, canvas:HTMLCanvasElement, centerX:number, centerY:number, rootScale:number,shootFrame:number,walkFrame:number){
         //anmA is leg,anmB is head
         let step_draw_candidates = new Map<string,(CostumeInfo|undefined)[]>()
 
@@ -529,13 +529,31 @@ class AnmPlayer{
                 }
             }
         }
-
+        //setup steps for anmC
+        if(anmC){
+            for(let step of this.COSTUME_STEP){
+                for(let info of anmC){
+                    for(let layer of info.player.currentAnm?.frames || []){
+                        if(info.player.getLayerName(layer.LayerId) == step){
+                            //动画中包含目标图层
+                            if(layer.frames[0]){
+                                if(step_draw_candidates.has(step)){
+                                    (step_draw_candidates.get(step) || [])[2] = info
+                                }else{
+                                    step_draw_candidates.set(step,[undefined, undefined, info])
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
         let head_transform = undefined
 
         for(let step of this.COSTUME_STEP){
             if(step_draw_candidates.has(step)){
                 let players = step_draw_candidates.get(step)
-                for(let draw_anm = 0;draw_anm <= 1;draw_anm++){
+                for(let draw_anm = 0;draw_anm <= 2;draw_anm++){
                     let player = (players && players[draw_anm])?.player
                     if(player){
                         let old_frame = undefined

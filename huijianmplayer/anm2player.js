@@ -415,18 +415,18 @@ RLQ.push(function () {
                 }
             }
         };
-        AnmPlayer.renderCostume = function (anmA, anmB, ctx, canvas, centerX, centerY, rootScale, shootFrame, walkFrame) {
-            var _a, _b, _c, _d, _e, _f, _g, _h;
+        AnmPlayer.renderCostume = function (anmA, anmB, anmC, ctx, canvas, centerX, centerY, rootScale, shootFrame, walkFrame) {
+            var _a, _b, _c, _d, _e, _f, _g, _h, _j;
             //anmA is leg,anmB is head
             var step_draw_candidates = new Map();
             var headTransformLayer = undefined;
             //setup steps for anmA
-            for (var _i = 0, _j = this.COSTUME_STEP; _i < _j.length; _i++) {
-                var step = _j[_i];
-                for (var _k = 0, anmA_1 = anmA; _k < anmA_1.length; _k++) {
-                    var info = anmA_1[_k];
-                    for (var _l = 0, _m = ((_a = info.player.currentAnm) === null || _a === void 0 ? void 0 : _a.frames) || []; _l < _m.length; _l++) {
-                        var layer = _m[_l];
+            for (var _i = 0, _k = this.COSTUME_STEP; _i < _k.length; _i++) {
+                var step = _k[_i];
+                for (var _l = 0, anmA_1 = anmA; _l < anmA_1.length; _l++) {
+                    var info = anmA_1[_l];
+                    for (var _m = 0, _o = ((_a = info.player.currentAnm) === null || _a === void 0 ? void 0 : _a.frames) || []; _m < _o.length; _m++) {
+                        var layer = _o[_m];
                         if (info.player.getLayerName(layer.LayerId) == step) {
                             //动画中包含目标图层
                             if (layer.frames[0]) {
@@ -436,15 +436,15 @@ RLQ.push(function () {
                     }
                     /** begin:HeadTransform **/
                     var nulllayer_id = undefined;
-                    for (var _o = 0, _p = ((_b = info.player.anm2.content) === null || _b === void 0 ? void 0 : _b.Nulls) || []; _o < _p.length; _o++) {
-                        var nulllayer = _p[_o];
+                    for (var _p = 0, _q = ((_b = info.player.anm2.content) === null || _b === void 0 ? void 0 : _b.Nulls) || []; _p < _q.length; _p++) {
+                        var nulllayer = _q[_p];
                         if (nulllayer.Name == "HeadTransform") {
                             nulllayer_id = nulllayer.Id;
                         }
                     }
                     if (nulllayer_id != undefined) {
-                        for (var _q = 0, _r = ((_c = info.player.currentAnm) === null || _c === void 0 ? void 0 : _c.nullFrames) || []; _q < _r.length; _q++) {
-                            var nulllayer = _r[_q];
+                        for (var _r = 0, _s = ((_c = info.player.currentAnm) === null || _c === void 0 ? void 0 : _c.nullFrames) || []; _r < _s.length; _r++) {
+                            var nulllayer = _s[_r];
                             if (nulllayer.LayerId == nulllayer_id) {
                                 headTransformLayer = nulllayer;
                             }
@@ -455,12 +455,12 @@ RLQ.push(function () {
             }
             //setup steps for anmB
             if (anmB) {
-                for (var _s = 0, _t = this.COSTUME_STEP; _s < _t.length; _s++) {
-                    var step = _t[_s];
-                    for (var _u = 0, anmB_1 = anmB; _u < anmB_1.length; _u++) {
-                        var info = anmB_1[_u];
-                        for (var _v = 0, _w = ((_d = info.player.currentAnm) === null || _d === void 0 ? void 0 : _d.frames) || []; _v < _w.length; _v++) {
-                            var layer = _w[_v];
+                for (var _t = 0, _u = this.COSTUME_STEP; _t < _u.length; _t++) {
+                    var step = _u[_t];
+                    for (var _v = 0, anmB_1 = anmB; _v < anmB_1.length; _v++) {
+                        var info = anmB_1[_v];
+                        for (var _w = 0, _x = ((_d = info.player.currentAnm) === null || _d === void 0 ? void 0 : _d.frames) || []; _w < _x.length; _w++) {
+                            var layer = _x[_w];
                             if (info.player.getLayerName(layer.LayerId) == step) {
                                 //动画中包含目标图层
                                 if (layer.frames[0]) {
@@ -476,26 +476,49 @@ RLQ.push(function () {
                     }
                 }
             }
+            //setup steps for anmC
+            if (anmC) {
+                for (var _y = 0, _z = this.COSTUME_STEP; _y < _z.length; _y++) {
+                    var step = _z[_y];
+                    for (var _0 = 0, anmC_1 = anmC; _0 < anmC_1.length; _0++) {
+                        var info = anmC_1[_0];
+                        for (var _1 = 0, _2 = ((_e = info.player.currentAnm) === null || _e === void 0 ? void 0 : _e.frames) || []; _1 < _2.length; _1++) {
+                            var layer = _2[_1];
+                            if (info.player.getLayerName(layer.LayerId) == step) {
+                                //动画中包含目标图层
+                                if (layer.frames[0]) {
+                                    if (step_draw_candidates.has(step)) {
+                                        (step_draw_candidates.get(step) || [])[2] = info;
+                                    }
+                                    else {
+                                        step_draw_candidates.set(step, [undefined, undefined, info]);
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
             var head_transform = undefined;
-            for (var _x = 0, _y = this.COSTUME_STEP; _x < _y.length; _x++) {
-                var step = _y[_x];
+            for (var _3 = 0, _4 = this.COSTUME_STEP; _3 < _4.length; _3++) {
+                var step = _4[_3];
                 if (step_draw_candidates.has(step)) {
                     var players = step_draw_candidates.get(step);
-                    for (var draw_anm = 0; draw_anm <= 1; draw_anm++) {
-                        var player = (_e = (players && players[draw_anm])) === null || _e === void 0 ? void 0 : _e.player;
+                    for (var draw_anm = 0; draw_anm <= 2; draw_anm++) {
+                        var player = (_f = (players && players[draw_anm])) === null || _f === void 0 ? void 0 : _f.player;
                         if (player) {
                             var old_frame = undefined;
                             //let head_transform = undefined
                             if (step.startsWith("body")) {
                                 old_frame = player.currentFrame;
-                                player.play(walkFrame % (((_f = player.currentAnm) === null || _f === void 0 ? void 0 : _f.FrameNum) || 100000));
+                                player.play(walkFrame % (((_g = player.currentAnm) === null || _g === void 0 ? void 0 : _g.FrameNum) || 100000));
                                 if (draw_anm == 0 /* leg */ && headTransformLayer) {
                                     head_transform = headTransformLayer.frames[player.currentFrame];
                                 }
                             }
-                            if (step.startsWith("head") && !((_g = player.currentAnm) === null || _g === void 0 ? void 0 : _g.Loop)) {
+                            if (step.startsWith("head") && !((_h = player.currentAnm) === null || _h === void 0 ? void 0 : _h.Loop)) {
                                 old_frame = player.currentFrame;
-                                player.play(shootFrame % (((_h = player.currentAnm) === null || _h === void 0 ? void 0 : _h.FrameNum) || 100000));
+                                player.play(shootFrame % (((_j = player.currentAnm) === null || _j === void 0 ? void 0 : _j.FrameNum) || 100000));
                             }
                             if (step.startsWith("head")) {
                                 player.drawCanvas(ctx, canvas, centerX, centerY, rootScale, step, head_transform);
@@ -745,8 +768,8 @@ RLQ.push(function () {
         var btns = new Map() /* 按钮名称到状态的映射，未按下为false，按下为function，此function用于重置按钮状态 */
 
         var render_as_costume = canvasdiv.getAttribute("data-costume") == "true"
-        var costume_A,costume_B
-        var costumeInfoA,costumeInfoB
+        var costume_A,costume_B,costume_C
+        var costumeInfoA,costumeInfoB,costumeInfoC
 
         var costume_status = 'Walk',costume_status_reset = false
         var costume_leg_dir = 'Down',costume_head_dir = 'Down',costume_shooting = {u:false,d:false,l:false,r:false},
@@ -754,8 +777,10 @@ RLQ.push(function () {
         if(render_as_costume){
             costume_A = [] /* head */
             costume_B = [] /* body */
+            costume_C = [] /* overlay */
             costumeInfoA = []
             costumeInfoB = []
+            costumeInfoC = []
         }
         var is_flying = false
 
@@ -902,6 +927,7 @@ RLQ.push(function () {
         function handleColorKey(key){
             if(typeof(key) == 'string' && key.match("^[0-9]$")){
                 setBackgroundColor(BACKGROUND_COLORS[+key] || '')
+                return true
             }
         }
         setBackgroundColor()
@@ -962,12 +988,14 @@ RLQ.push(function () {
                         AnmPlayer.processSkinAlt(target,overwrite_color,false)
                     }
 
-                    /* 此处AB共用同一份json，注意确保它们没问题 */
+                    /* 此处ABC共用同一份json，注意确保它们没问题 */
                     costume_A[i] = new AnmPlayer(target,huijiUrlBuilder,replace_sprite_func)
                     costume_B[i] = new AnmPlayer(target,huijiUrlBuilder,replace_sprite_func)
+                    costume_C[i] = new AnmPlayer(target,huijiUrlBuilder,replace_sprite_func)
 
                     costume_A[i].forceLoop = true
                     costume_B[i].forceLoop = true
+                    costume_C[i].forceLoop = true
 
                     costumeInfoA[i] = {
                         player:costume_A[i]
@@ -975,10 +1003,14 @@ RLQ.push(function () {
                     costumeInfoB[i] = {
                         player:costume_B[i]
                     }
+                    costumeInfoC[i] = {
+                        player:costume_C[i]
+                    }
 
 
                     costume_A[i].setFrame("HeadDown",0)
                     costume_B[i].setFrame("WalkDown",0)
+                    costume_C[i].setFrame("WalkDown_Overlay",0)
                 }else{
                     anms[i] = new AnmPlayer(resources.get(players[i].anm2), huijiUrlBuilder,replace_sprite_func)
                     anms[i].setFrame((players[i].name || '').split('.')[0], 0)    
@@ -1038,7 +1070,8 @@ RLQ.push(function () {
                 }
                 canvas.tabIndex = 1
                 canvas.onkeydown = function(e){
-                    handleColorKey(e.key)
+                    if(handleColorKey(e.key))
+                        e.preventDefault()
                 }
             }else{
                 canvas.tabIndex = 1
@@ -1075,7 +1108,7 @@ RLQ.push(function () {
                     // if(e.type == 'click'){
                     //     return
                     // }
-                    e.preventDefault()
+                    var catched = false
                     var key = e.key
                     if(key.length == 1){
                         key = key.toLowerCase()
@@ -1083,75 +1116,102 @@ RLQ.push(function () {
                     if(key == 'ArrowUp'){
                         costume_head_dir = 'Up'
                         costume_shooting.u = true
+                        catched = true
                     }
                     if(key == 'ArrowDown'){
                         costume_head_dir = 'Down'
                         costume_shooting.d = true
+                        catched = true
                     }
                     if(key == 'ArrowLeft'){
                         costume_head_dir = 'Left'
                         costume_shooting.l = true
+                        catched = true
                     }
                     if(key == 'ArrowRight'){
                         costume_head_dir = 'Right'
                         costume_shooting.r = true
+                        catched = true
                     }
                     if(key == 'w'){
                         costume_status = 'Walk'
                         costume_leg_dir = 'Up'
                         costume_walking.u = true
+                        catched = true
                     }
                     if(key == 's'){
                         costume_leg_dir = 'Down'
                         costume_walking.d = true
+                        catched = true
                     }
                     if(key == 'a'){
                         costume_leg_dir = 'Left'
                         costume_walking.l = true
+                        catched = true
                     }
                     if(key == 'd'){
                         costume_leg_dir = 'Right'
                         costume_walking.r = true
+                        catched = true
                     }
                     if(key == 'r'){
                         costume_status = 'Walk'
+                        catched = true
                     }
                     if(COSTUME_ANM_KEYS.has(key)){
                         var target_anm = COSTUME_ANM_KEYS.get(key)
                         costume_status = target_anm
                         costume_status_reset = true
+                        catched = true
                     }
-                    handleColorKey(key)
+                    if(handleColorKey(key)){
+                        catched = true
+                    }
+                    if(catched){
+                        e.preventDefault()
+                    }
                 }
                 canvas.onkeyup = function(e){
                     e.preventDefault()
+                    var catched = false
                     var key = e.key
                     if(key.length == 1){
                         key = key.toLowerCase()
                     }
                     if(key == 'ArrowUp'){
                         costume_shooting.u = false
+                        catched = true
                     }
                     if(key == 'ArrowDown'){
                         costume_shooting.d = false
+                        catched = true
                     }
                     if(key == 'ArrowLeft'){
                         costume_shooting.l = false
+                        catched = true
                     }
                     if(key == 'ArrowRight'){
                         costume_shooting.r = false
+                        catched = true
                     }
                     if(key == 'w'){
                         costume_walking.u = false
+                        catched = true
                     }
                     if(key == 's'){
                         costume_walking.d = false
+                        catched = true
                     }
                     if(key == 'a'){
                         costume_walking.l = false
+                        catched = true
                     }
                     if(key == 'd'){
                         costume_walking.r = false
+                        catched = true
+                    }
+                    if(catched){
+                        e.preventDefault()
                     }
                 }
             }
@@ -1183,6 +1243,11 @@ RLQ.push(function () {
                             }else{
                                 costume_B[i].update()
                             }
+                            if(costume_C[i].getCurrentAnmName() != ('Head' + costume_head_dir + '_Overlay')){
+                                costume_C[i].setFrame('Head' + costume_head_dir + '_Overlay',0)
+                            }else{
+                                costume_C[i].update()
+                            }
                         }else{
                             if(costume_A[i].getCurrentAnmName() != costume_status){
                                 costume_A[i].setFrame(costume_status,0)
@@ -1200,9 +1265,9 @@ RLQ.push(function () {
                     ctx.setTransform(1, 0, 0, 1, 0, 0)
                     ctx.clearRect(0, 0, canvas.width, canvas.height)
                     if(costume_status == 'Walk'){
-                        AnmPlayer.renderCostume(costumeInfoB,costumeInfoA,ctx, canvas, players[0].x, players[0].y, 1,Math.floor(costume_shooting_frame),Math.floor(costume_walking_frame))
+                        AnmPlayer.renderCostume(costumeInfoB,costumeInfoA,costumeInfoC,ctx, canvas, players[0].x, players[0].y, 1,Math.floor(costume_shooting_frame),Math.floor(costume_walking_frame))
                     }else{
-                        AnmPlayer.renderCostume(costumeInfoA,undefined,ctx, canvas, players[0].x, players[0].y, 1,Math.floor(costume_shooting_frame),Math.floor(costume_walking_frame))
+                        AnmPlayer.renderCostume(costumeInfoA,undefined,undefined,ctx, canvas, players[0].x, players[0].y, 1,Math.floor(costume_shooting_frame),Math.floor(costume_walking_frame))
                     }
                 }else{
                     for (var i = 0; i < anms.length; i++) {
