@@ -723,7 +723,7 @@ RLQ.push(function () {
                 if(btnname_str && btnname_str.length > 0){
                     if(btndiv == undefined){
                         btndiv = document.createElement("div")
-                        btndiv.style="margin-bottom:3px"
+                        // btndiv.style="margin-bottom:3px"
                     }
                     if(!btns.has(btnname_str)){
                         var nbtn = document.createElement("a")
@@ -811,10 +811,34 @@ RLQ.push(function () {
         }
 
         canvasdiv.innerHTML = ''
+        var color_div = document.createElement("div")
+        function setBackgroundColor(color){
+            if(color){
+                color_div.style = 'margin:0;padding:0;'+color
+            }else{
+                color_div.style = 'margin:0;padding:0;'
+            }
+        }
+        var BACKGROUND_COLORS = [
+            '',
+            'background-color:gray',
+            'background-color:white',
+            'background-color:black',
+        ]
+        function handleColorKey(key){
+            if(typeof(key) == 'string' && key.match("^[0-9]$")){
+                setBackgroundColor(BACKGROUND_COLORS[+key] || '')
+            }
+        }
+        setBackgroundColor()
+
+        canvasdiv.appendChild(color_div)
+
+
         var canvas = document.createElement("canvas")
         canvas.width = +canvasdiv.getAttribute("data-width")
         canvas.height = +canvasdiv.getAttribute("data-height")
-        canvasdiv.appendChild(canvas)
+        color_div.appendChild(canvas)
         var canvas_style = "vertical-align:middle;"
         if(canvasdiv.getAttribute("data-scale")){
             var scale = +canvasdiv.getAttribute("data-scale")
@@ -826,7 +850,7 @@ RLQ.push(function () {
             btndiv_contariner.style="text-align:center"
             btndiv_contariner.appendChild(btndiv)
             // canvasdiv.appendChild(document.createElement("hr"))
-            canvasdiv.appendChild(btndiv_contariner)
+            color_div.appendChild(btndiv_contariner)
         }
         var filter = { "$or": [] }
         for (var i = 0; i < players.length; i++) {
@@ -937,16 +961,20 @@ RLQ.push(function () {
                             apply_rule("next", trule, tanm, tplayer)
                         })
                     })(anms[i], players[i].rule, i, players[i])
-                }    
+                }
+                canvas.tabIndex = 1
+                canvas.onkeydown = function(e){
+                    handleColorKey(e.key)
+                }
             }else{
                 canvas.tabIndex = 1
                 var COSTUME_ANM_KEYS = new Map([
                     ['p','Pickup'],
                     ['h','Hit'],
                     //['A','Appear'],
-                    ['D','Death'],
-                    ['S','Sad'],
-                    ['H','Happy'],
+                    ['k','Death'],
+                    ['b','Sad'],
+                    ['o','Happy'],
                     //['t','TeleportUp'],
                     //['T','TeleportDown'],
                     ['t','Trapdoor'],
@@ -974,73 +1002,81 @@ RLQ.push(function () {
                     //     return
                     // }
                     e.preventDefault()
-                    if(e.key == 'ArrowUp'){
+                    var key = e.key
+                    if(key.length == 1){
+                        key = key.toLowerCase()
+                    }
+                    if(key == 'ArrowUp'){
                         costume_head_dir = 'Up'
                         costume_shooting.u = true
                     }
-                    if(e.key == 'ArrowDown'){
+                    if(key == 'ArrowDown'){
                         costume_head_dir = 'Down'
                         costume_shooting.d = true
                     }
-                    if(e.key == 'ArrowLeft'){
+                    if(key == 'ArrowLeft'){
                         costume_head_dir = 'Left'
                         costume_shooting.l = true
                     }
-                    if(e.key == 'ArrowRight'){
+                    if(key == 'ArrowRight'){
                         costume_head_dir = 'Right'
                         costume_shooting.r = true
                     }
-                    if(e.key == 'w'){
+                    if(key == 'w'){
                         costume_status = 'Walk'
                         costume_leg_dir = 'Up'
                         costume_walking.u = true
                     }
-                    if(e.key == 's'){
+                    if(key == 's'){
                         costume_leg_dir = 'Down'
                         costume_walking.d = true
                     }
-                    if(e.key == 'a'){
+                    if(key == 'a'){
                         costume_leg_dir = 'Left'
                         costume_walking.l = true
                     }
-                    if(e.key == 'd'){
+                    if(key == 'd'){
                         costume_leg_dir = 'Right'
                         costume_walking.r = true
                     }
-                    if(e.key == 'r'){
+                    if(key == 'r'){
                         costume_status = 'Walk'
                     }
-                    if(COSTUME_ANM_KEYS.has(e.key)){
-                        var target_anm = COSTUME_ANM_KEYS.get(e.key)
+                    if(COSTUME_ANM_KEYS.has(key)){
+                        var target_anm = COSTUME_ANM_KEYS.get(key)
                         costume_status = target_anm
                         costume_status_reset = true
                     }
-                    
+                    handleColorKey(key)
                 }
                 canvas.onkeyup = function(e){
                     e.preventDefault()
-                    if(e.key == 'ArrowUp'){
+                    var key = e.key
+                    if(key.length == 1){
+                        key = key.toLowerCase()
+                    }
+                    if(key == 'ArrowUp'){
                         costume_shooting.u = false
                     }
-                    if(e.key == 'ArrowDown'){
+                    if(key == 'ArrowDown'){
                         costume_shooting.d = false
                     }
-                    if(e.key == 'ArrowLeft'){
+                    if(key == 'ArrowLeft'){
                         costume_shooting.l = false
                     }
-                    if(e.key == 'ArrowRight'){
+                    if(key == 'ArrowRight'){
                         costume_shooting.r = false
                     }
-                    if(e.key == 'w'){
+                    if(key == 'w'){
                         costume_walking.u = false
                     }
-                    if(e.key == 's'){
+                    if(key == 's'){
                         costume_walking.d = false
                     }
-                    if(e.key == 'a'){
+                    if(key == 'a'){
                         costume_walking.l = false
                     }
-                    if(e.key == 'd'){
+                    if(key == 'd'){
                         costume_walking.r = false
                     }
                 }
@@ -1110,8 +1146,6 @@ RLQ.push(function () {
                     }
 
                 }
-
-
 
                 //loop
                 setTimeout(draw, 1000 / commonFps)
