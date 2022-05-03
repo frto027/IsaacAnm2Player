@@ -84,7 +84,7 @@ var LayerStatus = /** @class */ (function () {
     return LayerStatus;
 }());
 var AnmPlayer = /** @class */ (function () {
-    function AnmPlayer(json, img_url_builder, spritesheet_overwrite) {
+    function AnmPlayer(json, img_url_builder, spritesheet_overwrite, onloadimg) {
         var _a, _b, _c, _d, _e, _f, _g;
         this.sprites = new Array(); /* spriteid -> sprite path */
         this.sprites_htmlimg = new Array();
@@ -117,6 +117,7 @@ var AnmPlayer = /** @class */ (function () {
         for (var i = 0; i < (((_g = (_f = this.anm2.content) === null || _f === void 0 ? void 0 : _f.Spritesheets) === null || _g === void 0 ? void 0 : _g.length) || 0); i++) {
             this.loadSpritesheet(i, spritesheet_overwrite);
         }
+        this.imgLoadListener = onloadimg;
     }
     AnmPlayer.prototype.loadAnimationFrames = function (anms, length) {
         var ret = new Array(length);
@@ -261,6 +262,7 @@ var AnmPlayer = /** @class */ (function () {
         }
     };
     AnmPlayer.prototype.loadSpritesheet = function (i, overwiter) {
+        var _this = this;
         var img = this.sprites_htmlimg[i];
         if (img == undefined) {
             var replaced_url = overwiter && overwiter(i);
@@ -270,6 +272,9 @@ var AnmPlayer = /** @class */ (function () {
             img.setAttribute('style', "image-rendering: pixelated; display:none;");
             img.onload = function () {
                 img.setAttribute("img_loaded", "true");
+                if (_this.imgLoadListener) {
+                    _this.imgLoadListener();
+                }
             };
             this.sprites_htmlimg[i] = img;
             document.body.appendChild(img);

@@ -86,7 +86,7 @@ RLQ.push(function () {
         return LayerStatus;
     }());
     var AnmPlayer = /** @class */ (function () {
-        function AnmPlayer(json, img_url_builder, spritesheet_overwrite) {
+        function AnmPlayer(json, img_url_builder, spritesheet_overwrite, onloadimg) {
             var _a, _b, _c, _d, _e, _f, _g;
             this.sprites = new Array(); /* spriteid -> sprite path */
             this.sprites_htmlimg = new Array();
@@ -119,6 +119,7 @@ RLQ.push(function () {
             for (var i = 0; i < (((_g = (_f = this.anm2.content) === null || _f === void 0 ? void 0 : _f.Spritesheets) === null || _g === void 0 ? void 0 : _g.length) || 0); i++) {
                 this.loadSpritesheet(i, spritesheet_overwrite);
             }
+            this.imgLoadListener = onloadimg;
         }
         AnmPlayer.prototype.loadAnimationFrames = function (anms, length) {
             var ret = new Array(length);
@@ -263,6 +264,7 @@ RLQ.push(function () {
             }
         };
         AnmPlayer.prototype.loadSpritesheet = function (i, overwiter) {
+            var _this = this;
             var img = this.sprites_htmlimg[i];
             if (img == undefined) {
                 var replaced_url = overwiter && overwiter(i);
@@ -272,6 +274,9 @@ RLQ.push(function () {
                 img.setAttribute('style', "image-rendering: pixelated; display:none;");
                 img.onload = function () {
                     img.setAttribute("img_loaded", "true");
+                    if (_this.imgLoadListener) {
+                        _this.imgLoadListener();
+                    }
                 };
                 this.sprites_htmlimg[i] = img;
                 document.body.appendChild(img);
@@ -799,6 +804,7 @@ RLQ.push(function () {
         var btndiv = undefined
         var btns = new Map() /* 按钮名称到状态的映射，未按下为false，按下为function，此function用于重置按钮状态 */
 
+        var waiting_for_click = canvasdiv.getAttribute("data-waitkey") == "true"
         var render_as_costume = canvasdiv.getAttribute("data-costume") == "true"
         var costume_A,costume_B,costume_C
         var costumeInfoA,costumeInfoB,costumeInfoC
@@ -1021,9 +1027,9 @@ RLQ.push(function () {
                     }
 
                     /* 此处ABC共用同一份json，注意确保它们没问题 */
-                    costume_A[i] = new AnmPlayer(target,huijiUrlBuilder,replace_sprite_func)
-                    costume_B[i] = new AnmPlayer(target,huijiUrlBuilder,replace_sprite_func)
-                    costume_C[i] = new AnmPlayer(target,huijiUrlBuilder,replace_sprite_func)
+                    costume_A[i] = new AnmPlayer(target,huijiUrlBuilder,replace_sprite_func, function(){draw(true)})
+                    costume_B[i] = new AnmPlayer(target,huijiUrlBuilder,replace_sprite_func, function(){})
+                    costume_C[i] = new AnmPlayer(target,huijiUrlBuilder,replace_sprite_func, function(){})
 
                     costume_A[i].forceLoop = true
                     costume_B[i].forceLoop = true
@@ -1062,7 +1068,7 @@ RLQ.push(function () {
                     costume_B[i].setFrame("WalkDown",0)
                     costume_C[i].setFrame("WalkDown_Overlay",0)
                 }else{
-                    anms[i] = new AnmPlayer(resources.get(players[i].anm2), huijiUrlBuilder,replace_sprite_func)
+                    anms[i] = new AnmPlayer(resources.get(players[i].anm2), huijiUrlBuilder,replace_sprite_func,function(){draw(true)})
                     anms[i].setFrame((players[i].name || '').split('.')[0], 0)    
                 }
             }
@@ -1098,6 +1104,10 @@ RLQ.push(function () {
             var canvas_clicked = []
             if(!render_as_costume){
                 canvas.onclick = function () {
+                    if(waiting_for_click){
+                        waiting_for_click = false
+                        draw(false)
+                    }
                     for (var i = 0; i < players.length; i++) {
                         if (!apply_rule("click", players[i].rule, anms[i], players[i])) {
                             canvas_clicked[i] = true
@@ -1124,6 +1134,13 @@ RLQ.push(function () {
                         e.preventDefault()
                 }
             }else{
+                if(waiting_for_click){
+                    canvas.onclick = function(){
+                        waiting_for_click = false
+                        draw(false)
+                        canvas.onclick = undefined
+                    }    
+                }
                 canvas.tabIndex = 1
                 var COSTUME_ANM_KEYS = new Map([
                     ['p','Pickup'],
@@ -1188,21 +1205,33 @@ RLQ.push(function () {
                         costume_leg_dir = 'Up'
                         costume_walking.u = true
                         catched = true
+                        if(!(costume_shooting.u||costume_shooting.d||costume_shooting.l||costume_shooting.r)){
+                            costume_head_dir = 'Up'
+                        }
                     }
                     if(key == 's'){
                         costume_leg_dir = 'Down'
                         costume_walking.d = true
                         catched = true
+                        if(!(costume_shooting.u||costume_shooting.d||costume_shooting.l||costume_shooting.r)){
+                            costume_head_dir = 'Down'
+                        }
                     }
                     if(key == 'a'){
                         costume_leg_dir = 'Left'
                         costume_walking.l = true
                         catched = true
+                        if(!(costume_shooting.u||costume_shooting.d||costume_shooting.l||costume_shooting.r)){
+                            costume_head_dir = 'Left'
+                        }
                     }
                     if(key == 'd'){
                         costume_leg_dir = 'Right'
                         costume_walking.r = true
                         catched = true
+                        if(!(costume_shooting.u||costume_shooting.d||costume_shooting.l||costume_shooting.r)){
+                            costume_head_dir = 'Right'
+                        }
                     }
                     if(key == 'r'){
                         costume_status = 'Walk'
@@ -1265,63 +1294,65 @@ RLQ.push(function () {
                     }
                 }
             }
-            function draw() {
+            function draw(noUpdate) {
                 //update
                 if(render_as_costume){
-                    var is_head_idle = false
-                    if(costume_status == "Walk"){
-                        if(costume_shooting.u || costume_shooting.d || costume_shooting.l || costume_shooting.r){
-                            costume_shooting_frame+=0.5
-                        }else{
-                            costume_shooting_frame = is_head_idle ? (costume_shooting_frame + 1) % 2 : 0
-                            is_head_idle = true
-                        }
-                        if(is_flying ||costume_walking.u || costume_walking.d || costume_walking.l || costume_walking.r){
-                            costume_walking_frame++
-                        }else{
-                            costume_walking_frame = 0
-                        }
-                    }
-
-                    for(var i=0;i<costume_A.length;i++){
-                        if(costume_status == 'Walk'){
-                            var target_anm_name_A = 'Head' + costume_head_dir
-                            if(is_head_idle && costumeInfoA[i].head_has_idle){
-                                target_anm_name_A += '_Idle'
-                            }
-
-                            if(!is_head_idle && costumeInfoA[i].head_has_charge){
-                                var head_charge_frame = costumeInfoA[i].head_charge_frame
-                                if(costume_shooting_frame >= head_charge_frame){
-                                    costume_A[i].setFrame(target_anm_name_A + "ChargeFull",Math.floor(costume_shooting_frame - head_charge_frame))
-                                }else{
-                                    costume_A[i].setFrame(target_anm_name_A + "Charge",costume_shooting_frame)
-                                }
-                            }else /* original logic */ if(costume_A[i].getCurrentAnmName() != (target_anm_name_A)){
-                                costume_A[i].setFrame(target_anm_name_A,0)
+                    if(!noUpdate){
+                        var is_head_idle = false
+                        if(costume_status == "Walk"){
+                            if(costume_shooting.u || costume_shooting.d || costume_shooting.l || costume_shooting.r){
+                                costume_shooting_frame+=0.5
                             }else{
+                                costume_shooting_frame = is_head_idle ? (costume_shooting_frame + 1) % 2 : 0
+                                is_head_idle = true
+                            }
+                            if(is_flying ||costume_walking.u || costume_walking.d || costume_walking.l || costume_walking.r){
+                                costume_walking_frame++
+                            }else{
+                                costume_walking_frame = 0
+                            }
+                        }
+    
+                        for(var i=0;i<costume_A.length;i++){
+                            if(costume_status == 'Walk'){
+                                var target_anm_name_A = 'Head' + costume_head_dir
+                                if(is_head_idle && costumeInfoA[i].head_has_idle){
+                                    target_anm_name_A += '_Idle'
+                                }
+    
+                                if(!is_head_idle && costumeInfoA[i].head_has_charge){
+                                    var head_charge_frame = costumeInfoA[i].head_charge_frame
+                                    if(costume_shooting_frame >= head_charge_frame){
+                                        costume_A[i].setFrame(target_anm_name_A + "ChargeFull",Math.floor(costume_shooting_frame - head_charge_frame))
+                                    }else{
+                                        costume_A[i].setFrame(target_anm_name_A + "Charge",costume_shooting_frame)
+                                    }
+                                }else /* original logic */ if(costume_A[i].getCurrentAnmName() != (target_anm_name_A)){
+                                    costume_A[i].setFrame(target_anm_name_A,0)
+                                }else{
+                                    costume_A[i].update()
+                                }
+                                if(costume_B[i].getCurrentAnmName() != ('Walk' + costume_leg_dir)){
+                                    costume_B[i].setFrame('Walk' + costume_leg_dir,0)
+                                }else{
+                                    costume_B[i].update()
+                                }
+                                if(costume_C[i].getCurrentAnmName() != ('Head' + costume_head_dir + '_Overlay')){
+                                    costume_C[i].setFrame('Head' + costume_head_dir + '_Overlay',0)
+                                }else{
+                                    costume_C[i].update()
+                                }
+                            }else{
+                                if(costume_A[i].getCurrentAnmName() != costume_status){
+                                    costume_A[i].setFrame(costume_status,0)
+                                }
+                                if(costume_status_reset){
+                                    costume_status_reset = false
+                                    costume_A[i].play(0)
+                                }
                                 costume_A[i].update()
                             }
-                            if(costume_B[i].getCurrentAnmName() != ('Walk' + costume_leg_dir)){
-                                costume_B[i].setFrame('Walk' + costume_leg_dir,0)
-                            }else{
-                                costume_B[i].update()
-                            }
-                            if(costume_C[i].getCurrentAnmName() != ('Head' + costume_head_dir + '_Overlay')){
-                                costume_C[i].setFrame('Head' + costume_head_dir + '_Overlay',0)
-                            }else{
-                                costume_C[i].update()
-                            }
-                        }else{
-                            if(costume_A[i].getCurrentAnmName() != costume_status){
-                                costume_A[i].setFrame(costume_status,0)
-                            }
-                            if(costume_status_reset){
-                                costume_status_reset = false
-                                costume_A[i].play(0)
-                            }
-                            costume_A[i].update()
-                        }
+                        }    
                     }
                     //draw
                     var ctx = canvas.getContext("2d")
@@ -1334,13 +1365,15 @@ RLQ.push(function () {
                         AnmPlayer.renderCostume(costumeInfoA,undefined,undefined,ctx, canvas, players[0].x, players[0].y, 1,Math.floor(costume_shooting_frame),Math.floor(costume_walking_frame))
                     }
                 }else{
-                    for (var i = 0; i < anms.length; i++) {
-                        if (currentFps % (commonFps / anms[i].getFps()) == 0) {
-                            anms[i].update()
-                            players[i].played_frame++
+                    if(!noUpdate){
+                        for (var i = 0; i < anms.length; i++) {
+                            if (currentFps % (commonFps / anms[i].getFps()) == 0) {
+                                anms[i].update()
+                                players[i].played_frame++
+                            }
                         }
+                        currentFps = (currentFps + 1) % commonFps
                     }
-                    currentFps = (currentFps + 1) % commonFps
                     //draw
                     var ctx = canvas.getContext("2d")
                     ctx.imageSmoothingEnabled = false
@@ -1354,9 +1387,13 @@ RLQ.push(function () {
                 }
 
                 //loop
-                setTimeout(draw, 1000 / commonFps)
+                if(!noUpdate && !waiting_for_click){
+                    setTimeout(draw, 1000 / commonFps)
+                }
             }
-            draw()
+            if(!waiting_for_click){
+                draw(false)
+            }
         }
         function downloadJson() {
             $.ajax({

@@ -109,10 +109,12 @@ class AnmPlayer{
     flipX:boolean = false
 
 
+
     eventListener?:(eventName:string)=>void
     anmEndEventListener?:()=>void
+    imgLoadListener?:()=>void
 
-    constructor(json:Actor, img_url_builder:(url:string,replaced:boolean)=>string,spritesheet_overwrite:(sprite_id:number)=>string){
+    constructor(json:Actor, img_url_builder:(url:string,replaced:boolean)=>string,spritesheet_overwrite:(sprite_id:number)=>string, onloadimg:()=>void){
         this.anm2 = json
 
         for(let sheet of this.anm2.content?.Spritesheets || []){
@@ -137,6 +139,8 @@ class AnmPlayer{
         for(let i=0;i<(this.anm2.content?.Spritesheets?.length || 0);i++){
             this.loadSpritesheet(i,spritesheet_overwrite)
         }
+
+        this.imgLoadListener = onloadimg
         
     }
 
@@ -298,9 +302,13 @@ class AnmPlayer{
             img = document.createElement("img")
             img.src = this.img_url_builder(imgpath,replaced_url != undefined)
             img.setAttribute('style',"image-rendering: pixelated; display:none;")
-            img.onload = function(){
+            img.onload = ()=>{
                 img.setAttribute("img_loaded","true")
+                if(this.imgLoadListener){
+                    this.imgLoadListener()
+                }
             }
+            
             this.sprites_htmlimg[i] = img
             document.body.appendChild(img)
         }
