@@ -250,7 +250,7 @@ class AnmPlayer{
             if(this.currentFrame < 0){
                 this.currentFrame = 0
             }
-            if(this.currentFrame > this.currentAnm.FrameNum){
+            if(this.currentFrame >= this.currentAnm.FrameNum){
                 if(this.currentAnm.Loop){
                     this.currentFrame %= this.currentAnm.FrameNum
                 }else{

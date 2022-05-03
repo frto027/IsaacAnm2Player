@@ -224,7 +224,7 @@ RLQ.push(function () {
                 if (this.currentFrame < 0) {
                     this.currentFrame = 0;
                 }
-                if (this.currentFrame > this.currentAnm.FrameNum) {
+                if (this.currentFrame >= this.currentAnm.FrameNum) {
                     if (this.currentAnm.Loop) {
                         this.currentFrame %= this.currentAnm.FrameNum;
                     }
@@ -1030,16 +1030,25 @@ RLQ.push(function () {
                     costume_C[i].forceLoop = true
 
                     var head_has_idle = false
+                    var head_has_charge = false
+                    var head_charge_frame = 0
                     var anm_names = costume_A[i].getAnmNames()
                     for(var j=0;j<anm_names.length;j++){
                         if(anm_names[j].startsWith("Head") && anm_names[j].endsWith("_Idle")){
                             head_has_idle = true
                         }
+                        if(!head_has_charge && anm_names[j].startsWith("Head") && anm_names[j].endsWith("Charge")){
+                            head_has_charge = true
+                            costume_A[i].setFrame(anm_names[j],0)
+                            head_charge_frame = costume_A[i].currentAnm.FrameNum
+                        }
                     }
 
                     costumeInfoA[i] = {
                         player:costume_A[i],
-                        head_has_idle:head_has_idle
+                        head_has_idle:head_has_idle,
+                        head_has_charge:head_has_charge,
+                        head_charge_frame:head_charge_frame
                     }
                     costumeInfoB[i] = {
                         player:costume_B[i]
@@ -1264,13 +1273,13 @@ RLQ.push(function () {
                         if(costume_shooting.u || costume_shooting.d || costume_shooting.l || costume_shooting.r){
                             costume_shooting_frame+=0.5
                         }else{
-                            costume_shooting_frame = (costume_shooting_frame + 1) % 2
+                            costume_shooting_frame = is_head_idle ? (costume_shooting_frame + 1) % 2 : 0
                             is_head_idle = true
                         }
                         if(is_flying ||costume_walking.u || costume_walking.d || costume_walking.l || costume_walking.r){
                             costume_walking_frame++
                         }else{
-                            costume_walking_frame = (costume_shooting_frame + 1) % 2
+                            costume_walking_frame = 0
                         }
                     }
 
@@ -1281,7 +1290,14 @@ RLQ.push(function () {
                                 target_anm_name_A += '_Idle'
                             }
 
-                            if(costume_A[i].getCurrentAnmName() != (target_anm_name_A)){
+                            if(!is_head_idle && costumeInfoA[i].head_has_charge){
+                                var head_charge_frame = costumeInfoA[i].head_charge_frame
+                                if(costume_shooting_frame >= head_charge_frame){
+                                    costume_A[i].setFrame(target_anm_name_A + "ChargeFull",Math.floor(costume_shooting_frame - head_charge_frame))
+                                }else{
+                                    costume_A[i].setFrame(target_anm_name_A + "Charge",costume_shooting_frame)
+                                }
+                            }else /* original logic */ if(costume_A[i].getCurrentAnmName() != (target_anm_name_A)){
                                 costume_A[i].setFrame(target_anm_name_A,0)
                             }else{
                                 costume_A[i].update()
