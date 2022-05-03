@@ -443,6 +443,23 @@ class AnmPlayer{
         return undefined
     }
 
+    public getLayerByName(name:string):LayerStatus|undefined{
+        let layer_id = undefined
+        for(let layer of this.anm2.content?.Layers || []){
+            if(layer.Name == name){
+                layer_id = layer.Id
+                break
+            }
+        }
+        if(layer_id != undefined){
+            for(let frame of this.currentAnm?.frames || []){
+                if(frame.LayerId == layer_id){
+                    return frame
+                }
+            }
+        }
+        return undefined
+    }
     public static expandActor(target:any, keymap:any){
         if(typeof(target) != "object"){
             return
@@ -569,11 +586,26 @@ class AnmPlayer{
                             old_frame = player.currentFrame
                             player.play(shootFrame % (player.currentAnm?.FrameNum || 100000))
                         }
+                        /* fallback:HeadLeft -> HeadLeft_Idle */
+                        let fallback_restore = undefined
+                        if(players && players[draw_anm]?.head_has_idle && step == "head"){
+                            let frames = player.getLayerByName("head")?.frames
+                            //c340
+                            if(frames != undefined && (player.currentFrame < frames.length && frames[player.currentFrame].Visible == false)){
+                                fallback_restore = player.currentAnm
+                                player.setFrame(player.getCurrentAnmName() + "_Idle",player.currentFrame)
+                            }
+                        }
                         if(step.startsWith("head")){
                             player.drawCanvas(ctx,canvas,centerX,centerY,rootScale,step,head_transform)
                         }else{
                             player.drawCanvas(ctx,canvas,centerX,centerY,rootScale,step,undefined)
                         }
+
+                        if(fallback_restore){
+                            player.currentAnm = fallback_restore
+                        }
+
                         if(old_frame != undefined){
                             player.currentFrame = old_frame
                         }
@@ -585,6 +617,7 @@ class AnmPlayer{
 }
 interface CostumeInfo{
     player:AnmPlayer,
+    head_has_idle:boolean,
     /* steps[step][layer] == anmarray_index */
 }
 

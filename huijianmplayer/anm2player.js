@@ -385,6 +385,26 @@ RLQ.push(function () {
             }
             return undefined;
         };
+        AnmPlayer.prototype.getLayerByName = function (name) {
+            var _a, _b;
+            var layer_id = undefined;
+            for (var _i = 0, _c = ((_a = this.anm2.content) === null || _a === void 0 ? void 0 : _a.Layers) || []; _i < _c.length; _i++) {
+                var layer = _c[_i];
+                if (layer.Name == name) {
+                    layer_id = layer.Id;
+                    break;
+                }
+            }
+            if (layer_id != undefined) {
+                for (var _d = 0, _e = ((_b = this.currentAnm) === null || _b === void 0 ? void 0 : _b.frames) || []; _d < _e.length; _d++) {
+                    var frame = _e[_d];
+                    if (frame.LayerId == layer_id) {
+                        return frame;
+                    }
+                }
+            }
+            return undefined;
+        };
         AnmPlayer.expandActor = function (target, keymap) {
             if (typeof (target) != "object") {
                 return;
@@ -416,17 +436,17 @@ RLQ.push(function () {
             }
         };
         AnmPlayer.renderCostume = function (anmA, anmB, anmC, ctx, canvas, centerX, centerY, rootScale, shootFrame, walkFrame) {
-            var _a, _b, _c, _d, _e, _f, _g, _h, _j;
+            var _a, _b, _c, _d, _e, _f, _g, _h, _j, _k, _l;
             //anmA is leg,anmB is head
             var step_draw_candidates = new Map();
             var headTransformLayer = undefined;
             //setup steps for anmA
-            for (var _i = 0, _k = this.COSTUME_STEP; _i < _k.length; _i++) {
-                var step = _k[_i];
-                for (var _l = 0, anmA_1 = anmA; _l < anmA_1.length; _l++) {
-                    var info = anmA_1[_l];
-                    for (var _m = 0, _o = ((_a = info.player.currentAnm) === null || _a === void 0 ? void 0 : _a.frames) || []; _m < _o.length; _m++) {
-                        var layer = _o[_m];
+            for (var _i = 0, _m = this.COSTUME_STEP; _i < _m.length; _i++) {
+                var step = _m[_i];
+                for (var _o = 0, anmA_1 = anmA; _o < anmA_1.length; _o++) {
+                    var info = anmA_1[_o];
+                    for (var _p = 0, _q = ((_a = info.player.currentAnm) === null || _a === void 0 ? void 0 : _a.frames) || []; _p < _q.length; _p++) {
+                        var layer = _q[_p];
                         if (info.player.getLayerName(layer.LayerId) == step) {
                             //动画中包含目标图层
                             if (layer.frames[0]) {
@@ -436,15 +456,15 @@ RLQ.push(function () {
                     }
                     /** begin:HeadTransform **/
                     var nulllayer_id = undefined;
-                    for (var _p = 0, _q = ((_b = info.player.anm2.content) === null || _b === void 0 ? void 0 : _b.Nulls) || []; _p < _q.length; _p++) {
-                        var nulllayer = _q[_p];
+                    for (var _r = 0, _s = ((_b = info.player.anm2.content) === null || _b === void 0 ? void 0 : _b.Nulls) || []; _r < _s.length; _r++) {
+                        var nulllayer = _s[_r];
                         if (nulllayer.Name == "HeadTransform") {
                             nulllayer_id = nulllayer.Id;
                         }
                     }
                     if (nulllayer_id != undefined) {
-                        for (var _r = 0, _s = ((_c = info.player.currentAnm) === null || _c === void 0 ? void 0 : _c.nullFrames) || []; _r < _s.length; _r++) {
-                            var nulllayer = _s[_r];
+                        for (var _t = 0, _u = ((_c = info.player.currentAnm) === null || _c === void 0 ? void 0 : _c.nullFrames) || []; _t < _u.length; _t++) {
+                            var nulllayer = _u[_t];
                             if (nulllayer.LayerId == nulllayer_id) {
                                 headTransformLayer = nulllayer;
                             }
@@ -455,12 +475,12 @@ RLQ.push(function () {
             }
             //setup steps for anmB
             if (anmB) {
-                for (var _t = 0, _u = this.COSTUME_STEP; _t < _u.length; _t++) {
-                    var step = _u[_t];
-                    for (var _v = 0, anmB_1 = anmB; _v < anmB_1.length; _v++) {
-                        var info = anmB_1[_v];
-                        for (var _w = 0, _x = ((_d = info.player.currentAnm) === null || _d === void 0 ? void 0 : _d.frames) || []; _w < _x.length; _w++) {
-                            var layer = _x[_w];
+                for (var _v = 0, _w = this.COSTUME_STEP; _v < _w.length; _v++) {
+                    var step = _w[_v];
+                    for (var _x = 0, anmB_1 = anmB; _x < anmB_1.length; _x++) {
+                        var info = anmB_1[_x];
+                        for (var _y = 0, _z = ((_d = info.player.currentAnm) === null || _d === void 0 ? void 0 : _d.frames) || []; _y < _z.length; _y++) {
+                            var layer = _z[_y];
                             if (info.player.getLayerName(layer.LayerId) == step) {
                                 //动画中包含目标图层
                                 if (layer.frames[0]) {
@@ -478,12 +498,12 @@ RLQ.push(function () {
             }
             //setup steps for anmC
             if (anmC) {
-                for (var _y = 0, _z = this.COSTUME_STEP; _y < _z.length; _y++) {
-                    var step = _z[_y];
-                    for (var _0 = 0, anmC_1 = anmC; _0 < anmC_1.length; _0++) {
-                        var info = anmC_1[_0];
-                        for (var _1 = 0, _2 = ((_e = info.player.currentAnm) === null || _e === void 0 ? void 0 : _e.frames) || []; _1 < _2.length; _1++) {
-                            var layer = _2[_1];
+                for (var _0 = 0, _1 = this.COSTUME_STEP; _0 < _1.length; _0++) {
+                    var step = _1[_0];
+                    for (var _2 = 0, anmC_1 = anmC; _2 < anmC_1.length; _2++) {
+                        var info = anmC_1[_2];
+                        for (var _3 = 0, _4 = ((_e = info.player.currentAnm) === null || _e === void 0 ? void 0 : _e.frames) || []; _3 < _4.length; _3++) {
+                            var layer = _4[_3];
                             if (info.player.getLayerName(layer.LayerId) == step) {
                                 //动画中包含目标图层
                                 if (layer.frames[0]) {
@@ -500,8 +520,8 @@ RLQ.push(function () {
                 }
             }
             var head_transform = undefined;
-            for (var _3 = 0, _4 = this.COSTUME_STEP; _3 < _4.length; _3++) {
-                var step = _4[_3];
+            for (var _5 = 0, _6 = this.COSTUME_STEP; _5 < _6.length; _5++) {
+                var step = _6[_5];
                 if (step_draw_candidates.has(step)) {
                     var players = step_draw_candidates.get(step);
                     for (var draw_anm = 0; draw_anm <= 2; draw_anm++) {
@@ -520,11 +540,24 @@ RLQ.push(function () {
                                 old_frame = player.currentFrame;
                                 player.play(shootFrame % (((_j = player.currentAnm) === null || _j === void 0 ? void 0 : _j.FrameNum) || 100000));
                             }
+                            /* fallback:HeadLeft -> HeadLeft_Idle */
+                            var fallback_restore = undefined;
+                            if (players && ((_k = players[draw_anm]) === null || _k === void 0 ? void 0 : _k.head_has_idle) && step == "head") {
+                                var frames_1 = (_l = player.getLayerByName("head")) === null || _l === void 0 ? void 0 : _l.frames;
+                                //c340
+                                if (frames_1 != undefined && (player.currentFrame < frames_1.length && frames_1[player.currentFrame].Visible == false)) {
+                                    fallback_restore = player.currentAnm;
+                                    player.setFrame(player.getCurrentAnmName() + "_Idle", player.currentFrame);
+                                }
+                            }
                             if (step.startsWith("head")) {
                                 player.drawCanvas(ctx, canvas, centerX, centerY, rootScale, step, head_transform);
                             }
                             else {
                                 player.drawCanvas(ctx, canvas, centerX, centerY, rootScale, step, undefined);
+                            }
+                            if (fallback_restore) {
+                                player.currentAnm = fallback_restore;
                             }
                             if (old_frame != undefined) {
                                 player.currentFrame = old_frame;
@@ -540,7 +573,6 @@ RLQ.push(function () {
         return AnmPlayer;
     }());
     
-        
                 /* ===================================== */
     function md5(md5str) {
         var createMD5String = function (string) {
@@ -997,8 +1029,17 @@ RLQ.push(function () {
                     costume_B[i].forceLoop = true
                     costume_C[i].forceLoop = true
 
+                    var head_has_idle = false
+                    var anm_names = costume_A[i].getAnmNames()
+                    for(var j=0;j<anm_names.length;j++){
+                        if(anm_names[j].startsWith("Head") && anm_names[j].endsWith("_Idle")){
+                            head_has_idle = true
+                        }
+                    }
+
                     costumeInfoA[i] = {
-                        player:costume_A[i]
+                        player:costume_A[i],
+                        head_has_idle:head_has_idle
                     }
                     costumeInfoB[i] = {
                         player:costume_B[i]
@@ -1218,23 +1259,30 @@ RLQ.push(function () {
             function draw() {
                 //update
                 if(render_as_costume){
+                    var is_head_idle = false
                     if(costume_status == "Walk"){
                         if(costume_shooting.u || costume_shooting.d || costume_shooting.l || costume_shooting.r){
                             costume_shooting_frame+=0.5
                         }else{
-                            costume_shooting_frame = 0.5
+                            costume_shooting_frame = (costume_shooting_frame + 1) % 2
+                            is_head_idle = true
                         }
                         if(is_flying ||costume_walking.u || costume_walking.d || costume_walking.l || costume_walking.r){
                             costume_walking_frame++
                         }else{
-                            costume_walking_frame = 0
+                            costume_walking_frame = (costume_shooting_frame + 1) % 2
                         }
                     }
 
                     for(var i=0;i<costume_A.length;i++){
                         if(costume_status == 'Walk'){
-                            if(costume_A[i].getCurrentAnmName() != ('Head' + costume_head_dir)){
-                                costume_A[i].setFrame('Head' + costume_head_dir,0)
+                            var target_anm_name_A = 'Head' + costume_head_dir
+                            if(is_head_idle && costumeInfoA[i].head_has_idle){
+                                target_anm_name_A += '_Idle'
+                            }
+
+                            if(costume_A[i].getCurrentAnmName() != (target_anm_name_A)){
+                                costume_A[i].setFrame(target_anm_name_A,0)
                             }else{
                                 costume_A[i].update()
                             }
