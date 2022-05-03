@@ -173,6 +173,7 @@ class AnmPlayer{
         let NS = "http://www.w3.org/2000/svg"
         if(AnmPlayer.svgRoot == undefined){
             AnmPlayer.svgRoot = document.createElementNS(NS,"svg")
+            AnmPlayer.svgRoot.setAttribute("style","display:none")
             document.body.appendChild(AnmPlayer.svgRoot)
         }
         let filter = document.createElementNS(NS,"filter")
