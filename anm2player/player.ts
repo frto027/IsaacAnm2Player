@@ -108,7 +108,7 @@ class AnmPlayer{
     forceLoop:boolean = false
     flipX:boolean = false
 
-
+    sheet_offsets:{x:number,y:number}[/* sheet id */] = []
 
     eventListener?:(eventName:string)=>void
     anmEndEventListener?:()=>void
@@ -380,7 +380,9 @@ class AnmPlayer{
                 if(frame && frame.Visible){
                     ctx.save()
 
-                    let img = this.loadSpritesheet(this.layers[layer.LayerId].SpritesheetId)
+                    let sprite_sheet_id = this.layers[layer.LayerId].SpritesheetId
+
+                    let img = this.loadSpritesheet(sprite_sheet_id)
 
 
                     ctx.translate(frame.XPosition, frame.YPosition)
@@ -409,7 +411,15 @@ class AnmPlayer{
 
                     ctx.filter = frame.filterId || 'none'
                     ctx.globalAlpha = 1
-                    ctx.drawImage(img,frame.XCrop,frame.YCrop, frame.Width, frame.Height,0,0, frame.Width, frame.Height)
+
+                    let sheet_offset_x = 0,sheet_offset_y = 0
+                    let sheet_offset = this.sheet_offsets[sprite_sheet_id]
+                    if(sheet_offset!=undefined){
+                        sheet_offset_x = sheet_offset.x
+                        sheet_offset_y = sheet_offset.y
+                    }
+
+                    ctx.drawImage(img,frame.XCrop + sheet_offset_x,frame.YCrop + sheet_offset_y, frame.Width, frame.Height,0,0, frame.Width, frame.Height)
 
                     if(this.debug_anchor){
                         ctx.beginPath()

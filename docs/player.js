@@ -94,6 +94,7 @@ var AnmPlayer = /** @class */ (function () {
         this.frames = new Map();
         this.forceLoop = false;
         this.flipX = false;
+        this.sheet_offsets = [];
         this.debug_anchor = false;
         this.anm2 = json;
         for (var _i = 0, _h = ((_a = this.anm2.content) === null || _a === void 0 ? void 0 : _a.Spritesheets) || []; _i < _h.length; _i++) {
@@ -330,7 +331,8 @@ var AnmPlayer = /** @class */ (function () {
                 var frame = layer.frames[this.currentFrame];
                 if (frame && frame.Visible) {
                     ctx.save();
-                    var img = this.loadSpritesheet(this.layers[layer.LayerId].SpritesheetId);
+                    var sprite_sheet_id = this.layers[layer.LayerId].SpritesheetId;
+                    var img = this.loadSpritesheet(sprite_sheet_id);
                     ctx.translate(frame.XPosition, frame.YPosition);
                     ctx.rotate(frame.Rotation * Math.PI / 180);
                     // ctx.translate(-canvas.width/2,-canvas.height/2)
@@ -345,7 +347,13 @@ var AnmPlayer = /** @class */ (function () {
                     }
                     ctx.filter = frame.filterId || 'none';
                     ctx.globalAlpha = 1;
-                    ctx.drawImage(img, frame.XCrop, frame.YCrop, frame.Width, frame.Height, 0, 0, frame.Width, frame.Height);
+                    var sheet_offset_x = 0, sheet_offset_y = 0;
+                    var sheet_offset = this.sheet_offsets[sprite_sheet_id];
+                    if (sheet_offset != undefined) {
+                        sheet_offset_x = sheet_offset.x;
+                        sheet_offset_y = sheet_offset.y;
+                    }
+                    ctx.drawImage(img, frame.XCrop + sheet_offset_x, frame.YCrop + sheet_offset_y, frame.Width, frame.Height, 0, 0, frame.Width, frame.Height);
                     if (this.debug_anchor) {
                         ctx.beginPath();
                         ctx.arc(frame.XPivot, frame.YPivot, 5, 0, Math.PI / 2);

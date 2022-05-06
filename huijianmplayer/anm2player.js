@@ -96,6 +96,7 @@ RLQ.push(function () {
             this.frames = new Map();
             this.forceLoop = false;
             this.flipX = false;
+            this.sheet_offsets = [];
             this.debug_anchor = false;
             this.anm2 = json;
             for (var _i = 0, _h = ((_a = this.anm2.content) === null || _a === void 0 ? void 0 : _a.Spritesheets) || []; _i < _h.length; _i++) {
@@ -332,7 +333,8 @@ RLQ.push(function () {
                     var frame = layer.frames[this.currentFrame];
                     if (frame && frame.Visible) {
                         ctx.save();
-                        var img = this.loadSpritesheet(this.layers[layer.LayerId].SpritesheetId);
+                        var sprite_sheet_id = this.layers[layer.LayerId].SpritesheetId;
+                        var img = this.loadSpritesheet(sprite_sheet_id);
                         ctx.translate(frame.XPosition, frame.YPosition);
                         ctx.rotate(frame.Rotation * Math.PI / 180);
                         // ctx.translate(-canvas.width/2,-canvas.height/2)
@@ -347,7 +349,13 @@ RLQ.push(function () {
                         }
                         ctx.filter = frame.filterId || 'none';
                         ctx.globalAlpha = 1;
-                        ctx.drawImage(img, frame.XCrop, frame.YCrop, frame.Width, frame.Height, 0, 0, frame.Width, frame.Height);
+                        var sheet_offset_x = 0, sheet_offset_y = 0;
+                        var sheet_offset = this.sheet_offsets[sprite_sheet_id];
+                        if (sheet_offset != undefined) {
+                            sheet_offset_x = sheet_offset.x;
+                            sheet_offset_y = sheet_offset.y;
+                        }
+                        ctx.drawImage(img, frame.XCrop + sheet_offset_x, frame.YCrop + sheet_offset_y, frame.Width, frame.Height, 0, 0, frame.Width, frame.Height);
                         if (this.debug_anchor) {
                             ctx.beginPath();
                             ctx.arc(frame.XPivot, frame.YPivot, 5, 0, Math.PI / 2);
@@ -579,6 +587,7 @@ RLQ.push(function () {
         return AnmPlayer;
     }());
     
+    
                 /* ===================================== */
     function md5(md5str) {
         var createMD5String = function (string) {
@@ -785,6 +794,13 @@ RLQ.push(function () {
     }
     /*====================================== */
     var keymap = { "a": "info", "b": "CreatedBy", "c": "CreatedOn", "d": "Fps", "e": "Version", "f": "content", "g": "Spritesheets", "h": "Id", "i": "Path", "j": "Layers", "k": "Name", "l": "SpritesheetId", "m": "Nulls", "n": "Events", "o": "animations", "p": "DefaultAnimation", "q": "animation", "r": "FrameNum", "s": "Loop", "t": "RootAnimation", "u": "XPosition", "v": "YPosition", "w": "Delay", "x": "Visible", "y": "XScale", "z": "YScale", "A": "RedTint", "B": "GreenTint", "C": "BlueTint", "D": "AlphaTint", "E": "RedOffset", "F": "GreenOffset", "G": "BlueOffset", "H": "Rotation", "I": "Interpolated", "J": "LayerAnimations", "K": "frames", "L": "LayerId", "M": "XPivot", "N": "YPivot", "O": "XCrop", "P": "YCrop", "Q": "Width", "R": "Height", "S": "NullAnimations", "T": "NullId", "U": "Triggers", "V": "EventId", "W": "AtFrame" }
+    var C_SECTION_FRAME_MAP = [
+        0,0,0,0,0,0,
+        1,1,1,1,
+        2,2,2,2,
+        3,3,3,3,
+        4,4,4
+    ]
     function huijiUrlBuilder(url,replaced) {
         /* 注意过滤url */
         var prefix = 'Anm2/'
@@ -1041,6 +1057,7 @@ RLQ.push(function () {
                     costume_B[i] = new AnmPlayer(target,huijiUrlBuilder,replace_sprite_func, function(){})
                     costume_C[i] = new AnmPlayer(target,huijiUrlBuilder,replace_sprite_func, function(){})
 
+
                     costume_A[i].forceLoop = true
                     costume_B[i].forceLoop = true
                     costume_C[i].forceLoop = true
@@ -1071,6 +1088,11 @@ RLQ.push(function () {
                     }
                     costumeInfoC[i] = {
                         player:costume_C[i]
+                    }
+
+                    if(patch.has(PATCH_csection) && costume_B[i].getAnmNames().indexOf("SubAnim_Shoot") != -1){
+                        costume_B[i].sheet_offsets[0] = {x:0,y:0}
+                        costumeInfoB[i].is_csection = true
                     }
 
 
@@ -1309,6 +1331,13 @@ RLQ.push(function () {
                 if(render_as_costume){
                     if(!noUpdate){
                         var is_head_idle = false
+
+                        
+                        if(patch.has(PATCH_csection)){
+                            costume_leg_dir = costume_head_dir
+                        }
+                        
+
                         if(costume_status == "Walk"){
                             if(costume_shooting.u || costume_shooting.d || costume_shooting.l || costume_shooting.r){
                                 if(patch.has(PATCH_Neptunus)){
@@ -1329,7 +1358,9 @@ RLQ.push(function () {
                                     is_head_idle = true
                                 }
                             }
-                            if(is_flying ||costume_walking.u || costume_walking.d || costume_walking.l || costume_walking.r){
+                            if(is_flying ||costume_walking.u || costume_walking.d || costume_walking.l || costume_walking.r ||
+                                (patch.has(PATCH_csection) && (costume_shooting.u || costume_shooting.d || costume_shooting.l || costume_shooting.r))
+                                ){
                                 costume_walking_frame++
                             }else{
                                 costume_walking_frame = 0
@@ -1342,7 +1373,7 @@ RLQ.push(function () {
                                 if(is_head_idle && costumeInfoA[i].head_has_idle){
                                     target_anm_name_A += '_Idle'
                                 }
-                                
+
                                 if(patch.has(PATCH_Neptunus)){
                                     if(is_head_idle){
                                         costume_A[i].setFrame(target_anm_name_A + "Charge",costume_shooting_frame)
@@ -1362,6 +1393,11 @@ RLQ.push(function () {
                                     costume_A[i].update()
                                 }
 
+
+
+                                if(costumeInfoB[i].is_csection){
+                                    costume_B[i].sheet_offsets[0].y = C_SECTION_FRAME_MAP[Math.floor(costume_shooting_frame * 1.5) % C_SECTION_FRAME_MAP.length] * 96
+                                }
                                 if(costume_B[i].getCurrentAnmName() != ('Walk' + costume_leg_dir)){
                                     costume_B[i].setFrame('Walk' + costume_leg_dir,0)
                                 }else{
@@ -1390,7 +1426,11 @@ RLQ.push(function () {
                     ctx.setTransform(1, 0, 0, 1, 0, 0)
                     ctx.clearRect(0, 0, canvas.width, canvas.height)
                     if(costume_status == 'Walk'){
-                        AnmPlayer.renderCostume(costumeInfoB,costumeInfoA,costumeInfoC,ctx, canvas, players[0].x, players[0].y, 1,Math.floor(costume_shooting_frame),Math.floor(costume_walking_frame))
+                        if(patch.has(PATCH_csection)){
+                            AnmPlayer.renderCostume(costumeInfoB,costumeInfoA,costumeInfoC,ctx, canvas, players[0].x, players[0].y, 1,0,Math.floor(costume_walking_frame))
+                        }else{
+                            AnmPlayer.renderCostume(costumeInfoB,costumeInfoA,costumeInfoC,ctx, canvas, players[0].x, players[0].y, 1,Math.floor(costume_shooting_frame),Math.floor(costume_walking_frame))
+                        }
                     }else{
                         AnmPlayer.renderCostume(costumeInfoA,undefined,undefined,ctx, canvas, players[0].x, players[0].y, 1,Math.floor(costume_shooting_frame),Math.floor(costume_walking_frame))
                     }
