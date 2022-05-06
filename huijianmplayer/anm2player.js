@@ -823,6 +823,15 @@ RLQ.push(function () {
         }
         var is_flying = false
 
+        var patch = new Set()
+        var PATCH_Neptunus = "neptunus"
+        var PATCH_csection = "csection"
+
+        var patch_attr = (canvasdiv.getAttribute("data-patch") || '').split(',')
+        for(var i=0;i<patch_attr.length;i++){
+            patch.add(patch_attr[i])
+        }
+
         for (var i = 0; i < canvasdiv.children.length; i++) {
             var anm = canvasdiv.children[i]
 
@@ -1302,10 +1311,23 @@ RLQ.push(function () {
                         var is_head_idle = false
                         if(costume_status == "Walk"){
                             if(costume_shooting.u || costume_shooting.d || costume_shooting.l || costume_shooting.r){
-                                costume_shooting_frame+=0.5
+                                if(patch.has(PATCH_Neptunus)){
+                                    costume_shooting_frame -= 0.5
+                                }else{
+                                    costume_shooting_frame+=0.5
+                                }
                             }else{
-                                costume_shooting_frame = is_head_idle ? (costume_shooting_frame + 1) % 2 : 0
-                                is_head_idle = true
+                                if(patch.has(PATCH_Neptunus)){
+                                    if(costume_shooting_frame < 17){
+                                        costume_shooting_frame += 0.5
+                                    }else{
+                                        //do nothing
+                                    }
+                                    is_head_idle = true
+                                }else{
+                                    costume_shooting_frame = is_head_idle ? (costume_shooting_frame + 1) % 2 : 0
+                                    is_head_idle = true
+                                }
                             }
                             if(is_flying ||costume_walking.u || costume_walking.d || costume_walking.l || costume_walking.r){
                                 costume_walking_frame++
@@ -1320,8 +1342,14 @@ RLQ.push(function () {
                                 if(is_head_idle && costumeInfoA[i].head_has_idle){
                                     target_anm_name_A += '_Idle'
                                 }
-    
-                                if(!is_head_idle && costumeInfoA[i].head_has_charge){
+                                
+                                if(patch.has(PATCH_Neptunus)){
+                                    if(is_head_idle){
+                                        costume_A[i].setFrame(target_anm_name_A + "Charge",costume_shooting_frame)
+                                    }else{
+                                        costume_A[i].setFrame(target_anm_name_A + "Shoot",costume_shooting_frame)
+                                    }
+                                }else if(!is_head_idle && costumeInfoA[i].head_has_charge){
                                     var head_charge_frame = costumeInfoA[i].head_charge_frame
                                     if(costume_shooting_frame >= head_charge_frame){
                                         costume_A[i].setFrame(target_anm_name_A + "ChargeFull",Math.floor(costume_shooting_frame - head_charge_frame))
@@ -1333,6 +1361,7 @@ RLQ.push(function () {
                                 }else{
                                     costume_A[i].update()
                                 }
+
                                 if(costume_B[i].getCurrentAnmName() != ('Walk' + costume_leg_dir)){
                                     costume_B[i].setFrame('Walk' + costume_leg_dir,0)
                                 }else{
