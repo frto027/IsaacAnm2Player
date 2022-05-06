@@ -842,6 +842,9 @@ RLQ.push(function () {
         var patch = new Set()
         var PATCH_Neptunus = "neptunus"
         var PATCH_csection = "csection"
+        var PATCH_tApollyon = "tApollyon"
+
+        var tapollyon_ring_frame = 0
 
         var patch_attr = (canvasdiv.getAttribute("data-patch") || '').split(',')
         for(var i=0;i<patch_attr.length;i++){
@@ -1095,6 +1098,11 @@ RLQ.push(function () {
                         costumeInfoB[i].is_csection = true
                     }
 
+                    if(patch.has(PATCH_tApollyon) && costume_A[i].getAnmNames().indexOf("SubAnim") != -1){
+                        costume_A[i].sheet_offsets[2] = {x:0,y:0}
+                        costumeInfoA[i].is_tapollyon = true
+                    }
+
 
                     costume_A[i].setFrame("HeadDown",0)
                     costume_B[i].setFrame("WalkDown",0)
@@ -1336,6 +1344,9 @@ RLQ.push(function () {
                         if(patch.has(PATCH_csection)){
                             costume_leg_dir = costume_head_dir
                         }
+                        if(patch.has(PATCH_tApollyon)){
+                            tapollyon_ring_frame += 0.5
+                        }
                         
 
                         if(costume_status == "Walk"){
@@ -1372,6 +1383,10 @@ RLQ.push(function () {
                                 var target_anm_name_A = 'Head' + costume_head_dir
                                 if(is_head_idle && costumeInfoA[i].head_has_idle){
                                     target_anm_name_A += '_Idle'
+                                }
+
+                                if(costumeInfoA[i].is_tapollyon){
+                                    costume_A[i].sheet_offsets[2].y = (Math.floor(tapollyon_ring_frame) % 8) * 32
                                 }
 
                                 if(patch.has(PATCH_Neptunus)){
