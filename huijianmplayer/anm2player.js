@@ -1153,6 +1153,7 @@ RLQ.push(function () {
             var currentFps = 0
 
             var canvas_clicked = []
+            var touch_data = {}
             if(!render_as_costume){
                 canvas.onclick = function () {
                     if(waiting_for_click){
@@ -1344,6 +1345,84 @@ RLQ.push(function () {
                         e.preventDefault()
                     }
                 }
+                canvas.addEventListener('touchstart',function(ev){
+                    var touch = ev.touches[0]
+                    if(touch){
+                        ev.preventDefault()
+                        var id = touch.identifier
+                        if(id == undefined){
+                            id = 't'
+                        }
+                        var x = touch.pageX, y=touch.pageY
+                        touch_data[id] = {x:x,y:y}
+
+                        costume_shooting.u = (costume_head_dir == "Up")
+                        costume_shooting.l = (costume_head_dir == "Left")
+                        costume_shooting.r = (costume_head_dir == "Right")
+                        costume_shooting.d = (costume_head_dir == "Down")
+                    }
+                })
+                canvas.addEventListener('touchmove',function(ev){
+                    var touch = ev.touches[0]
+                    if(touch){
+                        ev.preventDefault()
+                        var id = touch.identifier
+                        if(id == undefined){
+                            id = 't'
+                        }
+                        var x = touch.pageX, y=touch.pageY
+                        var axis = touch_data[id]
+                        if(axis == undefined)
+                            return
+                        var dx = x - axis.x
+                        var dy = y - axis.y
+                        var len = dx*dx+dy*dy
+                        if(len > 4){
+                            costume_shooting.d = false
+                            costume_shooting.r = false
+                            costume_shooting.u = false
+                            costume_shooting.l = false
+                            costume_walking.u = false
+                            costume_walking.l = false
+                            costume_walking.r = false
+                            costume_walking.d = false
+    
+                            if(dx > dy){
+                                if(dx > -dy){
+                                    costume_head_dir = 'Right'
+                                    costume_leg_dir = 'Right'
+                                    costume_walking.r = true
+                                }else{
+                                    costume_head_dir = 'Up'
+                                    costume_leg_dir = 'Up'
+                                    costume_walking.u = true
+                                }
+                            }else{
+                                if(dx > -dy){
+                                    costume_head_dir = 'Down'
+                                    costume_leg_dir = 'Down'
+                                    costume_walking.d = true
+                                }else{
+                                    costume_head_dir = 'Left'
+                                    costume_leg_dir = 'Left'
+                                    costume_walking.l = true
+                                }
+                            }
+                        }
+                    }
+                })
+                canvas.addEventListener('touchend',function(ev){
+                    ev.preventDefault()
+                    costume_shooting.d = false
+                    costume_shooting.r = false
+                    costume_shooting.u = false
+                    costume_shooting.l = false
+                    costume_walking.u = false
+                    costume_walking.l = false
+                    costume_walking.r = false
+                    costume_walking.d = false
+                })
+
             }
             function draw(noUpdate) {
                 //update
