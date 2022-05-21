@@ -843,6 +843,7 @@ RLQ.push(function () {
         var PATCH_Neptunus = "neptunus"
         var PATCH_csection = "csection"
         var PATCH_tApollyon = "tApollyon"
+        var PATCH_noCharge = 'nocharge'
 
         var tapollyon_ring_frame = 0
 
@@ -1084,11 +1085,14 @@ RLQ.push(function () {
                         if(anm_names[j].startsWith("Head") && anm_names[j].endsWith("_Idle")){
                             head_has_idle = true
                         }
-                        if(!head_has_charge && anm_names[j].startsWith("Head") && anm_names[j].endsWith("Charge")){
-                            head_has_charge = true
-                            costume_A[i].setFrame(anm_names[j],0)
-                            head_charge_frame = costume_A[i].currentAnm.FrameNum
+                        if(!patch.has(PATCH_noCharge)){
+                            if(!head_has_charge && anm_names[j].startsWith("Head") && anm_names[j].endsWith("Charge")){
+                                head_has_charge = true
+                                costume_A[i].setFrame(anm_names[j],0)
+                                head_charge_frame = costume_A[i].currentAnm.FrameNum
+                            }
                         }
+
                     }
 
                     costumeInfoA[i] = {
