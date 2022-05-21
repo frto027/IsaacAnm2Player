@@ -806,7 +806,7 @@ RLQ.push(function () {
         var prefix = 'Anm2/'
         if(replaced)
             prefix = ''
-        url = (prefix + url).replaceAll("/", "_").replaceAll(' ', '_').replaceAll("?", "").replaceAll("&", "")
+        url = (prefix + url).replace(new RegExp("[/ \\?&]","g"), "_")
         url = url[0].toUpperCase() + url.substr(1)
         var hash = md5(url)
         url = "https://huiji-public.huijistatic.com/isaac/uploads/" + hash[0] + "/" + hash[0] + hash[1] + "/" + url
@@ -923,7 +923,7 @@ RLQ.push(function () {
             is_flying |= anm.getAttribute("data-isflying") == "true"
 
             var anmobj = {
-                anm2: "Data:" + (anm.getAttribute("data-anm2").replaceAll('&', '').replaceAll('?', '') || ""),
+                anm2: "Data:" + (anm.getAttribute("data-anm2").replace(new RegExp("[&\\?]","g"),"") || ""),
                 name: anm.getAttribute("data-name") || "",
                 x: +anm.getAttribute("data-x"),
                 y: +anm.getAttribute("data-y"),
@@ -986,9 +986,20 @@ RLQ.push(function () {
             }
         }
         var BACKGROUND_COLORS = [
+            /* 按键0：透明 */
             '',
+            /* 按键1：灰色 */
             'background-color:gray',
+            /* 按键2：棋盘格 */
+            'background-image:url("data:image/svg+xml,' + encodeURIComponent('<svg viewBox="0 0 2 2" width="14" height="14" xmlns="http://www.w3.org/2000/svg">' +
+            '    <rect width="1" height="1" fill="#dcdcdc"/>' +
+            '    <rect x="1" y="1" width="1" height="1" fill="#dcdcdc"/>' +
+            '    <rect y="1" width="1" height="1" fill="white"/>' +
+            '    <rect x="1" width="1" height="1" fill="white"/>' +
+            '</svg>') + '")',
+            /* 按键3：白色 */
             'background-color:white',
+            /* 按键4：黑色 */
             'background-color:black',
         ]
         function handleColorKey(key){
