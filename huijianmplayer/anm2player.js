@@ -1195,7 +1195,7 @@ RLQ.push(function () {
                         waiting_for_click = false
                         draw(false)
                         canvas.onclick = undefined
-                    }    
+                    }
                 }
                 canvas.tabIndex = 1
                 var COSTUME_ANM_KEYS = new Map([
@@ -1350,6 +1350,10 @@ RLQ.push(function () {
                     }
                 }
                 canvas.addEventListener('touchstart',function(ev){
+                    if(waiting_for_click){
+                        waiting_for_click = false
+                        draw(false)
+                    }
                     var touch = ev.touches[0]
                     if(touch){
                         ev.preventDefault()
