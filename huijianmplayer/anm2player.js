@@ -96,6 +96,8 @@ RLQ.push(function () {
             this.frames = new Map();
             this.forceLoop = false;
             this.flipX = false;
+            //倒放
+            this.revert = false;
             this.sheet_offsets = [];
             this.debug_anchor = false;
             this.anm2 = json;
@@ -243,16 +245,32 @@ RLQ.push(function () {
         AnmPlayer.prototype.update = function () {
             var _a, _b;
             if (this.currentAnm) {
-                this.currentFrame++;
-                if (this.currentFrame >= this.currentAnm.FrameNum) {
-                    if (this.currentAnm.Loop || this.forceLoop) {
-                        this.currentFrame = 0;
+                if (this.revert) {
+                    this.currentFrame--;
+                    if (this.currentFrame < 0) {
+                        if (this.currentAnm.Loop || this.forceLoop) {
+                            this.currentFrame = this.currentAnm.FrameNum - 1;
+                        }
+                        else {
+                            this.currentFrame = 0;
+                        }
+                        if (this.anmEndEventListener) {
+                            this.anmEndEventListener();
+                        }
                     }
-                    else {
-                        this.currentFrame--;
-                    }
-                    if (this.anmEndEventListener) {
-                        this.anmEndEventListener();
+                }
+                else {
+                    this.currentFrame++;
+                    if (this.currentFrame >= this.currentAnm.FrameNum) {
+                        if (this.currentAnm.Loop || this.forceLoop) {
+                            this.currentFrame = 0;
+                        }
+                        else {
+                            this.currentFrame--;
+                        }
+                        if (this.anmEndEventListener) {
+                            this.anmEndEventListener();
+                        }
                     }
                 }
             }
@@ -586,8 +604,6 @@ RLQ.push(function () {
         AnmPlayer.COSTUME_STEP = ["glow", "body", "body0", "body1", "head", "head0", "head1", "head2", "head3", "head4", "head5", "top0", "extra", "ghost", "back"];
         return AnmPlayer;
     }());
-    
-    
                 /* ===================================== */
     function md5(md5str) {
         var createMD5String = function (string) {
@@ -970,7 +986,7 @@ RLQ.push(function () {
                     }
 
                     anmplayer.flipX = r.has("flipX") && r.get("flipX") == "true"
-
+                    anmplayer.revert = r.has("revert") && r.get("revert") == "true"
                     return true
                 }
             }

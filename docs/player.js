@@ -94,6 +94,8 @@ var AnmPlayer = /** @class */ (function () {
         this.frames = new Map();
         this.forceLoop = false;
         this.flipX = false;
+        //倒放
+        this.revert = false;
         this.sheet_offsets = [];
         this.debug_anchor = false;
         this.anm2 = json;
@@ -241,16 +243,32 @@ var AnmPlayer = /** @class */ (function () {
     AnmPlayer.prototype.update = function () {
         var _a, _b;
         if (this.currentAnm) {
-            this.currentFrame++;
-            if (this.currentFrame >= this.currentAnm.FrameNum) {
-                if (this.currentAnm.Loop || this.forceLoop) {
-                    this.currentFrame = 0;
+            if (this.revert) {
+                this.currentFrame--;
+                if (this.currentFrame < 0) {
+                    if (this.currentAnm.Loop || this.forceLoop) {
+                        this.currentFrame = this.currentAnm.FrameNum - 1;
+                    }
+                    else {
+                        this.currentFrame = 0;
+                    }
+                    if (this.anmEndEventListener) {
+                        this.anmEndEventListener();
+                    }
                 }
-                else {
-                    this.currentFrame--;
-                }
-                if (this.anmEndEventListener) {
-                    this.anmEndEventListener();
+            }
+            else {
+                this.currentFrame++;
+                if (this.currentFrame >= this.currentAnm.FrameNum) {
+                    if (this.currentAnm.Loop || this.forceLoop) {
+                        this.currentFrame = 0;
+                    }
+                    else {
+                        this.currentFrame--;
+                    }
+                    if (this.anmEndEventListener) {
+                        this.anmEndEventListener();
+                    }
                 }
             }
         }

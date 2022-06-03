@@ -107,6 +107,8 @@ class AnmPlayer{
 
     forceLoop:boolean = false
     flipX:boolean = false
+    //倒放
+    revert:boolean = false
 
     sheet_offsets:{x:number,y:number}[/* sheet id */] = []
 
@@ -271,15 +273,29 @@ class AnmPlayer{
 
     public update(){
         if(this.currentAnm){
-            this.currentFrame++
-            if(this.currentFrame >= this.currentAnm.FrameNum){
-                if(this.currentAnm.Loop || this.forceLoop){
-                    this.currentFrame = 0
-                }else{
-                    this.currentFrame--
+            if(this.revert){
+                this.currentFrame--
+                if(this.currentFrame < 0){
+                    if(this.currentAnm.Loop || this.forceLoop){
+                        this.currentFrame = this.currentAnm.FrameNum - 1
+                    }else{
+                        this.currentFrame = 0
+                    }
+                    if(this.anmEndEventListener){
+                        this.anmEndEventListener()
+                    }
                 }
-                if(this.anmEndEventListener){
-                    this.anmEndEventListener()
+            }else{
+                this.currentFrame++
+                if(this.currentFrame >= this.currentAnm.FrameNum){
+                    if(this.currentAnm.Loop || this.forceLoop){
+                        this.currentFrame = 0
+                    }else{
+                        this.currentFrame--
+                    }
+                    if(this.anmEndEventListener){
+                        this.anmEndEventListener()
+                    }
                 }
             }
         }else{
