@@ -1,3 +1,7 @@
+# huijianmplayer
+
+文件`huijianmplayer/anm2player.js`是以撒的结合中文维基上[anm2播放器](https://isaac.huijiwiki.com/wiki/%E5%B8%AE%E5%8A%A9:Anm2%E6%92%AD%E6%94%BE%E5%99%A8)的源代码
+
 # anm2Parser
 
 用于将anm2的xml文件转换为json格式，以供浏览器使用
@@ -16,8 +20,8 @@ preview.html是一个demo
 
 # docs
 
-这是生成好的预览页面
-构架的话执行build.bat
+这是生成好的预览页面（仅供调试，与wiki无关）
+构建的话执行build.bat
 - 需要提前安装TypeScript
 - 还需要安装python
 - 另外还需要解包游戏，且删掉中文之外的语言资源
