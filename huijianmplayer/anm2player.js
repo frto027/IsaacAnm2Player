@@ -868,6 +868,9 @@ RLQ.push(function () {
             patch.add(patch_attr[i])
         }
 
+        //动画此时还没有加载，加载后此变量指向draw函数
+        var anmbtn_startdraw = undefined
+
         for (var i = 0; i < canvasdiv.children.length; i++) {
             var anm = canvasdiv.children[i]
 
@@ -915,6 +918,14 @@ RLQ.push(function () {
                         btndiv.appendChild(nbtn)
                         nbtn.onclick = (function(btnname,btn,btnreset_count){/* 用于闭包兼容 */
                             return function(){/* 实际回调函数 */
+                            if(anmbtn_startdraw == undefined){
+                                /* 动画还没有加载 */
+                                return
+                            }
+                            if(waiting_for_click){
+                                waiting_for_click = false
+                                anmbtn_startdraw(false)
+                            }
                                 //设置按钮状态为“按下”
                                 btn.triggered_anm2 = new Set()
                                 btn.style = 'text-decoration:none;border-radius:4px;background-color:#d5d4c963'
@@ -1602,6 +1613,7 @@ RLQ.push(function () {
                     setTimeout(draw, 1000 / commonFps)
                 }
             }
+            anmbtn_startdraw = draw
             if(!waiting_for_click){
                 draw(false)
             }
