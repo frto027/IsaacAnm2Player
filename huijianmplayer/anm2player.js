@@ -996,6 +996,9 @@ RLQ.push(function () {
 
                     anmplayer.flipX = r.has("flipX") && r.get("flipX") == "true"
                     anmplayer.revert = r.has("revert") && r.get("revert") == "true"
+                    if(anmplayer.revert){
+                        anmplayer.play(anmplayer.currentAnm.FrameNum - 1)
+                    }
                     return true
                 }
             }
