@@ -901,6 +901,7 @@ RLQ.push(function () {
                 }
                 //parse button
                 var btnname_str = anm.children[j].getAttribute("data-btnname")
+                var btnreset_count = +anm.children[j].getAttribute("data-reset")
                 if(btnname_str && btnname_str.length > 0){
                     if(btndiv == undefined){
                         btndiv = document.createElement("div")
@@ -912,14 +913,23 @@ RLQ.push(function () {
                         nbtn.innerText = btnname_str
                         nbtn.style = 'text-decoration:none;border-radius:4px;'
                         btndiv.appendChild(nbtn)
-                        nbtn.onclick = (function(btnname,btn){/* 用于闭包兼容 */
+                        nbtn.onclick = (function(btnname,btn,btnreset_count){/* 用于闭包兼容 */
                             return function(){/* 实际回调函数 */
+                                //设置按钮状态为“按下”
+                                btn.triggered_anm2 = new Set()
                                 btn.style = 'text-decoration:none;border-radius:4px;background-color:#d5d4c963'
-                                btns.set(btnname,function(){
-                                    btn.style = 'text-decoration:none;border-radius:4px;'
+                                btns.set(btnname,function(anm2_id){
+                                    if(btn.triggered_anm2.has(anm2_id))
+                                        return false
+                                    btn.triggered_anm2.add(anm2_id)
+                                    if(btn.triggered_anm2.size >= btnreset_count){
+                                        btn.style = 'text-decoration:none;border-radius:4px;'
+                                        btns.set(btnname,false)
+                                    }
+                                    return true
                                 })
                             }
-                        })(btnname_str,nbtn)
+                        })(btnname_str,nbtn,btnreset_count)
                     }
                 }
                 //parse replacesheet
@@ -954,7 +964,7 @@ RLQ.push(function () {
         }
         
 
-        function apply_rule(ename, rule, anmplayer, player) {
+        function apply_rule(ename, rule, anmplayer, player, player_id) {
             for (var i = 0; i < rule.length; i++) {
                 var r = rule[i]
                 if (r.has("when") && r.get("when") != player.name)
@@ -965,8 +975,12 @@ RLQ.push(function () {
                 
                 if (r.has("rate") && Math.random() > +r.get("rate"))
                     continue
-                if (r.has("whenbtn") && !btns.get(r.get("whenbtn"))){
-                    continue
+                if (r.has("whenbtn")){
+                    var btncb = btns.get(r.get("whenbtn"))
+                    if(!btncb)
+                        continue
+                    if(!btncb(player_id))
+                        continue
                 }
                 if (r.has(ename)) {
                     var rename = r.get(ename)
@@ -975,11 +989,6 @@ RLQ.push(function () {
                         anmplayer.setFrame(rename.split('.')[0], 0)
                     }
                     player.played_frame = 0
-
-                    if(r.has("whenbtn")){
-                        btns.get(r.get("whenbtn"))()
-                        btns.set(r.get("whenbtn"),false)
-                    }
 
                     if (mw.config.get("debug")) {
                         console.log("apply rule", rule[i])
@@ -1181,7 +1190,7 @@ RLQ.push(function () {
                         draw(false)
                     }
                     for (var i = 0; i < players.length; i++) {
-                        if (!apply_rule("click", players[i].rule, anms[i], players[i])) {
+                        if (!apply_rule("click", players[i].rule, anms[i], players[i],i)) {
                             canvas_clicked[i] = true
                         }
                     }
@@ -1192,11 +1201,11 @@ RLQ.push(function () {
                         anms[i].setEndEventListener(function () {
                             if (canvas_clicked[i]) {
                                 canvas_clicked[i] = false
-                                if (apply_rule("clicknext", trule, tanm, tplayer)) {
+                                if (apply_rule("clicknext", trule, tanm, tplayer,i)) {
                                     return
                                 }
                             }
-                            apply_rule("next", trule, tanm, tplayer)
+                            apply_rule("next", trule, tanm, tplayer,i)
                         })
                     })(anms[i], players[i].rule, i, players[i])
                 }
