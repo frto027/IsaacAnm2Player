@@ -908,6 +908,7 @@ RLQ.push(function () {
                 var btn_istoggle = anm.children[j].getAttribute("data-toggle") == "true"
                 var btn_groupname = anm.children[j].getAttribute("data-group")
                 var btn_initial_status = anm.children[j].getAttribute("data-init") == "true"
+                var btn_hide = anm.children[j].getAttribute("data-hide") == "true"
                 if(btnname_str && btnname_str.length > 0){
                     if(btndiv == undefined){
                         btndiv = document.createElement("div")
@@ -917,13 +918,19 @@ RLQ.push(function () {
                         var nbtn = document.createElement("a")
                         nbtn.href = 'javascript:void(0)'
                         nbtn.innerText = btnname_str
-                        nbtn.style = 'text-decoration:none;border-radius:4px;'
+                        if(btn_hide){
+                            nbtn.style = "display:none"
+                        }else{
+                            nbtn.style = 'text-decoration:none;border-radius:4px;'
+                        }
                         btndiv.appendChild(nbtn)
                         if(btn_istoggle){
-                            (function(btnname,group_name,btn){
+                            (function(btnname,group_name,btn,btn_hide){
                                 var is_active
                                 function set_active(target){
                                     is_active = target
+                                    if(btn_hide)
+                                        return
                                     if(is_active){
                                         btn.style = 'text-decoration:none;border-radius:4px;background-color:#d5d4c963'
                                     }else{
@@ -938,6 +945,19 @@ RLQ.push(function () {
                                     peek:function(){return is_active},
                                     clear:function(){/* 按钮按下后，不改变状态 */},
 
+                                    set_btn_status:function(newstatus){
+                                        if(group_name != undefined){
+                                            //reset group
+                                            //搜索所有的btn，重置状态
+                                            var values = btns.values()
+                                            for(var value = values.next();!value.done;value = values.next()){
+                                                if(value.value.reset_toggle_group){
+                                                    value.value.reset_toggle_group(group_name)
+                                                }
+                                            }
+                                        }
+                                        set_active(newstatus)
+                                    },
                                     reset_toggle_group:function(gpname){
                                         if(gpname == group_name){
                                             set_active(false)
@@ -968,11 +988,45 @@ RLQ.push(function () {
                                         set_active(true)
                                     }
                                 }
-                            })(btnname_str,btn_groupname,nbtn)
+                            })(btnname_str,btn_groupname,nbtn,btn_hide)
 
                         }else{
-                            nbtn.onclick = (function(btnname,btn,btnreset_count){/* 用于闭包兼容 */
-                                return function(){/* 实际回调函数 */
+                            (function(btnname,btn,btnreset_count,btn_hide){/* 用于闭包兼容 */
+                                var is_active
+                                function set_active(target){
+                                    is_active = target
+                                    if(btn_hide)
+                                        return
+                                    if(is_active){
+                                        btn.style = 'text-decoration:none;border-radius:4px;background-color:#d5d4c963'
+                                    }else{
+                                        btn.style = 'text-decoration:none;border-radius:4px;'
+                                    }
+                                }
+                                set_active(false)
+                                btns.set(btnname,
+                                        { /* button control object */
+                                            peek: function(anm2_id){
+                                                return is_active && !btn.triggered_anm2.has(anm2_id)
+                                            },
+                                            clear: function(anm2_id){
+                                                if(is_active && !btn.triggered_anm2.has(anm2_id)){
+                                                    btn.triggered_anm2.add(anm2_id)
+                                                    if(btn.triggered_anm2.size >= btnreset_count){
+                                                        set_active(false)
+                                                    }
+                                                    return true    
+                                                }else{
+                                                    return false
+                                                }
+                                            },
+                                            set_btn_status: function(newstatus){
+                                                btn.triggered_anm2 = new Set()
+                                                set_active(newstatus)
+                                            }
+                                        }
+                                    )
+                                btn.onclick = function(){/* 实际回调函数 */
                                     if(anmbtn_startdraw == undefined){
                                         /* 动画还没有加载 */
                                         return
@@ -983,28 +1037,9 @@ RLQ.push(function () {
                                     }
                                     //设置按钮状态为“按下”
                                     btn.triggered_anm2 = new Set()
-                                    btn.style = 'text-decoration:none;border-radius:4px;background-color:#d5d4c963'
-                                    btns.set(btnname,
-                                        { /* button control object */
-                                            peek: function(anm2_id){
-                                                if(btn.triggered_anm2.has(anm2_id))
-                                                    return false
-                                                return true
-                                            },
-                                            clear: function(anm2_id){
-                                                if(btn.triggered_anm2.has(anm2_id))
-                                                    return false
-                                                btn.triggered_anm2.add(anm2_id)
-                                                if(btn.triggered_anm2.size >= btnreset_count){
-                                                    btn.style = 'text-decoration:none;border-radius:4px;'
-                                                    btns.set(btnname,false)
-                                                }
-                                                return true
-                                            }
-                                        }
-                                    )
+                                    set_active(true)
                                 }
-                            })(btnname_str,nbtn,btnreset_count)
+                            })(btnname_str,nbtn,btnreset_count,btn_hide)
                         }
                     }
                 }
@@ -1104,6 +1139,25 @@ RLQ.push(function () {
                     anmplayer.revert = r.has("revert") && r.get("revert") == "true"
                     if(anmplayer.revert){
                         anmplayer.play(anmplayer.currentAnm.FrameNum - 1)
+                    }
+
+                    if(r.has("setbtn")){
+                        var btnnames = r.get("setbtn").split("&&&")
+                        for(var j=0;j<btnnames.length;j++){
+                            var btnobj = btns.get(btnnames[j])
+                            if(btnobj && btnobj.set_btn_status){
+                                btnobj.set_btn_status(true)
+                            }
+                        }
+                    }
+                    if(r.has("resetbtn")){
+                        var btnnames = r.get("resetbtn").split("&&&")
+                        for(var j=0;j<btnnames.length;j++){
+                            var btnobj = btns.get(btnnames[j])
+                            if(btnobj && btnobj.set_btn_status){
+                                btnobj.set_btn_status(false)
+                            }
+                        }
                     }
                     return true
                 }
