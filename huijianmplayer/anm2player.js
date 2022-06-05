@@ -836,7 +836,7 @@ RLQ.push(function () {
         //记录当前播放器中所有按钮是否被按下
         var btndiv = undefined
         var btns = new Map() /* 按钮名称到状态的映射，未按下为false，按下为function，此function用于重置按钮状态 */
-
+        
         var waiting_for_click = canvasdiv.getAttribute("data-waitkey") == "true"
         var render_as_costume = canvasdiv.getAttribute("data-costume") == "true"
         var costume_A,costume_B,costume_C
@@ -905,6 +905,9 @@ RLQ.push(function () {
                 //parse button
                 var btnname_str = anm.children[j].getAttribute("data-btnname")
                 var btnreset_count = +anm.children[j].getAttribute("data-reset")
+                var btn_istoggle = anm.children[j].getAttribute("data-toggle") == "true"
+                var btn_groupname = anm.children[j].getAttribute("data-group")
+                var btn_initial_status = anm.children[j].getAttribute("data-init") == "true"
                 if(btnname_str && btnname_str.length > 0){
                     if(btndiv == undefined){
                         btndiv = document.createElement("div")
@@ -916,31 +919,93 @@ RLQ.push(function () {
                         nbtn.innerText = btnname_str
                         nbtn.style = 'text-decoration:none;border-radius:4px;'
                         btndiv.appendChild(nbtn)
-                        nbtn.onclick = (function(btnname,btn,btnreset_count){/* 用于闭包兼容 */
-                            return function(){/* 实际回调函数 */
-                            if(anmbtn_startdraw == undefined){
-                                /* 动画还没有加载 */
-                                return
-                            }
-                            if(waiting_for_click){
-                                waiting_for_click = false
-                                anmbtn_startdraw(false)
-                            }
-                                //设置按钮状态为“按下”
-                                btn.triggered_anm2 = new Set()
-                                btn.style = 'text-decoration:none;border-radius:4px;background-color:#d5d4c963'
-                                btns.set(btnname,function(anm2_id){
-                                    if(btn.triggered_anm2.has(anm2_id))
-                                        return false
-                                    btn.triggered_anm2.add(anm2_id)
-                                    if(btn.triggered_anm2.size >= btnreset_count){
+                        if(btn_istoggle){
+                            (function(btnname,group_name,btn){
+                                var is_active
+                                function set_active(target){
+                                    is_active = target
+                                    if(is_active){
+                                        btn.style = 'text-decoration:none;border-radius:4px;background-color:#d5d4c963'
+                                    }else{
                                         btn.style = 'text-decoration:none;border-radius:4px;'
-                                        btns.set(btnname,false)
                                     }
-                                    return true
+                                }
+                                set_active(btn_initial_status)
+
+
+                                btns.set(btnname,{
+                                    /* 我们的按钮状态是is_active，通过闭包传递进来的，所以这里还是通过闭包来操作他 */
+                                    peek:function(){return is_active},
+                                    clear:function(){/* 按钮按下后，不改变状态 */},
+
+                                    reset_toggle_group:function(gpname){
+                                        if(gpname == group_name){
+                                            set_active(false)
+                                        }
+                                    }
                                 })
-                            }
-                        })(btnname_str,nbtn,btnreset_count)
+
+                                nbtn.onclick = function(){
+                                    if(anmbtn_startdraw == undefined){
+                                        /* 动画还没有加载 */
+                                        return
+                                    }
+                                    if(waiting_for_click){
+                                        waiting_for_click = false
+                                        anmbtn_startdraw(false)
+                                    }
+
+                                    if(group_name == undefined){
+                                        set_active(!is_active)
+                                    }else{
+                                        //搜索所有的btn，重置状态
+                                        var values = btns.values()
+                                        for(var value = values.next();!value.done;value = values.next()){
+                                            if(value.value.reset_toggle_group){
+                                                value.value.reset_toggle_group(group_name)
+                                            }
+                                        }
+                                        set_active(true)
+                                    }
+                                }
+                            })(btnname_str,btn_groupname,nbtn)
+
+                        }else{
+                            nbtn.onclick = (function(btnname,btn,btnreset_count){/* 用于闭包兼容 */
+                                return function(){/* 实际回调函数 */
+                                    if(anmbtn_startdraw == undefined){
+                                        /* 动画还没有加载 */
+                                        return
+                                    }
+                                    if(waiting_for_click){
+                                        waiting_for_click = false
+                                        anmbtn_startdraw(false)
+                                    }
+                                    //设置按钮状态为“按下”
+                                    btn.triggered_anm2 = new Set()
+                                    btn.style = 'text-decoration:none;border-radius:4px;background-color:#d5d4c963'
+                                    btns.set(btnname,
+                                        { /* button control object */
+                                            peek: function(anm2_id){
+                                                if(btn.triggered_anm2.has(anm2_id))
+                                                    return false
+                                                return true
+                                            },
+                                            clear: function(anm2_id){
+                                                if(btn.triggered_anm2.has(anm2_id))
+                                                    return false
+                                                btn.triggered_anm2.add(anm2_id)
+                                                if(btn.triggered_anm2.size >= btnreset_count){
+                                                    btn.style = 'text-decoration:none;border-radius:4px;'
+                                                    btns.set(btnname,false)
+                                                }
+                                                return true
+                                            }
+                                        }
+                                    )
+                                }
+                            })(btnname_str,nbtn,btnreset_count)
+                        }
                     }
                 }
                 //parse replacesheet
@@ -987,11 +1052,32 @@ RLQ.push(function () {
                 if (r.has("rate") && Math.random() > +r.get("rate"))
                     continue
                 if (r.has("whenbtn")){
-                    var btncb = btns.get(r.get("whenbtn"))
-                    if(!btncb)
+                    var block = false
+                    var btn_names = r.get("whenbtn").split("&&&")
+                    for(var j=0;j<btn_names.length;j++){
+                        var btncb = btns.get(btn_names[j])
+                        if((!btncb) || (!btncb.peek(player_id))){
+                            block = true
+                            break
+                        }
+                    }
+                    if(block){
                         continue
-                    if(!btncb(player_id))
+                    }
+                }
+                if (r.has("whenbtnN")){
+                    var block = false
+                    var btn_names = r.get("whenbtnN").split("&&&")
+                    for(var j=0;j<btn_names.length;j++){
+                        var btncb = btns.get(btn_names[j])
+                        if(btncb && btncb.peek(player_id)){
+                            block = true
+                            break
+                        }
+                    }
+                    if(block){
                         continue
+                    }
                 }
                 if (r.has(ename)) {
                     var rename = r.get(ename)
@@ -1001,6 +1087,15 @@ RLQ.push(function () {
                     }
                     player.played_frame = 0
 
+                    if (r.has("whenbtn")){
+                        var block = false
+                        var btn_names = r.get("whenbtn").split("&&&")
+                        for(var j=0;j<btn_names.length;j++){
+                            var btncb = btns.get(btn_names[j])
+                            btncb.clear(player_id)
+                        }
+                    }
+    
                     if (mw.config.get("debug")) {
                         console.log("apply rule", rule[i])
                     }
