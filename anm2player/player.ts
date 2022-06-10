@@ -525,7 +525,7 @@ class AnmPlayer{
             }
         }
     }
-    private static COSTUME_STEP = ["glow","body","body0","body1","head","head0","head1","head2","head3","head4","head5","top0","extra","ghost","back"]
+    private static COSTUME_STEP = ["glow","back","body","body0","body1","head","head0","head1","head2","head3","head4","head5","top0","extra","ghost"]
 
     public static renderCostume(anmA:CostumeInfo[],anmB:CostumeInfo[]|undefined,anmC:CostumeInfo[]|undefined,ctx:CanvasRenderingContext2D, canvas:HTMLCanvasElement, centerX:number, centerY:number, rootScale:number,shootFrame:number,walkFrame:number){
         //anmA is leg,anmB is head

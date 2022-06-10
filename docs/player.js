@@ -599,6 +599,6 @@ var AnmPlayer = /** @class */ (function () {
     };
     AnmPlayer.svgfilter_incrid = 0;
     AnmPlayer.SKIN_ALT_NAME = ['_white', '_black', '_blue', '_red', '_green', '_grey'];
-    AnmPlayer.COSTUME_STEP = ["glow", "body", "body0", "body1", "head", "head0", "head1", "head2", "head3", "head4", "head5", "top0", "extra", "ghost", "back"];
+    AnmPlayer.COSTUME_STEP = ["glow", "back", "body", "body0", "body1", "head", "head0", "head1", "head2", "head3", "head4", "head5", "top0", "extra", "ghost"];
     return AnmPlayer;
 }());
