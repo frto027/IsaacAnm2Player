@@ -855,11 +855,16 @@ RLQ.push(function () {
         }
         var is_flying = false
 
+        var random_idle_last_update = 0
+        var random_idle_anm = undefined
+        var random_idle_is_playing = false
+
         var patch = new Set()
         var PATCH_Neptunus = "neptunus"
         var PATCH_csection = "csection"
         var PATCH_tApollyon = "tApollyon"
         var PATCH_noCharge = 'nocharge'
+        var PATCH_randomIdle = "rndIdle"
 
         var tapollyon_ring_frame = 0
 
@@ -1266,6 +1271,10 @@ RLQ.push(function () {
                     costume_B[i] = new AnmPlayer(target,huijiUrlBuilder,replace_sprite_func, function(){})
                     costume_C[i] = new AnmPlayer(target,huijiUrlBuilder,replace_sprite_func, function(){})
 
+                    if(patch.has(PATCH_randomIdle)){
+                        random_idle_anm = new AnmPlayer(target,huijiUrlBuilder,replace_sprite_func, function(){})
+                        random_idle_anm.setEndEventListener(function(){random_idle_is_playing = false})
+                    }
 
                     costume_A[i].forceLoop = true
                     costume_B[i].forceLoop = true
@@ -1628,10 +1637,15 @@ RLQ.push(function () {
             }
             function draw(noUpdate) {
                 //update
+
+                var render_random_idle = random_idle_is_playing
+
                 if(render_as_costume){
                     if(!noUpdate){
                         var is_head_idle = false
-
+                        if(random_idle_is_playing){
+                            random_idle_anm.update()
+                        }
                         
                         if(patch.has(PATCH_csection)){
                             costume_leg_dir = costume_head_dir
@@ -1725,7 +1739,16 @@ RLQ.push(function () {
                                 }
                                 costume_A[i].update()
                             }
-                        }    
+                        }
+
+                        if(patch.has(PATCH_randomIdle)){
+                            var now = new Date().getTime()
+                            if(now > random_idle_last_update){
+                                random_idle_last_update = now + 1000*5
+                                random_idle_anm.setFrame("Idle",0)
+                                random_idle_is_playing = true
+                            }
+                        }
                     }
                     //draw
                     var ctx = canvas.getContext("2d")
@@ -1735,6 +1758,10 @@ RLQ.push(function () {
                     if(costume_status == 'Walk'){
                         if(patch.has(PATCH_csection)){
                             AnmPlayer.renderCostume(costumeInfoB,costumeInfoA,costumeInfoC,ctx, canvas, players[0].x, players[0].y, 1,0,Math.floor(costume_walking_frame))
+                        }else if(render_random_idle){
+                            //PATCH_randomIdle
+                            AnmPlayer.renderCostume(costumeInfoB,undefined,undefined,ctx, canvas, players[0].x, players[0].y, 1,Math.floor(costume_shooting_frame),Math.floor(costume_walking_frame))
+                            random_idle_anm.drawCanvas(ctx,canvas,players[0].x,players[0].y - 17,1)
                         }else{
                             AnmPlayer.renderCostume(costumeInfoB,costumeInfoA,costumeInfoC,ctx, canvas, players[0].x, players[0].y, 1,Math.floor(costume_shooting_frame),Math.floor(costume_walking_frame))
                         }
