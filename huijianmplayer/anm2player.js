@@ -1,4 +1,5 @@
-RLQ.push(function () {
+(function(){
+function setup_anm2_player() {
 
     /* ========= */
     var FrameStatus = /** @class */ (function () {
@@ -1921,4 +1922,11 @@ RLQ.push(function () {
     if (pageName && pageName.startsWith("Data:Anm2/") && pageName.endsWith(".json")) {
         initJsonPage(pageName.substr(5))
     }
-})
+}
+
+if(document.readyState == 'loading'){
+    document.addEventListener('DOMContentLoaded', setup_anm2_player)
+}else{
+    setup_anm2_player()
+}
+})()
