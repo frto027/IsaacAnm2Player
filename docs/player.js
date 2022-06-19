@@ -146,7 +146,7 @@ var AnmPlayer = /** @class */ (function () {
         }
         return ret;
     };
-    AnmPlayer.prototype.createSvgFilterElement = function (R, G, B, A, RO, GO, BO) {
+    AnmPlayer.createSvgFilterElement = function (R, G, B, A, RO, GO, BO) {
         var NS = "http://www.w3.org/2000/svg";
         if (AnmPlayer.svgRoot == undefined) {
             AnmPlayer.svgRoot = document.createElementNS(NS, "svg");
@@ -361,7 +361,7 @@ var AnmPlayer = /** @class */ (function () {
                     //draw frame
                     if (!frame.filterGenerated) {
                         frame.filterGenerated = true;
-                        frame.filterId = 'url(#' + this.createSvgFilterElement(((rootframe === null || rootframe === void 0 ? void 0 : rootframe.RedTint) || 255) * frame.RedTint / (255 * 255), ((rootframe === null || rootframe === void 0 ? void 0 : rootframe.GreenTint) || 255) * frame.GreenTint / (255 * 255), ((rootframe === null || rootframe === void 0 ? void 0 : rootframe.BlueTint) || 255) * frame.BlueTint / (255 * 255), ((rootframe === null || rootframe === void 0 ? void 0 : rootframe.AlphaTint) || 255) * frame.AlphaTint / (255 * 255), frame.RedOffset / 255, frame.GreenOffset / 255, frame.BlueOffset / 255) + ')';
+                        frame.filterId = 'url(#' + AnmPlayer.createSvgFilterElement(((rootframe === null || rootframe === void 0 ? void 0 : rootframe.RedTint) || 255) * frame.RedTint / (255 * 255), ((rootframe === null || rootframe === void 0 ? void 0 : rootframe.GreenTint) || 255) * frame.GreenTint / (255 * 255), ((rootframe === null || rootframe === void 0 ? void 0 : rootframe.BlueTint) || 255) * frame.BlueTint / (255 * 255), ((rootframe === null || rootframe === void 0 ? void 0 : rootframe.AlphaTint) || 255) * frame.AlphaTint / (255 * 255), frame.RedOffset / 255, frame.GreenOffset / 255, frame.BlueOffset / 255) + ')';
                     }
                     ctx.filter = frame.filterId || 'none';
                     ctx.globalAlpha = 1;

@@ -149,7 +149,7 @@ function setup_anm2_player() {
             }
             return ret;
         };
-        AnmPlayer.prototype.createSvgFilterElement = function (R, G, B, A, RO, GO, BO) {
+        AnmPlayer.createSvgFilterElement = function (R, G, B, A, RO, GO, BO) {
             var NS = "http://www.w3.org/2000/svg";
             if (AnmPlayer.svgRoot == undefined) {
                 AnmPlayer.svgRoot = document.createElementNS(NS, "svg");
@@ -364,7 +364,7 @@ function setup_anm2_player() {
                         //draw frame
                         if (!frame.filterGenerated) {
                             frame.filterGenerated = true;
-                            frame.filterId = 'url(#' + this.createSvgFilterElement(((rootframe === null || rootframe === void 0 ? void 0 : rootframe.RedTint) || 255) * frame.RedTint / (255 * 255), ((rootframe === null || rootframe === void 0 ? void 0 : rootframe.GreenTint) || 255) * frame.GreenTint / (255 * 255), ((rootframe === null || rootframe === void 0 ? void 0 : rootframe.BlueTint) || 255) * frame.BlueTint / (255 * 255), ((rootframe === null || rootframe === void 0 ? void 0 : rootframe.AlphaTint) || 255) * frame.AlphaTint / (255 * 255), frame.RedOffset / 255, frame.GreenOffset / 255, frame.BlueOffset / 255) + ')';
+                            frame.filterId = 'url(#' + AnmPlayer.createSvgFilterElement(((rootframe === null || rootframe === void 0 ? void 0 : rootframe.RedTint) || 255) * frame.RedTint / (255 * 255), ((rootframe === null || rootframe === void 0 ? void 0 : rootframe.GreenTint) || 255) * frame.GreenTint / (255 * 255), ((rootframe === null || rootframe === void 0 ? void 0 : rootframe.BlueTint) || 255) * frame.BlueTint / (255 * 255), ((rootframe === null || rootframe === void 0 ? void 0 : rootframe.AlphaTint) || 255) * frame.AlphaTint / (255 * 255), frame.RedOffset / 255, frame.GreenOffset / 255, frame.BlueOffset / 255) + ')';
                         }
                         ctx.filter = frame.filterId || 'none';
                         ctx.globalAlpha = 1;
@@ -866,6 +866,8 @@ function setup_anm2_player() {
         var PATCH_tApollyon = "tApollyon"
         var PATCH_noCharge = 'nocharge'
         var PATCH_randomIdle = "rndIdle"
+        var PATCH_blueFilter = "blueFilter"
+        var PATCH_noAttack = "noAttack"
 
         var tapollyon_ring_frame = 0
 
@@ -1221,8 +1223,13 @@ function setup_anm2_player() {
         var canvas_style = "vertical-align:middle;"
         if(canvasdiv.getAttribute("data-scale")){
             var scale = +canvasdiv.getAttribute("data-scale")
-            canvas_style += "transform:scale("+scale+");margin:" + (canvas.height * (scale-1)/2) + "px " + (canvas.width * (scale-1)/2) +"px"
+            canvas_style += "transform:scale("+scale+");margin:" + (canvas.height * (scale-1)/2) + "px " + (canvas.width * (scale-1)/2) +"px;"
         }
+
+        if(patch.has(PATCH_blueFilter)){
+            canvas_style += "filter:url(#" + AnmPlayer.createSvgFilterElement(1.5,1.7,2,1,0.05,0.12,0.2) + ");"
+        }
+
         canvas.style = canvas_style
         if(btndiv){
             var btndiv_contariner = document.createElement("div")
@@ -1440,25 +1447,27 @@ function setup_anm2_player() {
                     if(key.length == 1){
                         key = key.toLowerCase()
                     }
-                    if(key == 'ArrowUp'){
-                        costume_head_dir = 'Up'
-                        costume_shooting.u = true
-                        catched = true
-                    }
-                    if(key == 'ArrowDown'){
-                        costume_head_dir = 'Down'
-                        costume_shooting.d = true
-                        catched = true
-                    }
-                    if(key == 'ArrowLeft'){
-                        costume_head_dir = 'Left'
-                        costume_shooting.l = true
-                        catched = true
-                    }
-                    if(key == 'ArrowRight'){
-                        costume_head_dir = 'Right'
-                        costume_shooting.r = true
-                        catched = true
+                    if(!patch.has(PATCH_noAttack)){
+                        if(key == 'ArrowUp'){
+                            costume_head_dir = 'Up'
+                            costume_shooting.u = true
+                            catched = true
+                        }
+                        if(key == 'ArrowDown'){
+                            costume_head_dir = 'Down'
+                            costume_shooting.d = true
+                            catched = true
+                        }
+                        if(key == 'ArrowLeft'){
+                            costume_head_dir = 'Left'
+                            costume_shooting.l = true
+                            catched = true
+                        }
+                        if(key == 'ArrowRight'){
+                            costume_head_dir = 'Right'
+                            costume_shooting.r = true
+                            catched = true
+                        }    
                     }
                     if(key == 'w'){
                         costume_status = 'Walk'
@@ -1517,21 +1526,23 @@ function setup_anm2_player() {
                     if(key.length == 1){
                         key = key.toLowerCase()
                     }
-                    if(key == 'ArrowUp'){
-                        costume_shooting.u = false
-                        catched = true
-                    }
-                    if(key == 'ArrowDown'){
-                        costume_shooting.d = false
-                        catched = true
-                    }
-                    if(key == 'ArrowLeft'){
-                        costume_shooting.l = false
-                        catched = true
-                    }
-                    if(key == 'ArrowRight'){
-                        costume_shooting.r = false
-                        catched = true
+                    if(!patch.has(PATCH_noAttack)){
+                        if(key == 'ArrowUp'){
+                            costume_shooting.u = false
+                            catched = true
+                        }
+                        if(key == 'ArrowDown'){
+                            costume_shooting.d = false
+                            catched = true
+                        }
+                        if(key == 'ArrowLeft'){
+                            costume_shooting.l = false
+                            catched = true
+                        }
+                        if(key == 'ArrowRight'){
+                            costume_shooting.r = false
+                            catched = true
+                        }
                     }
                     if(key == 'w'){
                         costume_walking.u = false
@@ -1567,11 +1578,12 @@ function setup_anm2_player() {
                         }
                         var x = touch.pageX, y=touch.pageY
                         touch_data[id] = {x:x,y:y}
-
-                        costume_shooting.u = (costume_head_dir == "Up")
-                        costume_shooting.l = (costume_head_dir == "Left")
-                        costume_shooting.r = (costume_head_dir == "Right")
-                        costume_shooting.d = (costume_head_dir == "Down")
+                        if(!patch.has(PATCH_noAttack)){
+                            costume_shooting.u = (costume_head_dir == "Up")
+                            costume_shooting.l = (costume_head_dir == "Left")
+                            costume_shooting.r = (costume_head_dir == "Right")
+                            costume_shooting.d = (costume_head_dir == "Down")    
+                        }
                     }
                 })
                 canvas.addEventListener('touchmove',function(ev){

@@ -171,7 +171,7 @@ class AnmPlayer{
     }
 
     static svgRoot?:Element
-    private createSvgFilterElement(R:number,G:number,B:number,A:number,RO:number,GO:number,BO:number){
+    public static createSvgFilterElement(R:number,G:number,B:number,A:number,RO:number,GO:number,BO:number){
         let NS = "http://www.w3.org/2000/svg"
         if(AnmPlayer.svgRoot == undefined){
             AnmPlayer.svgRoot = document.createElementNS(NS,"svg")
@@ -414,7 +414,7 @@ class AnmPlayer{
                     //draw frame
                     if(!frame.filterGenerated){
                         frame.filterGenerated = true
-                        frame.filterId = 'url(#' + this.createSvgFilterElement(
+                        frame.filterId = 'url(#' + AnmPlayer.createSvgFilterElement(
                             (rootframe?.RedTint || 255) * frame.RedTint     /(255*255),
                             (rootframe?.GreenTint || 255) * frame.GreenTint     /(255*255),
                             (rootframe?.BlueTint || 255) * frame.BlueTint       /(255*255),
