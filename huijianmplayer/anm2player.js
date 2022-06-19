@@ -846,6 +846,8 @@ function setup_anm2_player() {
         var costume_status = 'Walk',costume_status_reset = false
         var costume_leg_dir = 'Down',costume_head_dir = 'Down',costume_shooting = {u:false,d:false,l:false,r:false},
             costume_walking = {u:false,d:false,l:false,r:false} ,costume_shooting_frame=0,costume_walking_frame=0
+        var is_pausing = false
+
         if(render_as_costume){
             costume_A = [] /* head */
             costume_B = [] /* body */
@@ -1512,6 +1514,10 @@ function setup_anm2_player() {
                         costume_status_reset = true
                         catched = true
                     }
+                    if(key == 'x'){
+                        is_pausing = !is_pausing
+                        catched = true
+                    }
                     if(handleColorKey(key)){
                         catched = true
                     }
@@ -1650,157 +1656,158 @@ function setup_anm2_player() {
             }
             function draw(noUpdate) {
                 //update
-
-                var render_random_idle = random_idle_is_playing
-
-                if(render_as_costume){
-                    if(!noUpdate){
-                        var is_head_idle = false
-                        if(random_idle_is_playing){
-                            random_idle_anm.update()
-                        }
-                        
-                        if(patch.has(PATCH_csection)){
-                            costume_leg_dir = costume_head_dir
-                        }
-                        if(patch.has(PATCH_tApollyon)){
-                            tapollyon_ring_frame += 0.5
-                        }
-                        
-
-                        if(costume_status == "Walk"){
-                            if(costume_shooting.u || costume_shooting.d || costume_shooting.l || costume_shooting.r){
-                                if(patch.has(PATCH_Neptunus)){
-                                    costume_shooting_frame -= 0.5
-                                }else{
-                                    costume_shooting_frame+=0.5
-                                }
-                            }else{
-                                if(patch.has(PATCH_Neptunus)){
-                                    if(costume_shooting_frame < 17){
-                                        costume_shooting_frame += 0.5
-                                    }else{
-                                        //do nothing
-                                    }
-                                    is_head_idle = true
-                                }else{
-                                    costume_shooting_frame = is_head_idle ? (costume_shooting_frame + 1) % 2 : 0
-                                    is_head_idle = true
-                                }
+                if(!is_pausing){
+                    //render
+                    var render_random_idle = random_idle_is_playing
+                    if(render_as_costume){
+                        if(!noUpdate){
+                            var is_head_idle = false
+                            if(random_idle_is_playing){
+                                random_idle_anm.update()
                             }
-                            if(is_flying ||costume_walking.u || costume_walking.d || costume_walking.l || costume_walking.r ||
-                                (patch.has(PATCH_csection) && (costume_shooting.u || costume_shooting.d || costume_shooting.l || costume_shooting.r))
-                                ){
-                                costume_walking_frame++
-                            }else{
-                                costume_walking_frame = 0
+                            
+                            if(patch.has(PATCH_csection)){
+                                costume_leg_dir = costume_head_dir
                             }
-                        }
+                            if(patch.has(PATCH_tApollyon)){
+                                tapollyon_ring_frame += 0.5
+                            }
+                            
     
-                        for(var i=0;i<costume_A.length;i++){
-                            if(costume_status == 'Walk'){
-                                var target_anm_name_A = 'Head' + costume_head_dir
-                                if(is_head_idle && costumeInfoA[i].head_has_idle){
-                                    target_anm_name_A += '_Idle'
-                                }
-
-                                if(costumeInfoA[i].is_tapollyon){
-                                    costume_A[i].sheet_offsets[2].y = (Math.floor(tapollyon_ring_frame) % 8) * 32
-                                }
-
-                                if(patch.has(PATCH_Neptunus)){
-                                    if(is_head_idle){
-                                        costume_A[i].setFrame(target_anm_name_A + "Charge",costume_shooting_frame)
+                            if(costume_status == "Walk"){
+                                if(costume_shooting.u || costume_shooting.d || costume_shooting.l || costume_shooting.r){
+                                    if(patch.has(PATCH_Neptunus)){
+                                        costume_shooting_frame -= 0.5
                                     }else{
-                                        costume_A[i].setFrame(target_anm_name_A + "Shoot",costume_shooting_frame)
+                                        costume_shooting_frame+=0.5
                                     }
-                                }else if(!is_head_idle && costumeInfoA[i].head_has_charge){
-                                    var head_charge_frame = costumeInfoA[i].head_charge_frame
-                                    if(costume_shooting_frame >= head_charge_frame){
-                                        costume_A[i].setFrame(target_anm_name_A + "ChargeFull",Math.floor(costume_shooting_frame - head_charge_frame))
-                                    }else{
-                                        costume_A[i].setFrame(target_anm_name_A + "Charge",costume_shooting_frame)
-                                    }
-                                }else /* original logic */ if(costume_A[i].getCurrentAnmName() != (target_anm_name_A)){
-                                    costume_A[i].setFrame(target_anm_name_A,0)
                                 }else{
+                                    if(patch.has(PATCH_Neptunus)){
+                                        if(costume_shooting_frame < 17){
+                                            costume_shooting_frame += 0.5
+                                        }else{
+                                            //do nothing
+                                        }
+                                        is_head_idle = true
+                                    }else{
+                                        costume_shooting_frame = is_head_idle ? (costume_shooting_frame + 1) % 2 : 0
+                                        is_head_idle = true
+                                    }
+                                }
+                                if(is_flying ||costume_walking.u || costume_walking.d || costume_walking.l || costume_walking.r ||
+                                    (patch.has(PATCH_csection) && (costume_shooting.u || costume_shooting.d || costume_shooting.l || costume_shooting.r))
+                                    ){
+                                    costume_walking_frame++
+                                }else{
+                                    costume_walking_frame = 0
+                                }
+                            }
+        
+                            for(var i=0;i<costume_A.length;i++){
+                                if(costume_status == 'Walk'){
+                                    var target_anm_name_A = 'Head' + costume_head_dir
+                                    if(is_head_idle && costumeInfoA[i].head_has_idle){
+                                        target_anm_name_A += '_Idle'
+                                    }
+    
+                                    if(costumeInfoA[i].is_tapollyon){
+                                        costume_A[i].sheet_offsets[2].y = (Math.floor(tapollyon_ring_frame) % 8) * 32
+                                    }
+    
+                                    if(patch.has(PATCH_Neptunus)){
+                                        if(is_head_idle){
+                                            costume_A[i].setFrame(target_anm_name_A + "Charge",costume_shooting_frame)
+                                        }else{
+                                            costume_A[i].setFrame(target_anm_name_A + "Shoot",costume_shooting_frame)
+                                        }
+                                    }else if(!is_head_idle && costumeInfoA[i].head_has_charge){
+                                        var head_charge_frame = costumeInfoA[i].head_charge_frame
+                                        if(costume_shooting_frame >= head_charge_frame){
+                                            costume_A[i].setFrame(target_anm_name_A + "ChargeFull",Math.floor(costume_shooting_frame - head_charge_frame))
+                                        }else{
+                                            costume_A[i].setFrame(target_anm_name_A + "Charge",costume_shooting_frame)
+                                        }
+                                    }else /* original logic */ if(costume_A[i].getCurrentAnmName() != (target_anm_name_A)){
+                                        costume_A[i].setFrame(target_anm_name_A,0)
+                                    }else{
+                                        costume_A[i].update()
+                                    }
+    
+    
+    
+                                    if(costumeInfoB[i].is_csection){
+                                        costume_B[i].sheet_offsets[0].y = C_SECTION_FRAME_MAP[Math.floor(costume_shooting_frame * 1.5) % C_SECTION_FRAME_MAP.length] * 96
+                                    }
+                                    if(costume_B[i].getCurrentAnmName() != ('Walk' + costume_leg_dir)){
+                                        costume_B[i].setFrame('Walk' + costume_leg_dir,0)
+                                    }else{
+                                        costume_B[i].update()
+                                    }
+                                    if(costume_C[i].getCurrentAnmName() != ('Head' + costume_head_dir + '_Overlay')){
+                                        costume_C[i].setFrame('Head' + costume_head_dir + '_Overlay',0)
+                                    }else{
+                                        costume_C[i].update()
+                                    }
+                                }else{
+                                    if(costume_A[i].getCurrentAnmName() != costume_status){
+                                        costume_A[i].setFrame(costume_status,0)
+                                    }
+                                    if(costume_status_reset){
+                                        costume_status_reset = false
+                                        costume_A[i].play(0)
+                                    }
                                     costume_A[i].update()
                                 }
-
-
-
-                                if(costumeInfoB[i].is_csection){
-                                    costume_B[i].sheet_offsets[0].y = C_SECTION_FRAME_MAP[Math.floor(costume_shooting_frame * 1.5) % C_SECTION_FRAME_MAP.length] * 96
+                            }
+    
+                            if(patch.has(PATCH_randomIdle)){
+                                var now = new Date().getTime()
+                                if(now > random_idle_last_update){
+                                    random_idle_last_update = now + 1000*5
+                                    random_idle_anm.setFrame("Idle",0)
+                                    random_idle_is_playing = true
                                 }
-                                if(costume_B[i].getCurrentAnmName() != ('Walk' + costume_leg_dir)){
-                                    costume_B[i].setFrame('Walk' + costume_leg_dir,0)
-                                }else{
-                                    costume_B[i].update()
-                                }
-                                if(costume_C[i].getCurrentAnmName() != ('Head' + costume_head_dir + '_Overlay')){
-                                    costume_C[i].setFrame('Head' + costume_head_dir + '_Overlay',0)
-                                }else{
-                                    costume_C[i].update()
-                                }
+                            }
+                        }
+                        //draw
+                        var ctx = canvas.getContext("2d")
+                        ctx.imageSmoothingEnabled = false
+                        ctx.setTransform(1, 0, 0, 1, 0, 0)
+                        ctx.clearRect(0, 0, canvas.width, canvas.height)
+                        if(costume_status == 'Walk'){
+                            if(patch.has(PATCH_csection)){
+                                AnmPlayer.renderCostume(costumeInfoB,costumeInfoA,costumeInfoC,ctx, canvas, players[0].x, players[0].y, 1,0,Math.floor(costume_walking_frame))
+                            }else if(render_random_idle){
+                                //PATCH_randomIdle
+                                AnmPlayer.renderCostume(costumeInfoB,undefined,undefined,ctx, canvas, players[0].x, players[0].y, 1,Math.floor(costume_shooting_frame),Math.floor(costume_walking_frame))
+                                random_idle_anm.drawCanvas(ctx,canvas,players[0].x,players[0].y - 17,1)
                             }else{
-                                if(costume_A[i].getCurrentAnmName() != costume_status){
-                                    costume_A[i].setFrame(costume_status,0)
-                                }
-                                if(costume_status_reset){
-                                    costume_status_reset = false
-                                    costume_A[i].play(0)
-                                }
-                                costume_A[i].update()
+                                AnmPlayer.renderCostume(costumeInfoB,costumeInfoA,costumeInfoC,ctx, canvas, players[0].x, players[0].y, 1,Math.floor(costume_shooting_frame),Math.floor(costume_walking_frame))
                             }
-                        }
-
-                        if(patch.has(PATCH_randomIdle)){
-                            var now = new Date().getTime()
-                            if(now > random_idle_last_update){
-                                random_idle_last_update = now + 1000*5
-                                random_idle_anm.setFrame("Idle",0)
-                                random_idle_is_playing = true
-                            }
-                        }
-                    }
-                    //draw
-                    var ctx = canvas.getContext("2d")
-                    ctx.imageSmoothingEnabled = false
-                    ctx.setTransform(1, 0, 0, 1, 0, 0)
-                    ctx.clearRect(0, 0, canvas.width, canvas.height)
-                    if(costume_status == 'Walk'){
-                        if(patch.has(PATCH_csection)){
-                            AnmPlayer.renderCostume(costumeInfoB,costumeInfoA,costumeInfoC,ctx, canvas, players[0].x, players[0].y, 1,0,Math.floor(costume_walking_frame))
-                        }else if(render_random_idle){
-                            //PATCH_randomIdle
-                            AnmPlayer.renderCostume(costumeInfoB,undefined,undefined,ctx, canvas, players[0].x, players[0].y, 1,Math.floor(costume_shooting_frame),Math.floor(costume_walking_frame))
-                            random_idle_anm.drawCanvas(ctx,canvas,players[0].x,players[0].y - 17,1)
                         }else{
-                            AnmPlayer.renderCostume(costumeInfoB,costumeInfoA,costumeInfoC,ctx, canvas, players[0].x, players[0].y, 1,Math.floor(costume_shooting_frame),Math.floor(costume_walking_frame))
+                            AnmPlayer.renderCostume(costumeInfoA,undefined,undefined,ctx, canvas, players[0].x, players[0].y, 1,Math.floor(costume_shooting_frame),Math.floor(costume_walking_frame))
                         }
                     }else{
-                        AnmPlayer.renderCostume(costumeInfoA,undefined,undefined,ctx, canvas, players[0].x, players[0].y, 1,Math.floor(costume_shooting_frame),Math.floor(costume_walking_frame))
-                    }
-                }else{
-                    if(!noUpdate){
-                        for (var i = 0; i < anms.length; i++) {
-                            if (currentFps % (commonFps / anms[i].getFps()) == 0) {
-                                anms[i].update()
-                                players[i].played_frame++
+                        if(!noUpdate){
+                            for (var i = 0; i < anms.length; i++) {
+                                if (currentFps % (commonFps / anms[i].getFps()) == 0) {
+                                    anms[i].update()
+                                    players[i].played_frame++
+                                }
                             }
+                            currentFps = (currentFps + 1) % commonFps
                         }
-                        currentFps = (currentFps + 1) % commonFps
+                        //draw
+                        var ctx = canvas.getContext("2d")
+                        ctx.imageSmoothingEnabled = false
+    
+                        ctx.setTransform(1, 0, 0, 1, 0, 0)
+                        ctx.clearRect(0, 0, canvas.width, canvas.height)
+                        for (var i = anms.length - 1; i >= 0; i--) {
+                            anms[i].drawCanvas(ctx, canvas, players[i].x, players[i].y, 1)
+                        }
+    
                     }
-                    //draw
-                    var ctx = canvas.getContext("2d")
-                    ctx.imageSmoothingEnabled = false
-
-                    ctx.setTransform(1, 0, 0, 1, 0, 0)
-                    ctx.clearRect(0, 0, canvas.width, canvas.height)
-                    for (var i = anms.length - 1; i >= 0; i--) {
-                        anms[i].drawCanvas(ctx, canvas, players[i].x, players[i].y, 1)
-                    }
-
                 }
 
                 //loop
