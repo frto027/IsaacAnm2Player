@@ -1449,28 +1449,33 @@ function setup_anm2_player() {
                     if(key.length == 1){
                         key = key.toLowerCase()
                     }
-                    if(!patch.has(PATCH_noAttack)){
-                        if(key == 'ArrowUp'){
-                            costume_head_dir = 'Up'
-                            costume_shooting.u = true
-                            catched = true
-                        }
-                        if(key == 'ArrowDown'){
-                            costume_head_dir = 'Down'
-                            costume_shooting.d = true
-                            catched = true
-                        }
-                        if(key == 'ArrowLeft'){
-                            costume_head_dir = 'Left'
-                            costume_shooting.l = true
-                            catched = true
-                        }
-                        if(key == 'ArrowRight'){
-                            costume_head_dir = 'Right'
-                            costume_shooting.r = true
-                            catched = true
-                        }    
+                    if(key == 'ArrowUp'){
+                        costume_head_dir = 'Up'
+                        costume_shooting.u = true
+                        catched = true
                     }
+                    if(key == 'ArrowDown'){
+                        costume_head_dir = 'Down'
+                        costume_shooting.d = true
+                        catched = true
+                    }
+                    if(key == 'ArrowLeft'){
+                        costume_head_dir = 'Left'
+                        costume_shooting.l = true
+                        catched = true
+                    }
+                    if(key == 'ArrowRight'){
+                        costume_head_dir = 'Right'
+                        costume_shooting.r = true
+                        catched = true
+                    }
+                    if(patch.has(PATCH_noAttack)){
+                        costume_shooting.u = false
+                        costume_shooting.d = false
+                        costume_shooting.l = false
+                        costume_shooting.r = false
+                    }
+                    
                     if(key == 'w'){
                         costume_status = 'Walk'
                         costume_leg_dir = 'Up'
@@ -1532,23 +1537,21 @@ function setup_anm2_player() {
                     if(key.length == 1){
                         key = key.toLowerCase()
                     }
-                    if(!patch.has(PATCH_noAttack)){
-                        if(key == 'ArrowUp'){
-                            costume_shooting.u = false
-                            catched = true
-                        }
-                        if(key == 'ArrowDown'){
-                            costume_shooting.d = false
-                            catched = true
-                        }
-                        if(key == 'ArrowLeft'){
-                            costume_shooting.l = false
-                            catched = true
-                        }
-                        if(key == 'ArrowRight'){
-                            costume_shooting.r = false
-                            catched = true
-                        }
+                    if(key == 'ArrowUp'){
+                        costume_shooting.u = false
+                        catched = true
+                    }
+                    if(key == 'ArrowDown'){
+                        costume_shooting.d = false
+                        catched = true
+                    }
+                    if(key == 'ArrowLeft'){
+                        costume_shooting.l = false
+                        catched = true
+                    }
+                    if(key == 'ArrowRight'){
+                        costume_shooting.r = false
+                        catched = true
                     }
                     if(key == 'w'){
                         costume_walking.u = false
