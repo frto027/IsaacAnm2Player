@@ -1175,6 +1175,9 @@ function setup_anm2_player() {
                             }
                         }
                     }
+                    if(r.has("waitkey") && r.get("waitkey") == "true"){
+                        waiting_for_click = true
+                    }
                     return true
                 }
             }
