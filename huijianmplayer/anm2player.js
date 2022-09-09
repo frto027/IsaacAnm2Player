@@ -825,7 +825,7 @@ function setup_anm2_player() {
         3,3,3,3,
         4,4,4
     ]
-    AnmPlayer.setCrossOrigin("anonymous")
+    // AnmPlayer.setCrossOrigin("anonymous")
     function huijiUrlBuilder(url,replaced) {
         /* 注意过滤url */
         var prefix = 'Anm2/'
