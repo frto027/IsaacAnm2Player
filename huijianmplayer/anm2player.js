@@ -885,7 +885,20 @@ function setup_anm2_player() {
         var PATCH_randomIdle = patch.has("rndIdle")
         var PATCH_blueFilter = patch.has("blueFilter")
         var PATCH_noAttack = patch.has("noAttack")
+        var PATCH_moveChara = patch.has("moveChara")
 
+        //在控制台中执行window.enableMoveChara以启用角色移动
+        {
+                (function(){
+                var old_func = window.enableMoveChara
+                window.enableMoveChara = function(){
+                    PATCH_moveChara = true
+                    if(old_func != undefined){
+                        old_func()
+                    }
+                }
+            })()
+        }
 
         //动画此时还没有加载，加载后此变量指向draw函数
         var anmbtn_startdraw = undefined
@@ -1229,6 +1242,13 @@ function setup_anm2_player() {
 
         canvasdiv.appendChild(color_div)
 
+        var moveChara_x = 0, moveChara_y = 0
+        /*if(PATCH_moveChara)*/{
+            function UpdateCharaTransform(){
+                canvasdiv.style.transform = 'translate(' + moveChara_x + 'px,' + moveChara_y + 'px)'
+            }
+            UpdateCharaTransform()
+        }
 
         var canvas = document.createElement("canvas")
         canvas.width = +canvasdiv.getAttribute("data-width")
@@ -1781,6 +1801,49 @@ function setup_anm2_player() {
                                     random_idle_last_update = now + 1000*5
                                     random_idle_anm.setFrame("Idle",0)
                                     random_idle_is_playing = true
+                                }
+                            }
+
+                            if(PATCH_moveChara && costume_status == 'Walk'){
+                                if(costume_walking.u || costume_walking.d || costume_walking.l || costume_walking.r){
+                                    var speed = 5
+                                    if(costume_walking.u){
+                                        moveChara_y -= speed
+                                    }
+                                    if(costume_walking.d){
+                                        moveChara_y += speed
+                                    }
+                                    if(costume_walking.r){
+                                        moveChara_x += speed
+                                    }
+                                    if(costume_walking.l){
+                                        moveChara_x -= speed
+                                    }
+
+                                    var rectA = canvasdiv.getBoundingClientRect()
+                                    var rectB = document.body.getBoundingClientRect()
+                                    
+                                    UpdateCharaTransform()
+                                    var reUpdate = false
+                                    if(rectA.x < rectB.x){
+                                        moveChara_x += rectB.x - rectA.x
+                                        reUpdate = true
+                                    }
+                                    if(rectA.right > rectB.right){
+                                        moveChara_x -= rectA.right - rectB.right
+                                        reUpdate = true
+                                    }
+                                    if(rectA.y < rectB.y){
+                                        moveChara_y += rectB.y - rectA.y
+                                        reUpdate = true
+                                    }
+                                    if(rectA.bottom > rectB.bottom){
+                                        moveChara_y -= rectA.bottom - rectB.bottom
+                                        reUpdate = true
+                                    }
+                                    if(reUpdate){
+                                        UpdateCharaTransform()
+                                    }
                                 }
                             }
                         }
