@@ -871,20 +871,21 @@ function setup_anm2_player() {
         var random_idle_is_playing = false
 
         var patch = new Set()
-        var PATCH_Neptunus = "neptunus"
-        var PATCH_csection = "csection"
-        var PATCH_tApollyon = "tApollyon"
-        var PATCH_noCharge = 'nocharge'
-        var PATCH_randomIdle = "rndIdle"
-        var PATCH_blueFilter = "blueFilter"
-        var PATCH_noAttack = "noAttack"
-
         var tapollyon_ring_frame = 0
 
         var patch_attr = (canvasdiv.getAttribute("data-patch") || '').split(',')
         for(var i=0;i<patch_attr.length;i++){
             patch.add(patch_attr[i])
         }
+
+        var PATCH_Neptunus = patch.has("neptunus")
+        var PATCH_csection = patch.has("csection")
+        var PATCH_tApollyon = patch.has("tApollyon")
+        var PATCH_noCharge = patch.has('nocharge')
+        var PATCH_randomIdle = patch.has("rndIdle")
+        var PATCH_blueFilter = patch.has("blueFilter")
+        var PATCH_noAttack = patch.has("noAttack")
+
 
         //动画此时还没有加载，加载后此变量指向draw函数
         var anmbtn_startdraw = undefined
@@ -1239,7 +1240,7 @@ function setup_anm2_player() {
             canvas_style += "transform:scale("+scale+");margin:" + (canvas.height * (scale-1)/2) + "px " + (canvas.width * (scale-1)/2) +"px;"
         }
 
-        if(patch.has(PATCH_blueFilter)){
+        if(PATCH_blueFilter){
             canvas_style += "filter:url(#" + AnmPlayer.createSvgFilterElement(1.5,1.7,2,1,0.05,0.12,0.2) + ");"
         }
 
@@ -1292,7 +1293,7 @@ function setup_anm2_player() {
                     costume_B[i] = new AnmPlayer(target,huijiUrlBuilder,replace_sprite_func, function(){})
                     costume_C[i] = new AnmPlayer(target,huijiUrlBuilder,replace_sprite_func, function(){})
 
-                    if(patch.has(PATCH_randomIdle)){
+                    if(PATCH_randomIdle){
                         random_idle_anm = new AnmPlayer(target,huijiUrlBuilder,replace_sprite_func, function(){})
                         random_idle_anm.setEndEventListener(function(){random_idle_is_playing = false})
                     }
@@ -1309,7 +1310,7 @@ function setup_anm2_player() {
                         if(anm_names[j].startsWith("Head") && anm_names[j].endsWith("_Idle")){
                             head_has_idle = true
                         }
-                        if(!patch.has(PATCH_noCharge)){
+                        if(!PATCH_noCharge){
                             if(!head_has_charge && anm_names[j].startsWith("Head") && anm_names[j].endsWith("Charge")){
                                 head_has_charge = true
                                 costume_A[i].setFrame(anm_names[j],0)
@@ -1332,12 +1333,12 @@ function setup_anm2_player() {
                         player:costume_C[i]
                     }
 
-                    if(patch.has(PATCH_csection) && costume_B[i].getAnmNames().indexOf("SubAnim_Shoot") != -1){
+                    if(PATCH_csection && costume_B[i].getAnmNames().indexOf("SubAnim_Shoot") != -1){
                         costume_B[i].sheet_offsets[0] = {x:0,y:0}
                         costumeInfoB[i].is_csection = true
                     }
 
-                    if(patch.has(PATCH_tApollyon) && costume_A[i].getAnmNames().indexOf("SubAnim") != -1){
+                    if(PATCH_tApollyon && costume_A[i].getAnmNames().indexOf("SubAnim") != -1){
                         costume_A[i].sheet_offsets[2] = {x:0,y:0}
                         costumeInfoA[i].is_tapollyon = true
                     }
@@ -1480,7 +1481,7 @@ function setup_anm2_player() {
                         costume_shooting.r = true
                         catched = true
                     }
-                    if(patch.has(PATCH_noAttack)){
+                    if(PATCH_noAttack){
                         costume_shooting.u = false
                         costume_shooting.d = false
                         costume_shooting.l = false
@@ -1598,7 +1599,7 @@ function setup_anm2_player() {
                         }
                         var x = touch.pageX, y=touch.pageY
                         touch_data[id] = {x:x,y:y}
-                        if(!patch.has(PATCH_noAttack)){
+                        if(!PATCH_noAttack){
                             costume_shooting.u = (costume_head_dir == "Up")
                             costume_shooting.l = (costume_head_dir == "Left")
                             costume_shooting.r = (costume_head_dir == "Right")
@@ -1680,23 +1681,23 @@ function setup_anm2_player() {
                                 random_idle_anm.update()
                             }
                             
-                            if(patch.has(PATCH_csection)){
+                            if(PATCH_csection){
                                 costume_leg_dir = costume_head_dir
                             }
-                            if(patch.has(PATCH_tApollyon)){
+                            if(PATCH_tApollyon){
                                 tapollyon_ring_frame += 0.5
                             }
                             
     
                             if(costume_status == "Walk"){
                                 if(costume_shooting.u || costume_shooting.d || costume_shooting.l || costume_shooting.r){
-                                    if(patch.has(PATCH_Neptunus)){
+                                    if(PATCH_Neptunus){
                                         costume_shooting_frame -= 0.5
                                     }else{
                                         costume_shooting_frame+=0.5
                                     }
                                 }else{
-                                    if(patch.has(PATCH_Neptunus)){
+                                    if(PATCH_Neptunus){
                                         if(costume_shooting_frame < 17){
                                             costume_shooting_frame += 0.5
                                         }else{
@@ -1709,7 +1710,7 @@ function setup_anm2_player() {
                                     }
                                 }
                                 if(is_flying ||costume_walking.u || costume_walking.d || costume_walking.l || costume_walking.r ||
-                                    (patch.has(PATCH_csection) && (costume_shooting.u || costume_shooting.d || costume_shooting.l || costume_shooting.r))
+                                    (PATCH_csection && (costume_shooting.u || costume_shooting.d || costume_shooting.l || costume_shooting.r))
                                     ){
                                     costume_walking_frame++
                                 }else{
@@ -1728,7 +1729,7 @@ function setup_anm2_player() {
                                         costume_A[i].sheet_offsets[2].y = (Math.floor(tapollyon_ring_frame) % 8) * 32
                                     }
     
-                                    if(patch.has(PATCH_Neptunus)){
+                                    if(PATCH_Neptunus){
                                         if(is_head_idle){
                                             costume_A[i].setFrame(target_anm_name_A + "Charge",costume_shooting_frame)
                                         }else{
@@ -1774,7 +1775,7 @@ function setup_anm2_player() {
                                 }
                             }
     
-                            if(patch.has(PATCH_randomIdle)){
+                            if(PATCH_randomIdle){
                                 var now = new Date().getTime()
                                 if(now > random_idle_last_update){
                                     random_idle_last_update = now + 1000*5
@@ -1789,7 +1790,7 @@ function setup_anm2_player() {
                         ctx.setTransform(1, 0, 0, 1, 0, 0)
                         ctx.clearRect(0, 0, canvas.width, canvas.height)
                         if(costume_status == 'Walk'){
-                            if(patch.has(PATCH_csection)){
+                            if(PATCH_csection){
                                 AnmPlayer.renderCostume(costumeInfoB,costumeInfoA,costumeInfoC,ctx, canvas, players[0].x, players[0].y, 1,0,Math.floor(costume_walking_frame))
                             }else if(render_random_idle){
                                 //PATCH_randomIdle
