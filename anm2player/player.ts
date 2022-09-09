@@ -93,6 +93,8 @@ interface LoadedAnms{
 
 class AnmPlayer{
     static svgfilter_incrid:number = 0
+    static crossOrigin?:string = undefined
+
     anm2:Actor
     
     sprites:string[] = new Array() /* spriteid -> sprite path */
@@ -111,6 +113,7 @@ class AnmPlayer{
     revert:boolean = false
 
     sheet_offsets:{x:number,y:number}[/* sheet id */] = []
+
 
     eventListener?:(eventName:string)=>void
     anmEndEventListener?:()=>void
@@ -319,6 +322,9 @@ class AnmPlayer{
             img = document.createElement("img")
             img.src = this.img_url_builder(imgpath,replaced_url != undefined)
             img.setAttribute('style',"image-rendering: pixelated; display:none;")
+            if(AnmPlayer.crossOrigin != undefined){
+                img.setAttribute('crossorigin', AnmPlayer.crossOrigin)
+            }
             img.onload = ()=>{
                 img.setAttribute("img_loaded","true")
                 if(this.imgLoadListener){
@@ -512,6 +518,9 @@ class AnmPlayer{
         }
     }
 
+    public static setCrossOrigin(origin?:string){
+        AnmPlayer.crossOrigin = origin
+    }
     private static SKIN_ALT_NAME = ['_white','_black','_blue','_red','_green','_grey']
     public static processSkinAlt(target:Actor, skinAlt:number, firstOnly:boolean = false){
         if(skinAlt >=0 && skinAlt < AnmPlayer.SKIN_ALT_NAME.length){

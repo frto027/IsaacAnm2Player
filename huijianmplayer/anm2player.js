@@ -293,6 +293,9 @@ function setup_anm2_player() {
                 img = document.createElement("img");
                 img.src = this.img_url_builder(imgpath, replaced_url != undefined);
                 img.setAttribute('style', "image-rendering: pixelated; display:none;");
+                if (AnmPlayer.crossOrigin != undefined) {
+                    img.setAttribute('crossorigin', AnmPlayer.crossOrigin);
+                }
                 img.onload = function () {
                     img.setAttribute("img_loaded", "true");
                     if (_this.imgLoadListener) {
@@ -453,6 +456,9 @@ function setup_anm2_player() {
                 }
             }
         };
+        AnmPlayer.setCrossOrigin = function (origin) {
+            AnmPlayer.crossOrigin = origin;
+        };
         AnmPlayer.processSkinAlt = function (target, skinAlt, firstOnly) {
             var _a;
             if (firstOnly === void 0) { firstOnly = false; }
@@ -601,11 +607,12 @@ function setup_anm2_player() {
             }
         };
         AnmPlayer.svgfilter_incrid = 0;
+        AnmPlayer.crossOrigin = undefined;
         AnmPlayer.SKIN_ALT_NAME = ['_white', '_black', '_blue', '_red', '_green', '_grey'];
         AnmPlayer.COSTUME_STEP = ["glow", "back", "body", "body0", "body1", "head", "head0", "head1", "head2", "head3", "head4", "head5", "top0", "extra", "ghost"];
         return AnmPlayer;
     }());
-                /* ===================================== */
+                    /* ===================================== */
     function md5(md5str) {
         var createMD5String = function (string) {
             var x = Array();
@@ -818,6 +825,7 @@ function setup_anm2_player() {
         3,3,3,3,
         4,4,4
     ]
+    AnmPlayer.setCrossOrigin("anonymous")
     function huijiUrlBuilder(url,replaced) {
         /* 注意过滤url */
         var prefix = 'Anm2/'

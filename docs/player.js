@@ -290,6 +290,9 @@ var AnmPlayer = /** @class */ (function () {
             img = document.createElement("img");
             img.src = this.img_url_builder(imgpath, replaced_url != undefined);
             img.setAttribute('style', "image-rendering: pixelated; display:none;");
+            if (AnmPlayer.crossOrigin != undefined) {
+                img.setAttribute('crossorigin', AnmPlayer.crossOrigin);
+            }
             img.onload = function () {
                 img.setAttribute("img_loaded", "true");
                 if (_this.imgLoadListener) {
@@ -450,6 +453,9 @@ var AnmPlayer = /** @class */ (function () {
             }
         }
     };
+    AnmPlayer.setCrossOrigin = function (origin) {
+        AnmPlayer.crossOrigin = origin;
+    };
     AnmPlayer.processSkinAlt = function (target, skinAlt, firstOnly) {
         var _a;
         if (firstOnly === void 0) { firstOnly = false; }
@@ -598,6 +604,7 @@ var AnmPlayer = /** @class */ (function () {
         }
     };
     AnmPlayer.svgfilter_incrid = 0;
+    AnmPlayer.crossOrigin = undefined;
     AnmPlayer.SKIN_ALT_NAME = ['_white', '_black', '_blue', '_red', '_green', '_grey'];
     AnmPlayer.COSTUME_STEP = ["glow", "back", "body", "body0", "body1", "head", "head0", "head1", "head2", "head3", "head4", "head5", "top0", "extra", "ghost"];
     return AnmPlayer;
