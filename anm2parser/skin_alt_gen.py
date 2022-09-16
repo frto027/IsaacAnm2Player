@@ -47,4 +47,5 @@ for costume in costume_maps:
     output += "]," # + "\n"
 output += "])"
 
-print(output)
+if __name__ == "__main__":
+    print(output)
