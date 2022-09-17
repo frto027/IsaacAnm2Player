@@ -471,6 +471,34 @@ var AnmPlayer = /** @class */ (function () {
             }
         }
     };
+    AnmPlayer.processSkinAltAndCostumeAlt = function (target, skinAlt, costumeAlt) {
+        var _a;
+        for (var _i = 0, _b = ((_a = target.content) === null || _a === void 0 ? void 0 : _a.Spritesheets) || []; _i < _b.length; _i++) {
+            var sprite = _b[_i];
+            if (sprite.Path && sprite.Path.endsWith('.png')) {
+                var path_from = sprite.Path;
+                var path_try_skin = sprite.Path.substring(0, sprite.Path.length - 4) + this.SKIN_ALT_NAME[skinAlt] + '.png';
+                if (costumeAlt && costumeAlt.length > 0 && this.COSTUME_ALT_DICT.has(costumeAlt)) {
+                    var rep_dict = this.COSTUME_ALT_DICT.get(costumeAlt);
+                    if (rep_dict === null || rep_dict === void 0 ? void 0 : rep_dict.has(path_try_skin)) {
+                        //皮肤颜色变换后，仍然具有角色贴图（使用变换后的角色贴图）
+                        sprite.Path = rep_dict.get(path_try_skin) || sprite.Path;
+                    }
+                    else if (rep_dict === null || rep_dict === void 0 ? void 0 : rep_dict.has(path_from)) {
+                        //皮肤颜色变换前有角色贴图，但变换后没有（使用变换前的角色贴图）
+                        sprite.Path = rep_dict.get(path_from) || sprite.Path;
+                    }
+                    else {
+                        //没有角色贴图（使用变换后的皮肤颜色贴图）
+                        sprite.Path = path_try_skin;
+                    }
+                }
+                else {
+                    sprite.Path = path_try_skin;
+                }
+            }
+        }
+    };
     AnmPlayer.processCostumeAlt = function (target, costumeAlt) {
         var _a;
         if (this.COSTUME_ALT_DICT.has(costumeAlt)) {
