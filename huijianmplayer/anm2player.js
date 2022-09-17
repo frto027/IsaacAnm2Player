@@ -1269,9 +1269,11 @@ function setup_anm2_player() {
             '    <rect y="1" width="1" height="1" fill="white"/>' +
             '    <rect x="1" width="1" height="1" fill="white"/>' +
             '</svg>') + '")',
-            /* 按键3：白色 */
+            /* 按键3：绿色 */
+            'background-color:#0F0',
+            /* 按键4：白色 */
             'background-color:white',
-            /* 按键4：黑色 */
+            /* 按键5：黑色 */
             'background-color:black',
         ]
         function handleColorKey(key){
