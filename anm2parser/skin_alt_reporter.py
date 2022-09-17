@@ -17,11 +17,10 @@ tainted_anm2 = []
 
 def parse_anm(anmpath):
     with open(anmpath, 'r',encoding='utf8') as f:
-        txt = f.read()
+        txt = f.read().lower()
         for png in png_files:
-            if txt.find(png[0]) != -1:
+            if txt.find(png[0].lower()) != -1:
                 tainted_anm2.append([anmpath.split("\\")[-1],png[1]])
-                break
 
 for f in tqdm.tqdm(glob(skin_alt_gen.folder + "resources\\**\\*.anm2", recursive=True),"find resources anm2"):
     parse_anm(f)
@@ -31,10 +30,19 @@ for f in tqdm.tqdm(glob(skin_alt_gen.folder + "resources-dlc3\\**\\*.anm2", recu
 namemap = {
     "none":"n","passive":"c","familiar":"c","active":"c","trinket":"t"
 }
+charamap = {
+    "apollyon"      :"C_apollyon,n36",
+    "bluebaby"      :"C_bluebaby",
+    "forgotten"     :"C_forgotten,n44",
+    "forgottensoul" :"C_forgottensoul,blueFilter",
+    "keeper"        :"C_keeper,n47",
+    "lilith"        :"C_lilith,n34,noAttack",
+    "shadow"        :"C_shadow",
+}
 
 with open(skin_alt_gen.folder + "resources-dlc3\\costumes2.xml", "r") as f:
     for ch in ET.parse(f).getroot():
         anm2path = ch.attrib["anm2path"].split('\\')[-1]
         for anm in tainted_anm2:
-            if anm[0] == anm2path:
-                print(f'{namemap[ch.attrib["type"]]}{ch.attrib["id"]}\t{anm[1]}')
+            if anm[0].lower() == anm2path.lower():
+                print(f'{namemap[ch.attrib["type"]]}{ch.attrib["id"]}\t{charamap[anm[1]]}')
