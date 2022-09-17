@@ -2067,6 +2067,72 @@ function setup_anm2_player() {
     if (pageName && pageName.startsWith("Data:Anm2/") && pageName.endsWith(".json")) {
         initJsonPage(pageName.substr(5))
     }
+
+    //用于折叠显示角色服装
+    (function(){
+        var CharaElementTemplate = new Map([
+            ["isaac","https://huiji-public.huijistatic.com/isaac/uploads/b/bd/Isaac_Icon.png"],
+            ["apollyon","https://huiji-public.huijistatic.com/isaac/uploads/8/86/Apollyon_Icon.png"],
+            ["bluebaby","https://huiji-public.huijistatic.com/isaac/uploads/3/3a/Blue_Baby_Icon.png"],
+            ["forgotten","https://huiji-public.huijistatic.com/isaac/uploads/6/6c/The_Forgotten_Icon.png"],
+            ["forgottensoul","https://huiji-public.huijistatic.com/isaac/uploads/b/b4/The_Soul_Icon.png"],
+            ["keeper","https://huiji-public.huijistatic.com/isaac/uploads/f/f8/Keeper_Icon.png"],
+            ["lilith","https://huiji-public.huijistatic.com/isaac/uploads/9/9c/Lilith_Icon.png"],
+            ["shadow","https://huiji-public.huijistatic.com/isaac/uploads/3/3a/Dark_Judas_Icon.png"],
+        ])
+        var targets = document.getElementsByClassName("chara-target-tabs")
+
+        function handleTarget(target){
+            var select_pannel = document.createElement('div')
+            var elems = []
+            var btns = []
+
+            var selected = "isaac"
+
+            function flushTargetUI(){
+                for(var j=0;j<elems.length;j++){
+                    if(elems[j].getAttribute('data-chara-target') != selected){
+                        elems[j].style.display = 'none'
+                        btns[j].style.borderBottom = ''
+                    }else{
+                        elems[j].style.display = 'inline-block'
+                        btns[j].style.borderBottom = 'solid 1px gray'
+                    }
+                }
+            }
+
+            for(var i=0;i<target.children.length;i++){
+                var sub_player = target.children[i]
+                var character = sub_player.getAttribute('data-chara-target')
+                if(CharaElementTemplate.has(character)){    
+                    var btn = document.createElement('img')
+                    btn.src = CharaElementTemplate.get(character)
+                    btn.style.borderRadius = '3px'
+                    btn.style.margin = '0px -4px'
+                    btn.onclick = (function(character){//闭包character变量
+                        return function(){
+                            selected = character
+                            flushTargetUI()
+                        }
+                    })(character)
+
+                    select_pannel.appendChild(btn)
+                    elems.push(sub_player)
+                    btns.push(btn)
+                }else{
+                    sub_player.style.display = 'none'
+                }
+            }
+
+            target.appendChild(select_pannel)
+
+            flushTargetUI()
+        }
+
+        for(var i=0;i<targets.length;i++){
+            handleTarget(targets[i])
+        }
+    })();
 }
 
 if(document.readyState == 'loading'){
@@ -2074,70 +2140,4 @@ if(document.readyState == 'loading'){
 }else{
     setup_anm2_player()
 }
-})();
-
-//用于折叠显示角色服装
-(function(){
-    var CharaElementTemplate = new Map([
-        ["isaac","https://huiji-public.huijistatic.com/isaac/uploads/b/bd/Isaac_Icon.png"],
-        ["apollyon","https://huiji-public.huijistatic.com/isaac/uploads/8/86/Apollyon_Icon.png"],
-        ["bluebaby","https://huiji-public.huijistatic.com/isaac/uploads/3/3a/Blue_Baby_Icon.png"],
-        ["forgotten","https://huiji-public.huijistatic.com/isaac/uploads/6/6c/The_Forgotten_Icon.png"],
-        ["forgottensoul","https://huiji-public.huijistatic.com/isaac/uploads/b/b4/The_Soul_Icon.png"],
-        ["keeper","https://huiji-public.huijistatic.com/isaac/uploads/f/f8/Keeper_Icon.png"],
-        ["lilith","https://huiji-public.huijistatic.com/isaac/uploads/9/9c/Lilith_Icon.png"],
-        ["shadow","https://huiji-public.huijistatic.com/isaac/uploads/3/3a/Dark_Judas_Icon.png"],
-    ])
-    var targets = document.getElementsByClassName("chara-target-tabs")
-
-    function handleTarget(target){
-        var select_pannel = document.createElement('div')
-        var elems = []
-        var btns = []
-
-        var selected = "isaac"
-
-        function flushTargetUI(){
-            for(var j=0;j<elems.length;j++){
-                if(elems[j].getAttribute('data-chara-target') != selected){
-                    elems[j].style.display = 'none'
-                    btns[j].style.borderBottom = ''
-                }else{
-                    elems[j].style.display = 'inline-block'
-                    btns[j].style.borderBottom = 'solid 1px gray'
-                }
-            }
-        }
-
-        for(var i=0;i<target.children.length;i++){
-            var sub_player = target.children[i]
-            var character = sub_player.getAttribute('data-chara-target')
-            if(CharaElementTemplate.has(character)){    
-                var btn = document.createElement('img')
-                btn.src = CharaElementTemplate.get(character)
-                btn.style.borderRadius = '3px'
-                btn.style.margin = '0px -4px'
-                btn.onclick = (function(character){//闭包character变量
-                    return function(){
-                        selected = character
-                        flushTargetUI()
-                    }
-                })(character)
-
-                select_pannel.appendChild(btn)
-                elems.push(sub_player)
-                btns.push(btn)
-            }else{
-                sub_player.style.display = 'none'
-            }
-        }
-
-        target.appendChild(select_pannel)
-
-        flushTargetUI()
-    }
-
-    for(var i=0;i<targets.length;i++){
-        handleTarget(targets[i])
-    }
 })();
