@@ -304,7 +304,7 @@ var AnmPlayer = /** @class */ (function () {
         }
         return img;
     };
-    AnmPlayer.prototype.drawCanvas = function (ctx, canvas, centerX, centerY, rootScale, layer_name, transformFrame) {
+    AnmPlayer.prototype.drawCanvas = function (ctx, canvas, centerX, centerY, rootScale, layer_name, transformFrame, blackPatch /* 用于渲染犹大之影的身体 */) {
         var _a, _b, _c;
         ctx.save();
         ctx.setTransform(1, 0, 0, 1, 0, 0);
@@ -364,7 +364,12 @@ var AnmPlayer = /** @class */ (function () {
                     //draw frame
                     if (!frame.filterGenerated) {
                         frame.filterGenerated = true;
-                        frame.filterId = 'url(#' + AnmPlayer.createSvgFilterElement(((rootframe === null || rootframe === void 0 ? void 0 : rootframe.RedTint) || 255) * frame.RedTint / (255 * 255), ((rootframe === null || rootframe === void 0 ? void 0 : rootframe.GreenTint) || 255) * frame.GreenTint / (255 * 255), ((rootframe === null || rootframe === void 0 ? void 0 : rootframe.BlueTint) || 255) * frame.BlueTint / (255 * 255), ((rootframe === null || rootframe === void 0 ? void 0 : rootframe.AlphaTint) || 255) * frame.AlphaTint / (255 * 255), frame.RedOffset / 255, frame.GreenOffset / 255, frame.BlueOffset / 255) + ')';
+                        if (blackPatch) {
+                            frame.filterId = 'url(#' + AnmPlayer.createSvgFilterElement(((rootframe === null || rootframe === void 0 ? void 0 : rootframe.RedTint) || 255) * frame.RedTint / (255 * 255), ((rootframe === null || rootframe === void 0 ? void 0 : rootframe.GreenTint) || 255) * frame.GreenTint / (255 * 255), ((rootframe === null || rootframe === void 0 ? void 0 : rootframe.BlueTint) || 255) * frame.BlueTint / (255 * 255), ((rootframe === null || rootframe === void 0 ? void 0 : rootframe.AlphaTint) || 255) * frame.AlphaTint / (255 * 255), -255 / 255, -255 / 255, -255 / 255) + ')';
+                        }
+                        else {
+                            frame.filterId = 'url(#' + AnmPlayer.createSvgFilterElement(((rootframe === null || rootframe === void 0 ? void 0 : rootframe.RedTint) || 255) * frame.RedTint / (255 * 255), ((rootframe === null || rootframe === void 0 ? void 0 : rootframe.GreenTint) || 255) * frame.GreenTint / (255 * 255), ((rootframe === null || rootframe === void 0 ? void 0 : rootframe.BlueTint) || 255) * frame.BlueTint / (255 * 255), ((rootframe === null || rootframe === void 0 ? void 0 : rootframe.AlphaTint) || 255) * frame.AlphaTint / (255 * 255), frame.RedOffset / 255, frame.GreenOffset / 255, frame.BlueOffset / 255) + ')';
+                        }
                     }
                     ctx.filter = frame.filterId || 'none';
                     ctx.globalAlpha = 1;
@@ -511,7 +516,7 @@ var AnmPlayer = /** @class */ (function () {
             }
         }
     };
-    AnmPlayer.renderCostume = function (anmA, anmB, anmC, ctx, canvas, centerX, centerY, rootScale, shootFrame, walkFrame) {
+    AnmPlayer.renderCostume = function (anmA, anmB, anmC, ctx, canvas, centerX, centerY, rootScale, shootFrame, walkFrame, blackBody) {
         var _a, _b, _c, _d, _e, _f, _g, _h, _j, _k, _l;
         //anmA is leg,anmB is head
         var step_draw_candidates = new Map();
@@ -627,10 +632,10 @@ var AnmPlayer = /** @class */ (function () {
                             }
                         }
                         if (step.startsWith("head")) {
-                            player.drawCanvas(ctx, canvas, centerX, centerY, rootScale, step, head_transform);
+                            player.drawCanvas(ctx, canvas, centerX, centerY, rootScale, step, head_transform, false);
                         }
                         else {
-                            player.drawCanvas(ctx, canvas, centerX, centerY, rootScale, step, undefined);
+                            player.drawCanvas(ctx, canvas, centerX, centerY, rootScale, step, undefined, blackBody && step.startsWith("body"));
                         }
                         if (fallback_restore) {
                             player.currentAnm = fallback_restore;

@@ -341,7 +341,7 @@ class AnmPlayer{
     debug_anchor:boolean = false
     
 
-    public drawCanvas(ctx:CanvasRenderingContext2D, canvas:HTMLCanvasElement, centerX?:number, centerY?:number, rootScale?:number,layer_name?:string,transformFrame?:FrameStatus){
+    public drawCanvas(ctx:CanvasRenderingContext2D, canvas:HTMLCanvasElement, centerX?:number, centerY?:number, rootScale?:number,layer_name?:string,transformFrame?:FrameStatus, blackPatch?:boolean /* 用于渲染犹大之影的身体 */){
         ctx.save()
 
         ctx.setTransform(1,0,0,1,0,0)
@@ -420,15 +420,27 @@ class AnmPlayer{
                     //draw frame
                     if(!frame.filterGenerated){
                         frame.filterGenerated = true
-                        frame.filterId = 'url(#' + AnmPlayer.createSvgFilterElement(
-                            (rootframe?.RedTint || 255) * frame.RedTint     /(255*255),
-                            (rootframe?.GreenTint || 255) * frame.GreenTint     /(255*255),
-                            (rootframe?.BlueTint || 255) * frame.BlueTint       /(255*255),
-                            (rootframe?.AlphaTint || 255) * frame.AlphaTint     /(255*255),
-                            frame.RedOffset/255,
-                            frame.GreenOffset/255,
-                            frame.BlueOffset/255
-                        ) + ')'
+                        if(blackPatch){
+                            frame.filterId = 'url(#' + AnmPlayer.createSvgFilterElement(
+                                (rootframe?.RedTint || 255) * frame.RedTint     /(255*255),
+                                (rootframe?.GreenTint || 255) * frame.GreenTint     /(255*255),
+                                (rootframe?.BlueTint || 255) * frame.BlueTint       /(255*255),
+                                (rootframe?.AlphaTint || 255) * frame.AlphaTint     /(255*255),
+                                -255/255,
+                                -255/255,
+                                -255/255
+                            ) + ')'    
+                        }else{
+                            frame.filterId = 'url(#' + AnmPlayer.createSvgFilterElement(
+                                (rootframe?.RedTint || 255) * frame.RedTint     /(255*255),
+                                (rootframe?.GreenTint || 255) * frame.GreenTint     /(255*255),
+                                (rootframe?.BlueTint || 255) * frame.BlueTint       /(255*255),
+                                (rootframe?.AlphaTint || 255) * frame.AlphaTint     /(255*255),
+                                frame.RedOffset/255,
+                                frame.GreenOffset/255,
+                                frame.BlueOffset/255
+                            ) + ')'    
+                        }
                     }
 
                     ctx.filter = frame.filterId || 'none'
@@ -575,7 +587,7 @@ class AnmPlayer{
 
     private static COSTUME_STEP = ["glow","back","body","body0","body1","head","head0","head1","head2","head3","head4","head5","top0","extra","ghost"]
 
-    public static renderCostume(anmA:CostumeInfo[],anmB:CostumeInfo[]|undefined,anmC:CostumeInfo[]|undefined,ctx:CanvasRenderingContext2D, canvas:HTMLCanvasElement, centerX:number, centerY:number, rootScale:number,shootFrame:number,walkFrame:number){
+    public static renderCostume(anmA:CostumeInfo[],anmB:CostumeInfo[]|undefined,anmC:CostumeInfo[]|undefined,ctx:CanvasRenderingContext2D, canvas:HTMLCanvasElement, centerX:number, centerY:number, rootScale:number,shootFrame:number,walkFrame:number, blackBody:boolean){
         //anmA is leg,anmB is head
         let step_draw_candidates = new Map<string,(CostumeInfo|undefined)[]>()
 
@@ -680,9 +692,9 @@ class AnmPlayer{
                             }
                         }
                         if(step.startsWith("head")){
-                            player.drawCanvas(ctx,canvas,centerX,centerY,rootScale,step,head_transform)
+                            player.drawCanvas(ctx,canvas,centerX,centerY,rootScale,step,head_transform, false)
                         }else{
-                            player.drawCanvas(ctx,canvas,centerX,centerY,rootScale,step,undefined)
+                            player.drawCanvas(ctx,canvas,centerX,centerY,rootScale,step,undefined, blackBody && step.startsWith("body"))
                         }
 
                         if(fallback_restore){
