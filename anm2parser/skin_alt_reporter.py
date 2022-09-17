@@ -40,9 +40,26 @@ charamap = {
     "shadow"        :"C_shadow",
 }
 
+# with open(skin_alt_gen.folder + "resources-dlc3\\costumes2.xml", "r") as f:
+#     for ch in ET.parse(f).getroot():
+#         anm2path = ch.attrib["anm2path"].split('\\')[-1]
+#         for anm in tainted_anm2:
+#             if anm[0].lower() == anm2path.lower():
+#                 print(f'{namemap[ch.attrib["type"]]}{ch.attrib["id"]}\t{charamap[anm[1]]}')
+
+chara_appears = dict()
+
 with open(skin_alt_gen.folder + "resources-dlc3\\costumes2.xml", "r") as f:
     for ch in ET.parse(f).getroot():
         anm2path = ch.attrib["anm2path"].split('\\')[-1]
         for anm in tainted_anm2:
             if anm[0].lower() == anm2path.lower():
-                print(f'{namemap[ch.attrib["type"]]}{ch.attrib["id"]}\t{charamap[anm[1]]}')
+                id = f'{namemap[ch.attrib["type"]]}{ch.attrib["id"]}'
+                chara = anm[1]
+                if not id in chara_appears:
+                    chara_appears[id] = []
+                chara_appears[id].append( f'"{chara}"')
+
+for id in chara_appears:
+    print(f'["{id}"]=' + '{' + (','.join(chara_appears[id])) + "},")
+                # print(f'{namemap[ch.attrib["type"]]}{ch.attrib["id"]}\t{charamap[anm[1]]}')
