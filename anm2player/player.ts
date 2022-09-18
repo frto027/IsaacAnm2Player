@@ -623,12 +623,16 @@ class AnmPlayer{
             }
         }
         //setup steps for anmB
+        let head_has_charge = false
         if(anmB){
             for(let step of this.COSTUME_STEP){
                 for(let info of anmB){
                     for(let layer of info.player.currentAnm?.frames || []){
                         if(info.player.getLayerName(layer.LayerId) == step){
                             //动画中包含目标图层
+                            if(info.head_has_charge){
+                                head_has_charge = true
+                            }
                             if(layer.frames[0]){
                                 if(step_draw_candidates.has(step)){
                                     (step_draw_candidates.get(step) || [])[1] = info
@@ -679,7 +683,11 @@ class AnmPlayer{
                         }
                         if(step.startsWith("head") && !player.currentAnm?.Loop){
                             old_frame = player.currentFrame
-                            player.play(shootFrame % (player.currentAnm?.FrameNum || 100000))
+                            if(draw_anm == 1 /* draw head */ && head_has_charge && !(players && players[draw_anm])?.head_has_charge){
+                                player.play(shootFrame % 2)
+                            }else{
+                                player.play(shootFrame % (player.currentAnm?.FrameNum || 100000))
+                            }
                         }
                         /* fallback:HeadLeft -> HeadLeft_Idle */
                         let fallback_restore = undefined
@@ -713,6 +721,7 @@ class AnmPlayer{
 interface CostumeInfo{
     player:AnmPlayer,
     head_has_idle:boolean,
+    head_has_charge:boolean
     /* steps[step][layer] == anmarray_index */
 }
 

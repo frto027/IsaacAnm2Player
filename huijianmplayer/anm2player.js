@@ -520,17 +520,17 @@ function setup_anm2_player() {
             }
         };
         AnmPlayer.renderCostume = function (anmA, anmB, anmC, ctx, canvas, centerX, centerY, rootScale, shootFrame, walkFrame, blackBody) {
-            var _a, _b, _c, _d, _e, _f, _g, _h, _j, _k, _l;
+            var _a, _b, _c, _d, _e, _f, _g, _h, _j, _k, _l, _m;
             //anmA is leg,anmB is head
             var step_draw_candidates = new Map();
             var headTransformLayer = undefined;
             //setup steps for anmA
-            for (var _i = 0, _m = this.COSTUME_STEP; _i < _m.length; _i++) {
-                var step = _m[_i];
-                for (var _o = 0, anmA_1 = anmA; _o < anmA_1.length; _o++) {
-                    var info = anmA_1[_o];
-                    for (var _p = 0, _q = ((_a = info.player.currentAnm) === null || _a === void 0 ? void 0 : _a.frames) || []; _p < _q.length; _p++) {
-                        var layer = _q[_p];
+            for (var _i = 0, _o = this.COSTUME_STEP; _i < _o.length; _i++) {
+                var step = _o[_i];
+                for (var _p = 0, anmA_1 = anmA; _p < anmA_1.length; _p++) {
+                    var info = anmA_1[_p];
+                    for (var _q = 0, _r = ((_a = info.player.currentAnm) === null || _a === void 0 ? void 0 : _a.frames) || []; _q < _r.length; _q++) {
+                        var layer = _r[_q];
                         if (info.player.getLayerName(layer.LayerId) == step) {
                             //动画中包含目标图层
                             if (layer.frames[0]) {
@@ -540,15 +540,15 @@ function setup_anm2_player() {
                     }
                     /** begin:HeadTransform **/
                     var nulllayer_id = undefined;
-                    for (var _r = 0, _s = ((_b = info.player.anm2.content) === null || _b === void 0 ? void 0 : _b.Nulls) || []; _r < _s.length; _r++) {
-                        var nulllayer = _s[_r];
+                    for (var _s = 0, _t = ((_b = info.player.anm2.content) === null || _b === void 0 ? void 0 : _b.Nulls) || []; _s < _t.length; _s++) {
+                        var nulllayer = _t[_s];
                         if (nulllayer.Name == "HeadTransform") {
                             nulllayer_id = nulllayer.Id;
                         }
                     }
                     if (nulllayer_id != undefined) {
-                        for (var _t = 0, _u = ((_c = info.player.currentAnm) === null || _c === void 0 ? void 0 : _c.nullFrames) || []; _t < _u.length; _t++) {
-                            var nulllayer = _u[_t];
+                        for (var _u = 0, _v = ((_c = info.player.currentAnm) === null || _c === void 0 ? void 0 : _c.nullFrames) || []; _u < _v.length; _u++) {
+                            var nulllayer = _v[_u];
                             if (nulllayer.LayerId == nulllayer_id) {
                                 headTransformLayer = nulllayer;
                             }
@@ -558,15 +558,19 @@ function setup_anm2_player() {
                 }
             }
             //setup steps for anmB
+            var head_has_charge = false;
             if (anmB) {
-                for (var _v = 0, _w = this.COSTUME_STEP; _v < _w.length; _v++) {
-                    var step = _w[_v];
-                    for (var _x = 0, anmB_1 = anmB; _x < anmB_1.length; _x++) {
-                        var info = anmB_1[_x];
-                        for (var _y = 0, _z = ((_d = info.player.currentAnm) === null || _d === void 0 ? void 0 : _d.frames) || []; _y < _z.length; _y++) {
-                            var layer = _z[_y];
+                for (var _w = 0, _x = this.COSTUME_STEP; _w < _x.length; _w++) {
+                    var step = _x[_w];
+                    for (var _y = 0, anmB_1 = anmB; _y < anmB_1.length; _y++) {
+                        var info = anmB_1[_y];
+                        for (var _z = 0, _0 = ((_d = info.player.currentAnm) === null || _d === void 0 ? void 0 : _d.frames) || []; _z < _0.length; _z++) {
+                            var layer = _0[_z];
                             if (info.player.getLayerName(layer.LayerId) == step) {
                                 //动画中包含目标图层
+                                if (info.head_has_charge) {
+                                    head_has_charge = true;
+                                }
                                 if (layer.frames[0]) {
                                     if (step_draw_candidates.has(step)) {
                                         (step_draw_candidates.get(step) || [])[1] = info;
@@ -582,12 +586,12 @@ function setup_anm2_player() {
             }
             //setup steps for anmC
             if (anmC) {
-                for (var _0 = 0, _1 = this.COSTUME_STEP; _0 < _1.length; _0++) {
-                    var step = _1[_0];
-                    for (var _2 = 0, anmC_1 = anmC; _2 < anmC_1.length; _2++) {
-                        var info = anmC_1[_2];
-                        for (var _3 = 0, _4 = ((_e = info.player.currentAnm) === null || _e === void 0 ? void 0 : _e.frames) || []; _3 < _4.length; _3++) {
-                            var layer = _4[_3];
+                for (var _1 = 0, _2 = this.COSTUME_STEP; _1 < _2.length; _1++) {
+                    var step = _2[_1];
+                    for (var _3 = 0, anmC_1 = anmC; _3 < anmC_1.length; _3++) {
+                        var info = anmC_1[_3];
+                        for (var _4 = 0, _5 = ((_e = info.player.currentAnm) === null || _e === void 0 ? void 0 : _e.frames) || []; _4 < _5.length; _4++) {
+                            var layer = _5[_4];
                             if (info.player.getLayerName(layer.LayerId) == step) {
                                 //动画中包含目标图层
                                 if (layer.frames[0]) {
@@ -604,8 +608,8 @@ function setup_anm2_player() {
                 }
             }
             var head_transform = undefined;
-            for (var _5 = 0, _6 = this.COSTUME_STEP; _5 < _6.length; _5++) {
-                var step = _6[_5];
+            for (var _6 = 0, _7 = this.COSTUME_STEP; _6 < _7.length; _6++) {
+                var step = _7[_6];
                 if (step_draw_candidates.has(step)) {
                     var players = step_draw_candidates.get(step);
                     for (var draw_anm = 0; draw_anm <= 2; draw_anm++) {
@@ -622,12 +626,17 @@ function setup_anm2_player() {
                             }
                             if (step.startsWith("head") && !((_h = player.currentAnm) === null || _h === void 0 ? void 0 : _h.Loop)) {
                                 old_frame = player.currentFrame;
-                                player.play(shootFrame % (((_j = player.currentAnm) === null || _j === void 0 ? void 0 : _j.FrameNum) || 100000));
+                                if (draw_anm == 1 /* draw head */ && head_has_charge && !((_j = (players && players[draw_anm])) === null || _j === void 0 ? void 0 : _j.head_has_charge)) {
+                                    player.play(shootFrame % 2);
+                                }
+                                else {
+                                    player.play(shootFrame % (((_k = player.currentAnm) === null || _k === void 0 ? void 0 : _k.FrameNum) || 100000));
+                                }
                             }
                             /* fallback:HeadLeft -> HeadLeft_Idle */
                             var fallback_restore = undefined;
-                            if (players && ((_k = players[draw_anm]) === null || _k === void 0 ? void 0 : _k.head_has_idle) && step == "head") {
-                                var frames_1 = (_l = player.getLayerByName("head")) === null || _l === void 0 ? void 0 : _l.frames;
+                            if (players && ((_l = players[draw_anm]) === null || _l === void 0 ? void 0 : _l.head_has_idle) && step == "head") {
+                                var frames_1 = (_m = player.getLayerByName("head")) === null || _m === void 0 ? void 0 : _m.frames;
                                 //c340
                                 if (frames_1 != undefined && (player.currentFrame < frames_1.length && frames_1[player.currentFrame].Visible == false)) {
                                     fallback_restore = player.currentAnm;
