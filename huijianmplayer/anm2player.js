@@ -2095,6 +2095,21 @@ function setup_anm2_player() {
             ["lilith","https://huiji-public.huijistatic.com/isaac/uploads/9/9c/Lilith_Icon.png"],
             ["shadow","https://huiji-public.huijistatic.com/isaac/uploads/3/3a/Dark_Judas_Icon.png"],
         ])
+
+        {
+            var style = document.createElement('style')
+            document.head.appendChild(style)
+
+            style.sheet.insertRule('@keyframes showCharaPlayerAnmL{ from { transform:translate(-100%,0);opacity:0 } to { transform:translate(0%,0);opacity:1 } }')
+            style.sheet.insertRule('@keyframes hideCharaPlayerAnmL{ from { transform:translate(0%,0);opacity:1 } to { transform:translate(-100%,0);opacity:0 } }')
+            style.sheet.insertRule('@keyframes showCharaPlayerAnmR{ from { transform:translate(100%,0);opacity:0 } to { transform:translate(0%,0);opacity:1 } }')
+            style.sheet.insertRule('@keyframes hideCharaPlayerAnmR{ from { transform:translate(0%,0);opacity:1 } to { transform:translate(100%,0);opacity:0 } }')
+            style.sheet.insertRule('.chara-player-show-l{animation-name: showCharaPlayerAnmL; animation-duration:0.2s; } ')
+            style.sheet.insertRule('.chara-player-show-r{animation-name: showCharaPlayerAnmR; animation-duration:0.2s; } ')
+            style.sheet.insertRule('.chara-player-hide-l{animation-name: hideCharaPlayerAnmL; animation-duration:0.2s;animation-fill-mode: forwards;} ')
+            style.sheet.insertRule('.chara-player-hide-r{animation-name: hideCharaPlayerAnmR; animation-duration:0.2s;animation-fill-mode: forwards;} ')
+        }
+
         var targets = document.getElementsByClassName("chara-target-tabs")
 
         function handleTarget(target){
@@ -2103,19 +2118,72 @@ function setup_anm2_player() {
             var btns = []
 
             var selected = "isaac"
+            var last_selected = -1
 
-            function flushTargetUI(){
+            var nextAnimation = undefined
+            var isAnimating = false
+
+            function flushButtonUI(nextButton){
                 for(var j=0;j<elems.length;j++){
-                    if(elems[j].getAttribute('data-chara-target') != selected){
-                        elems[j].style.display = 'none'
+                    if(elems[j].getAttribute('data-chara-target') != nextButton){
                         btns[j].style.borderBottom = ''
                     }else{
-                        elems[j].style.display = 'inline-block'
-                        btns[j].style.borderBottom = 'solid 1px gray'
+                        btns[j].style.borderBottom = 'dashed 1px gray'
                     }
                 }
             }
+            function flushTargetUI(){
+                var new_selected = -1
+                if(last_selected == -1){
+                    for(var j=0;j<elems.length;j++){
+                        if(elems[j].getAttribute('data-chara-target') != selected){
+                            elems[j].style.visibility = 'hidden'
+                        }else{
+                            btns[j].style.borderBottom = 'solid 1px gray'
+                            last_selected = j
+                        }
+                    }
+                    return
+                }
+                isAnimating = true
+                for(var j=0;j<elems.length;j++){
+                    if(elems[j].getAttribute('data-chara-target') != selected){
+                        if(last_selected == j){
+                            // remove me
+                            if(new_selected == -1){
+                                elems[j].classList.remove('chara-player-show-l')
+                                elems[j].classList.remove('chara-player-show-r')
+                                elems[j].classList.add('chara-player-hide-l')    
+                            }else{
+                                elems[j].classList.remove('chara-player-show-l')
+                                elems[j].classList.remove('chara-player-show-r')
+                                elems[j].classList.add('chara-player-hide-r')    
+                            }
+                        }
+                        // $(elems[j]).hide()
+                        btns[j].style.borderBottom = ''
+                    }else{
+                        // elems[j].style.display = 'inline-block'
+                        if(last_selected < j){
+                            elems[j].classList.remove('chara-player-hide-l')
+                            elems[j].classList.remove('chara-player-hide-r')
+                            elems[j].classList.add('chara-player-show-r')
+                        }else{
+                            elems[j].classList.remove('chara-player-hide-l')
+                            elems[j].classList.remove('chara-player-hide-r')
+                            elems[j].classList.add('chara-player-show-l')
+                        }
+                        elems[j].style.visibility = ''
+                        new_selected = j
+                        
+                        // $(elems[j]).show(1000)
+                        btns[j].style.borderBottom = 'solid 1px gray'
+                    }
+                }
+                last_selected = new_selected
+            }
 
+            var first_character = true
             for(var i=0;i<target.children.length;i++){
                 var sub_player = target.children[i]
                 var character = sub_player.getAttribute('data-chara-target')
@@ -2126,21 +2194,52 @@ function setup_anm2_player() {
                     btn.style.margin = '0px -4px'
                     btn.onclick = (function(character){//闭包character变量
                         return function(){
-                            selected = character
-                            flushTargetUI()
+                            if(isAnimating){
+                                flushButtonUI(character)
+                                nextAnimation = function(){
+                                    if(selected != character){
+                                        selected = character
+                                        flushTargetUI()    
+                                    }        
+                                }
+                            }else{
+                                if(selected != character){
+                                    selected = character
+                                    flushTargetUI()    
+                                }
+                            }
                         }
                     })(character)
+                    sub_player.style.display = 'inline-block'
+                    if(first_character){
+                        first_character = false
+                    }else{
+                        sub_player.style.position = 'absolute'
+                        sub_player.style.left = '0'
+                        sub_player.style.top = '0'
+                    }
 
                     select_pannel.appendChild(btn)
                     elems.push(sub_player)
+                    sub_player.addEventListener("animationend",function(e){
+                        if(e.target.classList.contains('chara-player-hide-l') || e.target.classList.contains('chara-player-hide-r')){
+                            e.target.style.visibility = 'hidden'
+                        }
+                        isAnimating = false
+                        if(nextAnimation){
+                            nextAnimation()
+                            nextAnimation = undefined
+                        }
+                    })
                     btns.push(btn)
                 }else{
                     sub_player.style.display = 'none'
                 }
             }
 
-            target.appendChild(select_pannel)
+            target.style.position = 'relative'
 
+            target.appendChild(select_pannel)
             flushTargetUI()
         }
 
