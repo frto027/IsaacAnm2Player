@@ -911,6 +911,7 @@ function setup_anm2_player() {
         var costume_leg_dir = 'Down',costume_head_dir = 'Down',costume_shooting = {u:false,d:false,l:false,r:false},
             costume_walking = {u:false,d:false,l:false,r:false} ,costume_shooting_frame=0,costume_walking_frame=0
         var is_pausing = false
+        var suggest_moving = false; //控制器的建议移动方向
 
         if(render_as_costume){
             costume_A = [] /* head */
@@ -957,7 +958,7 @@ function setup_anm2_player() {
             })()
         }
 
-        //动画此时还没有加载，加载后此变量指向draw函数
+        //动画此时还没有加载，加载后此变量指向startDraw函数
         var anmbtn_startdraw = undefined
 
         for (var i = 0; i < canvasdiv.children.length; i++) {
@@ -1470,7 +1471,7 @@ function setup_anm2_player() {
                 canvas.onclick = function () {
                     if(waiting_for_click){
                         waiting_for_click = false
-                        draw(false)
+                        startDraw(false)
                     }
                     for (var i = 0; i < players.length; i++) {
                         if (!apply_rule("click", players[i].rule, anms[i], players[i],i)) {
@@ -1501,7 +1502,7 @@ function setup_anm2_player() {
                 if(waiting_for_click){
                     canvas.onclick = function(){
                         waiting_for_click = false
-                        draw(false)
+                        startDraw(false)
                         canvas.onclick = undefined
                     }
                 }
@@ -1671,7 +1672,7 @@ function setup_anm2_player() {
                 canvas.addEventListener('touchstart',function(ev){
                     if(waiting_for_click){
                         waiting_for_click = false
-                        draw(false)
+                        startDraw(false)
                     }
                     var touch = ev.touches[0]
                     if(touch){
@@ -1752,6 +1753,13 @@ function setup_anm2_player() {
                 })
 
             }
+            var drawStarted = false
+            function startDraw(){
+                if(!drawStarted){
+                    drawStarted = true
+                    draw(false)
+                }
+            }
             function draw(noUpdate) {
                 //update
                 if(!is_pausing){
@@ -1792,7 +1800,7 @@ function setup_anm2_player() {
                                         is_head_idle = true
                                     }
                                 }
-                                if(is_flying ||costume_walking.u || costume_walking.d || costume_walking.l || costume_walking.r ||
+                                if(suggest_moving || is_flying ||costume_walking.u || costume_walking.d || costume_walking.l || costume_walking.r ||
                                     (PATCH_csection && (costume_shooting.u || costume_shooting.d || costume_shooting.l || costume_shooting.r))
                                     ){
                                     costume_walking_frame++
@@ -1956,9 +1964,34 @@ function setup_anm2_player() {
                     setTimeout(draw, 1000 / commonFps)
                 }
             }
-            anmbtn_startdraw = draw
+            anmbtn_startdraw = startDraw
             if(!waiting_for_click){
-                draw(false)
+                startDraw(false)
+            }
+
+            canvasdiv.AnmCostumeController = {
+                StartDrawAnm:function(){
+                    is_pausing = false
+                    if(waiting_for_click){
+                        waiting_for_click = false
+                        startDraw(false)
+                    }
+                },
+                SuggestMoveLeft:function(){
+                    suggest_moving = true
+                    costume_leg_dir = 'Left'
+                },
+                SuggestMoveRight:function(){
+                    suggest_moving = true
+                    costume_leg_dir = 'Right'
+                },
+                SuggestNoMove:function(){
+                    suggest_moving = false
+                    costume_leg_dir = 'Down'
+                },
+                SuggestPause:function(){
+                    is_pausing = true
+                }
             }
         }
         function downloadJson() {
@@ -2147,31 +2180,57 @@ function setup_anm2_player() {
                 }
                 isAnimating = true
                 for(var j=0;j<elems.length;j++){
+                    // 移动动画，暂时不做
+                    var target_anm_ctrl = elems[j].querySelector(".anm2player")
+                    if(target_anm_ctrl != undefined){
+                        target_anm_ctrl = target_anm_ctrl.AnmCostumeController                            
+                    }
+
                     if(elems[j].getAttribute('data-chara-target') != selected){
                         if(last_selected == j){
                             // remove me
                             if(new_selected == -1){
                                 elems[j].classList.remove('chara-player-show-l')
                                 elems[j].classList.remove('chara-player-show-r')
-                                elems[j].classList.add('chara-player-hide-l')    
+                                elems[j].classList.add('chara-player-hide-l')
+                                // if(target_anm_ctrl){
+                                //     target_anm_ctrl.SuggestMoveLeft()
+                                // }    
+    
                             }else{
                                 elems[j].classList.remove('chara-player-show-l')
                                 elems[j].classList.remove('chara-player-show-r')
-                                elems[j].classList.add('chara-player-hide-r')    
+                                elems[j].classList.add('chara-player-hide-r') 
+                                // if(target_anm_ctrl){
+                                //     target_anm_ctrl.SuggestMoveRight()
+                                // }    
+       
                             }
                         }
                         // $(elems[j]).hide()
                         btns[j].style.borderBottom = ''
                     }else{
+                        //play anim
+                        if(target_anm_ctrl){
+                            target_anm_ctrl.StartDrawAnm()
+                        }
+
+                        //move show
                         // elems[j].style.display = 'inline-block'
                         if(last_selected < j){
                             elems[j].classList.remove('chara-player-hide-l')
                             elems[j].classList.remove('chara-player-hide-r')
                             elems[j].classList.add('chara-player-show-r')
+                            // if(target_anm_ctrl){
+                            //     target_anm_ctrl.SuggestMoveLeft()
+                            // }    
                         }else{
                             elems[j].classList.remove('chara-player-hide-l')
                             elems[j].classList.remove('chara-player-hide-r')
                             elems[j].classList.add('chara-player-show-l')
+                            // if(target_anm_ctrl){
+                            //     target_anm_ctrl.SuggestMoveRight()
+                            // }    
                         }
                         elems[j].style.visibility = ''
                         new_selected = j
@@ -2200,7 +2259,7 @@ function setup_anm2_player() {
                                     if(selected != character){
                                         selected = character
                                         flushTargetUI()    
-                                    }        
+                                    }
                                 }
                             }else{
                                 if(selected != character){
@@ -2222,9 +2281,18 @@ function setup_anm2_player() {
                     select_pannel.appendChild(btn)
                     elems.push(sub_player)
                     sub_player.addEventListener("animationend",function(e){
+                        var target_anm_ctrl = e.target.querySelector(".anm2player")
+                        if(target_anm_ctrl != undefined){
+                            target_anm_ctrl = target_anm_ctrl.AnmCostumeController                            
+                        }
+
                         if(e.target.classList.contains('chara-player-hide-l') || e.target.classList.contains('chara-player-hide-r')){
                             e.target.style.visibility = 'hidden'
+                            if(target_anm_ctrl != undefined){
+                                target_anm_ctrl.SuggestPause()
+                            }
                         }
+
                         isAnimating = false
                         if(nextAnimation){
                             nextAnimation()
