@@ -1214,7 +1214,14 @@ function setup_anm2_player() {
                     var rename = r.get(ename)
                     player.name = rename
                     if (anmplayer.getAnmNames().indexOf(rename.split('.')[0]) != -1) {
-                        anmplayer.setFrame(rename.split('.')[0], 0)
+                        var frame = 0
+                        if(r.has("frame")){
+                            frame = +r.get("frame")
+                            if(isNaN(frame)){
+                                frame = 0
+                            }
+                        }
+                        anmplayer.setFrame(rename.split('.')[0], frame)
                     }
                     player.played_frame = 0
 
@@ -1255,8 +1262,8 @@ function setup_anm2_player() {
                             }
                         }
                     }
-                    if(r.has("waitkey") && r.get("waitkey") == "true"){
-                        waiting_for_click = true
+                    if(r.has("pause") && r.get("pause") == "true"){
+                        is_pausing = true
                     }
                     return true
                 }
@@ -1473,6 +1480,7 @@ function setup_anm2_player() {
                         waiting_for_click = false
                         startDraw(false)
                     }
+                    is_pausing = false
                     for (var i = 0; i < players.length; i++) {
                         if (!apply_rule("click", players[i].rule, anms[i], players[i],i)) {
                             canvas_clicked[i] = true
@@ -1760,9 +1768,18 @@ function setup_anm2_player() {
                     draw(false)
                 }
             }
+
+            var init_event_emited = false
             function draw(noUpdate) {
                 //update
                 if(!is_pausing){
+                    if(!init_event_emited){
+                        init_event_emited = true
+                        //触发初始化事件
+                        for (var i = 0; i < players.length; i++) {
+                            apply_rule("init", players[i].rule, anms[i], players[i],i)
+                        }
+                    }
                     //render
                     var render_random_idle = random_idle_is_playing
                     if(render_as_costume){
