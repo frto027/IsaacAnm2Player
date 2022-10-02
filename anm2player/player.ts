@@ -425,7 +425,7 @@ class AnmPlayer{
                                 (rootframe?.RedTint || 255) * frame.RedTint     /(255*255),
                                 (rootframe?.GreenTint || 255) * frame.GreenTint     /(255*255),
                                 (rootframe?.BlueTint || 255) * frame.BlueTint       /(255*255),
-                                (rootframe?.AlphaTint || 255) * frame.AlphaTint     /(255*255),
+                                1, //(rootframe?.AlphaTint || 255) * frame.AlphaTint     /(255*255),
                                 -255/255,
                                 -255/255,
                                 -255/255
@@ -435,7 +435,7 @@ class AnmPlayer{
                                 (rootframe?.RedTint || 255) * frame.RedTint     /(255*255),
                                 (rootframe?.GreenTint || 255) * frame.GreenTint     /(255*255),
                                 (rootframe?.BlueTint || 255) * frame.BlueTint       /(255*255),
-                                (rootframe?.AlphaTint || 255) * frame.AlphaTint     /(255*255),
+                                1, //(rootframe?.AlphaTint || 255) * frame.AlphaTint     /(255*255),
                                 frame.RedOffset/255,
                                 frame.GreenOffset/255,
                                 frame.BlueOffset/255
@@ -444,7 +444,7 @@ class AnmPlayer{
                     }
 
                     ctx.filter = frame.filterId || 'none'
-                    ctx.globalAlpha = 1
+                    ctx.globalAlpha = (rootframe?.AlphaTint || 255) * frame.AlphaTint     /(255*255)
 
                     let sheet_offset_x = 0,sheet_offset_y = 0
                     let sheet_offset = this.sheet_offsets[sprite_sheet_id]
