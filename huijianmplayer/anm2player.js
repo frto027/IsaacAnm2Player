@@ -902,6 +902,9 @@ function setup_anm2_player() {
         var players = []
         //anms存储AmpPlayer
         var anms = []
+        //接口
+        var htmlrule = undefined
+        var htmlrule_constructor = undefined
         //记录当前播放器中所有按钮是否被按下
         var btndiv = undefined
         var btns = new Map() /* 按钮名称到状态的映射，未按下为false，按下为function，此function用于重置按钮状态 */
@@ -960,6 +963,14 @@ function setup_anm2_player() {
                     }
                 }
             })()
+        }
+
+        //加载htmlrule
+        {
+            var html_rule_attr = canvasdiv.getAttribute('data-html-rule')
+            if(html_rule_attr && html_rule_attr.length > 0 && window.anm2Rule && window.anm2Rule.has(html_rule_attr)){
+                htmlrule_constructor = window.anm2Rule.get(html_rule_attr)
+            }
         }
 
         //动画此时还没有加载，加载后此变量指向startDraw函数
@@ -1469,7 +1480,6 @@ function setup_anm2_player() {
                     }
                     commonFps++
                 }
-    
             }
 
 
@@ -1478,7 +1488,6 @@ function setup_anm2_player() {
             var canvas_clicked = []
             var touch_data = {}
             if(!render_as_costume){
-
                 canvas.onclick = function () {
                     if(waiting_for_click){
                         waiting_for_click = false
@@ -1492,13 +1501,17 @@ function setup_anm2_player() {
                             canvas_clicked[i] = true
                         }
                     }
+
+                    if(htmlrule && htmlrule.onclick){
+                        htmlrule.onclick()
+                    }
                 }
                 //设置结束事件
                 for (var i = 0; i < players.length; i++) {
                     (function (tanm, trule, i, tplayer) {
                         anms[i].setEndEventListener(function () {
                             //window.luaPostMessage && window.luaPostMessage("Anm2:event:playend:" + my_start_player_lua_id,"I","",my_start_player_lua_id + i);
-
+                            var clicked = canvas_clicked[i]
                             if (canvas_clicked[i]) {
                                 canvas_clicked[i] = false
                                 if (apply_rule("clicknext", trule, tanm, tplayer,i)) {
@@ -1506,13 +1519,37 @@ function setup_anm2_player() {
                                 }
                             }
                             apply_rule("next", trule, tanm, tplayer,i)
+
+                            if(htmlrule && htmlrule.onend){
+                                htmlrule.onend(i, clicked)
+                            }
                         })
+
+                        anms[i].eventListener = function(event_name){
+                            if(htmlrule && htmlrule.onevent){
+                                htmlrule.onevent(i, event_name)
+                            }
+                        }
                     })(anms[i], players[i].rule, i, players[i])
                 }
                 canvas.tabIndex = 1
                 canvas.onkeydown = function(e){
+                    if(htmlrule && htmlrule.onkeydown && htmlrule.onkeydown(e.key)){
+                        e.preventDefault()
+                        return
+                    }
                     if(handleColorKey(e.key))
                         e.preventDefault()
+                }
+                canvas.onkeyup = function(e){
+                    if(htmlrule && htmlrule.onkeyup && htmlrule.onkeyup(e.key)){
+                        e.preventDefault()
+                        return
+                    }
+                }
+
+                if(htmlrule_constructor){
+                    htmlrule = htmlrule_constructor(anms)
                 }
             }else{
                 if(waiting_for_click){
