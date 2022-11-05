@@ -99,6 +99,7 @@ function setup_anm2_player() {
             this.flipX = false;
             //倒放
             this.revert = false;
+            this.visible = true;
             this.sheet_offsets = [];
             this.debug_anchor = false;
             this.anm2 = json;
@@ -344,7 +345,7 @@ function setup_anm2_player() {
                 ctx.fill();
             }
             //layer transform
-            for (var i = 0; i < (((_b = this.currentAnm) === null || _b === void 0 ? void 0 : _b.frames.length) || 0); i++) {
+            for (var i = 0; this.visible && i < (((_b = this.currentAnm) === null || _b === void 0 ? void 0 : _b.frames.length) || 0); i++) {
                 var layer = (_c = this.currentAnm) === null || _c === void 0 ? void 0 : _c.frames[i];
                 if (layer_name) {
                     if (this.getLayerName(layer ? layer.LayerId : -1) != layer_name) {
@@ -914,17 +915,29 @@ function setup_anm2_player() {
                 return;
             player.setFrame(anmname || "", frame || 0)
         });
-        window.luaRegisterCallback("Anm2:SetFlipX", "II", "", function(player_id, flipX){
+        window.luaRegisterCallback("Anm2:SetFlipX", "IB", "", function(player_id, flipX){
             var player = getAnmPlayerFromLuaId(player_id);
             if(player == undefined)
                 return;
-            player.flipX = (flipX == 1 ? true : false);
+            if(flipX == undefined)
+                flipX = false;
+            player.flipX = flipX;
         });
-        window.luaRegisterCallback("Anm2:SetRevert", "II", "", function(player_id, revert){
+        window.luaRegisterCallback("Anm2:SetRevert", "IB", "", function(player_id, revert){
             var player = getAnmPlayerFromLuaId(player_id);
             if(player == undefined)
                 return;
-            player.revert = (revert == 1 ? true : false);
+            if(revert == undefined)
+                revert = false;
+            player.revert = revert;
+        });
+        window.luaRegisterCallback("Anm2:SetVisible", "IB", "", function(player_id, visible){
+            var player = getAnmPlayerFromLuaId(player_id);
+            if(player == undefined)
+                return;
+            if(visible == undefined)
+                visible = true;
+            player.visible = visible;
         });
         window.luaRegisterCallback("Anm2:GetCurrentAnmInfo","I","S",function(player_id){
             var player = getAnmPlayerFromLuaId(player_id);
@@ -1018,17 +1031,21 @@ function setup_anm2_player() {
                     lua_code_name = "noname"
                 }
 
-                var lua_code = ""
-                var lines = anm.getElementsByTagName("li")
-                for(var j=0;j<lines.length;j++){
-                    var code = lines[j].innerText
-                    if(code == undefined)
-                        continue
-                    lua_code += code.replace(
-                        new RegExp(String.fromCharCode(160),"g"),
-                        " "
-                    ).replace(new RegExp("\n","g"),"") + "\n"
+                /* 在huiji.preload.js中会对pre标签进行语法高亮，我们要判断脚本加载顺序，以决定从哪里获得代码 */
+                var pre_element = anm.querySelector("pre")
+                var idx = pre_element.getAttribute("data-pre-index")
+                if(idx != undefined && idx.length > 0 && idx.match(new RegExp("^[0-9]+$"))){
+                    //huiji.preload.js已经加载了（innerText不可用）
+                    var lua_code = window.huijiPreContent[idx]
+                }else{
+                    //huiji.preload.js没有加载，直接拿代码就可以了
+                    var lua_code = pre_element.innerText
                 }
+                lua_code = lua_code.replace(
+                    new RegExp(String.fromCharCode(160), "g"),
+                    " "
+                )
+                
 
                 lua_codes.push({
                     code:lua_code,
@@ -1241,8 +1258,7 @@ function setup_anm2_player() {
                 skincolor:skincolor,
             }
             players.push(anmobj)
-        }
-        
+        }        
 
         function apply_rule(ename, rule, anmplayer, player, player_id) {
             for (var i = 0; i < rule.length; i++) {
@@ -1520,7 +1536,36 @@ function setup_anm2_player() {
                     last_global_player_id++
                 }
             }
-            
+        
+
+            window.onLuaInit.push(function(){
+                window.luaRegisterCallback("Anm2:GetBtnStatus:" + my_start_player_lua_id, "S","B",function(btn_name){
+                    var btn_obj = btns.get(btn_name)
+                    if(btn_obj == undefined){
+                        return [false]
+                    }
+                    return [btn_obj.peek()]
+                })
+                window.luaRegisterCallback("Anm2:SetBtnStatus:" + my_start_player_lua_id, "SB","B",function(btn_name,new_status){
+                    var btn_obj = btns.get(btn_name);
+                    if(btn_obj == undefined || btn_obj.set_btn_status == undefined){
+                        return [false]
+                    }
+                    btn_obj.set_btn_status(new_status);
+                    return [true];
+                })
+                
+                // 输入参数是多个按钮名字（数量不超过按钮定义数量），返回值是每个按钮的状态
+                window.luaRegisterCallback("Anm2:GetEachBtnStatus:" + my_start_player_lua_id, "S".repeat(btns.size) /* 输入参数为btns.size个字符串 */, "B".repeat(btns.size), function(){
+                    var ret = new Array(btns.size)
+                    for(var i=0;i<ret.length;i++){
+                        var btn_name = arguments[i];
+                        ret[i] = btn_name != undefined && btns.has(btn_name) && btns.get(btn_name).peek();
+                    }
+                    return ret
+                })
+            })
+
             if(lua_codes.length > 0){
                 window.onLuaInit.push(function(){
                     start_player_lua_id = my_start_player_lua_id

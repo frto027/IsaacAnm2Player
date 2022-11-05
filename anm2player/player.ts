@@ -111,6 +111,7 @@ class AnmPlayer{
     flipX:boolean = false
     //倒放
     revert:boolean = false
+    visible:boolean = true
 
     sheet_offsets:{x:number,y:number}[/* sheet id */] = []
 
@@ -389,7 +390,7 @@ class AnmPlayer{
 
 
         //layer transform
-        for(let i=0;i<(this.currentAnm?.frames.length || 0);i++){
+        for(let i=0;this.visible && i<(this.currentAnm?.frames.length || 0);i++){
 
             let layer = this.currentAnm?.frames[i]
             if(layer_name){

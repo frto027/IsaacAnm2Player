@@ -96,6 +96,7 @@ var AnmPlayer = /** @class */ (function () {
         this.flipX = false;
         //倒放
         this.revert = false;
+        this.visible = true;
         this.sheet_offsets = [];
         this.debug_anchor = false;
         this.anm2 = json;
@@ -341,7 +342,7 @@ var AnmPlayer = /** @class */ (function () {
             ctx.fill();
         }
         //layer transform
-        for (var i = 0; i < (((_b = this.currentAnm) === null || _b === void 0 ? void 0 : _b.frames.length) || 0); i++) {
+        for (var i = 0; this.visible && i < (((_b = this.currentAnm) === null || _b === void 0 ? void 0 : _b.frames.length) || 0); i++) {
             var layer = (_c = this.currentAnm) === null || _c === void 0 ? void 0 : _c.frames[i];
             if (layer_name) {
                 if (this.getLayerName(layer ? layer.LayerId : -1) != layer_name) {
