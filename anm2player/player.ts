@@ -94,14 +94,6 @@ interface LoadedAnms{
 class AnmPlayer{
     static svgfilter_incrid:number = 0
     static crossOrigin?:string = undefined
-    // static createThree:boolean = false
-    // static threeWidth = 800
-    // static threeHeight = 600
-
-    // static threeLayerDistance = 400
-    // static threePlayerDistance = 60
-    // static threeCostumeLayerDistance = 30
-    // static threeCostumeSpriteDistance = 10
 
     anm2:Actor
     
@@ -127,36 +119,6 @@ class AnmPlayer{
     eventListener?:(eventName:string)=>void
     anmEndEventListener?:()=>void
     imgLoadListener?:()=>void
-
-    //three supports
-    // static threeContext?:{
-    //     threeScene: THREE.Scene
-    //     threeCamera: THREE.Camera
-    //     threeRenderer: THREE.WebGLRenderer
-    //     spritesheetYBonous:number
-    //     controls:any // THREE.OrbitControls
-    // }
-
-    // threeContext?: typeof AnmPlayer.threeContext
-    // threeSpritesheetYBonousOffset:number = 0
-
-    // /* layerId -> three_elements */
-    // threeLayers?: Array<{
-    //     //Plane-绘制位置，Texture-指定spritesheet的区域
-    //     //plane是绘制原本动画的区域
-    //     planePlane: THREE.PlaneGeometry,
-    //     planeTexture: THREE.Texture,
-    //     planeMesh: THREE.Mesh,
-
-    //     //indicator是贴图指示器
-    //     indicatorPlane: THREE.PlaneGeometry,
-    //     indicatorMesh: THREE.Mesh,
-    //     //indicatorFrame是覆盖在当前渲染贴图位置的一个盒子
-    //     indicatorFrameBox: THREE.BoxGeometry,
-    //     indicatorFrameMesh: THREE.Mesh,
-
-    //     spritesheetY: number
-    // }>
 
     constructor(json:Actor, img_url_builder:(url:string,replaced:boolean)=>string,spritesheet_overwrite:(sprite_id:number)=>string, onloadimg:()=>void){
         this.anm2 = json
@@ -186,51 +148,6 @@ class AnmPlayer{
 
         this.imgLoadListener = onloadimg
         
-        // if(AnmPlayer.createThree){
-        //     if(AnmPlayer.threeContext == undefined){
-
-        //         let three:any = THREE
-
-        //         AnmPlayer.threeContext = {
-        //             threeScene: new THREE.Scene(),
-        //             // threeCamera:new THREE.OrthographicCamera(AnmPlayer.threeWidth / -2, AnmPlayer.threeWidth / 2, AnmPlayer.threeHeight / 2, AnmPlayer.threeHeight / -2, -10000,100000),
-        //             threeCamera:new THREE.PerspectiveCamera( 45, AnmPlayer.threeWidth / AnmPlayer.threeHeight, 1, 10000 ),
-        //             threeRenderer: new THREE.WebGLRenderer(),
-        //             spritesheetYBonous:0,
-        //             controls: undefined
-        //         }
-        //         AnmPlayer.threeContext.controls = new three.OrbitControls(AnmPlayer.threeContext.threeCamera, AnmPlayer.threeContext.threeRenderer.domElement)
-        //         AnmPlayer.threeContext?.threeRenderer?.setSize(AnmPlayer.threeWidth, AnmPlayer.threeHeight)
-        //         AnmPlayer.threeContext?.threeRenderer?.setPixelRatio(window.devicePixelRatio)
-        //         let context = AnmPlayer.threeContext
-
-        //         if(context){
-        //             context.threeCamera.position.x = 1000
-        //             context.threeCamera.position.y = 1000
-        //             context.threeCamera.position.z = 1000
-        //             context.threeCamera.lookAt(0,0,0)
-
-        //             let i = 0
-        //             let update = ()=>{
-        //                 // requestAnimationFrame(update)
-        //                 // let step = i * 0.01
-        //                 // context.threeCamera.position.x = 1000*Math.sin(step)
-        //                 // context.threeCamera.position.y = 1000
-        //                 // context.threeCamera.position.z = 1000*Math.cos(step)
-        //                 // context.threeCamera.lookAt(0,0,0)
-
-        //                 // i = i + 1
-        //                 context.controls.update()
-        //                 setTimeout(update,1000/60)
-        //             }
-        //             update()
-        //         }
-        //     }
-        //     this.threeContext = AnmPlayer.threeContext
-        //     this.threeLayers = [];
-        //     this.threeSpritesheetYBonousOffset = AnmPlayer.threeContext.spritesheetYBonous
-        //     AnmPlayer.threeContext.spritesheetYBonous += AnmPlayer.threePlayerDistance
-        // }
     }
 
     private loadAnimationFrames(anms:Frame[], length:number):FrameStatus[]{
@@ -415,68 +332,6 @@ class AnmPlayer{
                 if(this.imgLoadListener){
                     this.imgLoadListener()
                 }
-                // if(this.threeLayers){
-                //     let loader = new THREE.TextureLoader()
-                //     for(let layer of this.anm2.content?.Layers || []){
-                //         let layerId = layer.Id
-        
-                //         if(this.threeLayers[layerId]){
-                //             continue
-                //         }
-        
-                //         let spritesheet_id = this.layers[layer.Id].SpritesheetId
-                //         if(spritesheet_id == i){
-                //             let spritesheetY = -(spritesheet_id * AnmPlayer.threeLayerDistance + this.threeSpritesheetYBonousOffset)
-                //             let step_index = AnmPlayer.COSTUME_STEP.indexOf(this.getLayerName(layer.Id) ?? "")
-                //             if(step_index >= 0){
-                //                 spritesheetY = step_index * AnmPlayer.threeCostumeLayerDistance + spritesheet_id * AnmPlayer.threeCostumeSpriteDistance
-                //             }
-
-                //             let planePlane = new THREE.PlaneGeometry(1,1,1,1)
-                //             let planeTexture = loader.load(img.src)
-                //             planeTexture.wrapS = planeTexture.wrapT = THREE.RepeatWrapping
-                //             let planeMesh = new THREE.Mesh(planePlane, new THREE.MeshBasicMaterial({
-                //                 map: planeTexture,
-                //                 transparent: true,side: THREE.FrontSide
-                //                 // color: 0xffff00, side: THREE.DoubleSide
-                //             }))
-                //             this.threeContext?.threeScene.add(planeMesh)
-        
-                //             let indicatorPlane = new THREE.PlaneGeometry(img.width,img.height,1,1)
-                //             let indicatorTexture = loader.load(img.src)
-                //             indicatorTexture.wrapS = indicatorTexture.wrapT = THREE.RepeatWrapping
-                //             let indicatorMesh = new THREE.Mesh(indicatorPlane, new THREE.MeshBasicMaterial({
-                //                 map: indicatorTexture,
-                //                 transparent: true,
-                //             }))
-                //             indicatorMesh.rotation.x = -Math.PI/2
-                //             indicatorMesh.position.y = spritesheetY
-                //             indicatorMesh.position.x = img.width / 2
-                //             indicatorMesh.position.z = img.height / 2
-                //             indicatorMesh.visible = false
-                //             this.threeContext?.threeScene.add(indicatorMesh)
-        
-                //             let indicatorFrameBox = new THREE.BoxGeometry(1,1,1)
-                //             let indicatorFrameTexture = new THREE.MeshBasicMaterial( {color: 0x3f7b9d, side: THREE.DoubleSide,transparent:true, opacity:0.7} );
-                //             let indicatorFrameMesh = new THREE.Mesh(indicatorFrameBox, indicatorFrameTexture)
-                //             this.threeContext?.threeScene.add(indicatorFrameMesh)
-        
-                //             this.threeLayers[layerId] = {
-                //                 planePlane:planePlane,
-                //                 planeTexture:planeTexture,
-                //                 planeMesh:planeMesh,
-        
-                //                 indicatorPlane: indicatorPlane,
-                //                 indicatorMesh: indicatorMesh,
-        
-                //                 indicatorFrameBox: indicatorFrameBox,
-                //                 indicatorFrameMesh: indicatorFrameMesh,
-                                
-                //                 spritesheetY: spritesheetY,
-                //             }
-                //         }
-                //     }            
-                // }
             }
             
             this.sprites_htmlimg[i] = img
@@ -538,7 +393,6 @@ class AnmPlayer{
         //layer transform
         for(let i=0;this.visible && i<(this.currentAnm?.frames.length || 0);i++){
 
-            // let threeLayer = this.threeLayers?.at(i)
             let layer = this.currentAnm?.frames[i]
             if(layer_name){
                 if(this.getLayerName(layer? layer.LayerId : -1) != layer_name){
@@ -603,22 +457,6 @@ class AnmPlayer{
 
                     ctx.drawImage(img,frame.XCrop + sheet_offset_x,frame.YCrop + sheet_offset_y, frame.Width, frame.Height,0,0, frame.Width, frame.Height)
 
-                    // if(threeLayer){
-                    //     threeLayer.planeMesh.visible = true
-
-                    //     threeLayer.planeTexture.offset.set((frame.XCrop + sheet_offset_x)/threeLayer.indicatorPlane.parameters.width, 1-(frame.YCrop + sheet_offset_y + frame.Height)/threeLayer.indicatorPlane.parameters.height)
-
-                    //     threeLayer.planeTexture.repeat.set(
-                    //         (frame.Width)/threeLayer.indicatorPlane.parameters.width, frame.Height/threeLayer.indicatorPlane.parameters.height
-                    //     )
-
-                    //     threeLayer.planeMesh.position.set(-100, 
-                    //         threeLayer.spritesheetY,
-                    //         0)
-                    //     threeLayer.planeMesh.rotation.set(-Math.PI/2,0,0)
-                    //     threeLayer.planeMesh.scale.set(frame.Width, frame.Height, 1)
-                        
-                    // }
                     if(this.debug_anchor){
                         ctx.beginPath()
                         ctx.arc(frame.XPivot,frame.YPivot,5,0,Math.PI/2)
@@ -629,35 +467,9 @@ class AnmPlayer{
                 }
             }
 
-            // if(threeLayer){
-            //     let frame = layer?.frames[this.currentFrame]
-            //     if(threeLayer.indicatorFrameMesh.visible = (layer?.Visible ?? false) && (frame?.Visible ?? false)){
-            //         threeLayer.indicatorMesh.visible = true
-            //         if(layer && frame){
-            //             let sheet_offset_x = 0,sheet_offset_y = 0
-            //             let sheet_offset = this.sheet_offsets[this.layers[layer.LayerId].SpritesheetId]
-            //             if(sheet_offset!=undefined){
-            //                 sheet_offset_x = sheet_offset.x
-            //                 sheet_offset_y = sheet_offset.y
-            //             }
-    
-            //             threeLayer.indicatorFrameMesh.scale.set(frame.Width, 1, frame.Height)
-            //             threeLayer.indicatorFrameMesh.position.set(frame.XCrop + sheet_offset_x + frame.Width/2, threeLayer.spritesheetY + 0.1,frame.YCrop + sheet_offset_y + frame.Height/2)
-            //         }
-            //     }else{
-            //         threeLayer.indicatorMesh.visible = false
-            //         threeLayer.planeMesh.visible = false
-            //     }
-            // }
         }
         ctx.restore()
     }
-
-    // public renderThree(){
-    //     if(this.threeContext){
-    //         this.threeContext.threeRenderer.render(this.threeContext.threeScene, this.threeContext.threeCamera)
-    //     }
-    // }
 
     public getAnmNames():string[]{
         let ret:string[] = []
