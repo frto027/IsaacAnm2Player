@@ -589,7 +589,7 @@ class AnmPlayer{
 
     private static COSTUME_STEP = ["glow","back","body","body0","body1","head","head0","head1","head2","head3","head4","head5","top0","extra","ghost"]
 
-    public static renderCostume(anmA:CostumeInfo[],anmB:CostumeInfo[]|undefined,anmC:CostumeInfo[]|undefined,ctx:CanvasRenderingContext2D, canvas:HTMLCanvasElement, centerX:number, centerY:number, rootScale:number,shootFrame:number,walkFrame:number, blackBody:boolean){
+    public static renderCostume(anmA:CostumeInfo[],anmB:CostumeInfo[]|undefined,anmC:CostumeInfo[]|undefined,ctx:CanvasRenderingContext2D, canvas:HTMLCanvasElement, centerX:number, centerY:number, rootScale:number,shootFrame:number,walkFrame:number, blackBody:boolean, layer_stack_offset:[number,number]){
         //anmA is leg,anmB is head
         let step_draw_candidates = new Map<string,(CostumeInfo|undefined)[]>()
 
@@ -668,7 +668,11 @@ class AnmPlayer{
         }
         let head_transform = undefined
 
+        let layer_stack_id = 0
         for(let step of this.COSTUME_STEP){
+            layer_stack_id++
+            let layer_stack_xoffset = (layer_stack_id % 8) * (layer_stack_offset[0] ?? 0)
+            let layer_stack_yoffset = Math.floor(layer_stack_id / 8) * (layer_stack_offset[1] ?? 0)
             if(step_draw_candidates.has(step)){
                 let players = step_draw_candidates.get(step)
                 for(let draw_anm = 0;draw_anm <= 2;draw_anm++){
@@ -702,9 +706,9 @@ class AnmPlayer{
                             }
                         }
                         if(step.startsWith("head")){
-                            player.drawCanvas(ctx,canvas,centerX,centerY,rootScale,step,head_transform, false)
+                            player.drawCanvas(ctx,canvas,centerX + layer_stack_xoffset,centerY + layer_stack_yoffset,rootScale,step,head_transform, false)
                         }else{
-                            player.drawCanvas(ctx,canvas,centerX,centerY,rootScale,step,undefined, blackBody && step.startsWith("body"))
+                            player.drawCanvas(ctx,canvas,centerX + layer_stack_xoffset,centerY + layer_stack_yoffset,rootScale,step,undefined, blackBody && step.startsWith("body"))
                         }
 
                         if(fallback_restore){
