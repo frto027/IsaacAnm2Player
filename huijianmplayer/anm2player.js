@@ -1459,7 +1459,6 @@ var AnmPlayer = /** @class */ (function () {
                         costume_C[i].layer_frame_color = "yellow"
 
                         function spritesheetProvicer(spritesheet, url,w,h){
-                            console.log(url)
                             if(!spritesheet_canvas_map.has(url)){
                                 var cvs = document.createElement("canvas")
                                 cvs.style.backgroundImage = "url("+ url+")"
