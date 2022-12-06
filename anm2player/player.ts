@@ -120,6 +120,8 @@ class AnmPlayer{
     anmEndEventListener?:()=>void
     imgLoadListener?:()=>void
 
+    layer_frame_color?:string
+
     constructor(json:Actor, img_url_builder:(url:string,replaced:boolean)=>string,spritesheet_overwrite:(sprite_id:number)=>string, onloadimg:()=>void){
         this.anm2 = json
 
@@ -456,6 +458,15 @@ class AnmPlayer{
                     }
 
                     ctx.drawImage(img,frame.XCrop + sheet_offset_x,frame.YCrop + sheet_offset_y, frame.Width, frame.Height,0,0, frame.Width, frame.Height)
+                    if(this.layer_frame_color){
+                        ctx.beginPath()
+                        ctx.strokeStyle = this.layer_frame_color
+                        ctx.lineWidth = 1
+                        ctx.strokeRect(0,0,frame.Width, frame.Height)
+                        ctx.fillStyle = this.layer_frame_color
+                        ctx.arc(frame.XPivot,frame.YPivot,1,0,Math.PI/2)
+                        ctx.fill()
+                    }
 
                     if(this.debug_anchor){
                         ctx.beginPath()

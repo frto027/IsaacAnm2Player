@@ -390,6 +390,15 @@ var AnmPlayer = /** @class */ (function () {
                         sheet_offset_y = sheet_offset.y;
                     }
                     ctx.drawImage(img, frame.XCrop + sheet_offset_x, frame.YCrop + sheet_offset_y, frame.Width, frame.Height, 0, 0, frame.Width, frame.Height);
+                    if (this.layer_frame_color) {
+                        ctx.beginPath();
+                        ctx.strokeStyle = this.layer_frame_color;
+                        ctx.lineWidth = 1;
+                        ctx.strokeRect(0, 0, frame.Width, frame.Height);
+                        ctx.fillStyle = this.layer_frame_color;
+                        ctx.arc(frame.XPivot, frame.YPivot, 1, 0, Math.PI / 2);
+                        ctx.fill();
+                    }
                     if (this.debug_anchor) {
                         ctx.beginPath();
                         ctx.arc(frame.XPivot, frame.YPivot, 5, 0, Math.PI / 2);
@@ -1420,6 +1429,13 @@ var AnmPlayer = /** @class */ (function () {
                     costume_A[i] = new AnmPlayer(target,huijiUrlBuilder,replace_sprite_func, function(){draw(true)})
                     costume_B[i] = new AnmPlayer(target,huijiUrlBuilder,replace_sprite_func, function(){})
                     costume_C[i] = new AnmPlayer(target,huijiUrlBuilder,replace_sprite_func, function(){})
+
+                    if(layer_stack_exploded){
+                        costume_A[i].layer_frame_color = "red"
+                        costume_B[i].layer_frame_color = "green"
+                        costume_C[i].layer_frame_color = "yellow"    
+                    }
+                    
 
                     if(PATCH_randomIdle){
                         random_idle_anm = new AnmPlayer(target,huijiUrlBuilder,replace_sprite_func, function(){})
