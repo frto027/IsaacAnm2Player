@@ -248,6 +248,9 @@ var AnmPlayer = /** @class */ (function () {
     AnmPlayer.prototype.setEndEventListener = function (listener) {
         this.anmEndEventListener = listener;
     };
+    AnmPlayer.prototype.setSpritesheetCanvas = function (canvasProvider) {
+        this.spritesheetCanvasProvider = canvasProvider;
+    };
     AnmPlayer.prototype.update = function () {
         var _a, _b;
         if (this.currentAnm) {
@@ -302,9 +305,17 @@ var AnmPlayer = /** @class */ (function () {
             }
             img.src = this.img_url_builder(imgpath, replaced_url != undefined);
             img.onload = function () {
+                var _a;
                 img.setAttribute("img_loaded", "true");
                 if (_this.imgLoadListener) {
                     _this.imgLoadListener();
+                }
+                if (_this.spritesheetCanvasProvider) {
+                    _this.spritesheet_canvas = _this.spritesheet_canvas || [];
+                    var sprite = (_a = _this.anm2.content) === null || _a === void 0 ? void 0 : _a.Spritesheets;
+                    if (sprite && sprite[i]) {
+                        _this.spritesheet_canvas[i] = _this.spritesheetCanvasProvider(sprite[i], img.src, img.width, img.height);
+                    }
                 }
             };
             this.sprites_htmlimg[i] = img;
@@ -398,6 +409,16 @@ var AnmPlayer = /** @class */ (function () {
                         ctx.fillStyle = this.layer_frame_color;
                         ctx.arc(frame.XPivot, frame.YPivot, 1, 0, Math.PI / 2);
                         ctx.fill();
+                        //draw spritesheet canvas
+                        var spritesheet_canvas = this.spritesheet_canvas && this.spritesheet_canvas[sprite_sheet_id];
+                        if (spritesheet_canvas) {
+                            spritesheet_canvas.beginPath();
+                            spritesheet_canvas.strokeStyle = this.layer_frame_color;
+                            spritesheet_canvas.lineWidth = 1;
+                            spritesheet_canvas.strokeRect(frame.XCrop + sheet_offset_x, frame.YCrop + sheet_offset_y, frame.Width, frame.Height);
+                            spritesheet_canvas.fillStyle = this.layer_frame_color;
+                            spritesheet_canvas.fill();
+                        }
                     }
                     if (this.debug_anchor) {
                         ctx.beginPath();
@@ -939,6 +960,8 @@ var AnmPlayer = /** @class */ (function () {
         var layer_stack_exploded_x = 0, layer_stack_exploded_y = 0
         var layer_stack_exploding = false
 
+        var spritesheet_canvas_map = new Map() /* spritesheet_path => HTML Canvas Element */
+
         if(render_as_costume){
             costume_A = [] /* head */
             costume_B = [] /* body */
@@ -973,7 +996,7 @@ var AnmPlayer = /** @class */ (function () {
 
         //在控制台中执行window.enableMoveChara以启用角色移动
         {
-                (function(){
+            (function(){
                 var old_func = window.enableMoveChara
                 window.enableMoveChara = function(){
                     PATCH_moveChara = true
@@ -1433,7 +1456,24 @@ var AnmPlayer = /** @class */ (function () {
                     if(layer_stack_exploded){
                         costume_A[i].layer_frame_color = "red"
                         costume_B[i].layer_frame_color = "green"
-                        costume_C[i].layer_frame_color = "yellow"    
+                        costume_C[i].layer_frame_color = "yellow"
+
+                        function spritesheetProvicer(spritesheet, url,w,h){
+                            console.log(url)
+                            if(!spritesheet_canvas_map.has(url)){
+                                var cvs = document.createElement("canvas")
+                                cvs.style.backgroundImage = "url("+ url+")"
+                                cvs.width = w
+                                cvs.height = h
+                                canvasdiv.appendChild(cvs)
+                                canvasdiv.appendChild(document.createElement("br"))
+                                spritesheet_canvas_map.set(url, cvs.getContext("2d"))
+                            }
+                            return spritesheet_canvas_map.get(url)
+                        }
+                        costume_A[i].setSpritesheetCanvas(spritesheetProvicer)
+                        costume_B[i].setSpritesheetCanvas(spritesheetProvicer)
+                        costume_C[i].setSpritesheetCanvas(spritesheetProvicer)
                     }
                     
 
@@ -2041,6 +2081,13 @@ var AnmPlayer = /** @class */ (function () {
                         ctx.imageSmoothingEnabled = false
                         ctx.setTransform(1, 0, 0, 1, 0, 0)
                         ctx.clearRect(0, 0, canvas.width, canvas.height)
+                        if(spritesheet_canvas_map){
+                            var it = spritesheet_canvas_map.values()
+                            var next
+                            while(!(next = it.next()).done){
+                                next.value.clearRect(0,0,100000,100000)
+                            }
+                        }
                         if(costume_status == 'Walk'){
                             if(PATCH_csection){
                                 AnmPlayer.renderCostume(costumeInfoB,costumeInfoA,costumeInfoC,ctx, canvas, players[0].x, players[0].y, 1,0,Math.floor(costume_walking_frame),PATCH_shadowBody,[layer_stack_exploded_x, layer_stack_exploded_y])

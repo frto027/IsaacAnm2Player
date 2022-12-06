@@ -241,6 +241,9 @@ var AnmPlayer = /** @class */ (function () {
     AnmPlayer.prototype.setEndEventListener = function (listener) {
         this.anmEndEventListener = listener;
     };
+    AnmPlayer.prototype.setSpritesheetCanvas = function (canvasProvider) {
+        this.spritesheetCanvasProvider = canvasProvider;
+    };
     AnmPlayer.prototype.update = function () {
         var _a, _b;
         if (this.currentAnm) {
@@ -295,9 +298,17 @@ var AnmPlayer = /** @class */ (function () {
             }
             img.src = this.img_url_builder(imgpath, replaced_url != undefined);
             img.onload = function () {
+                var _a;
                 img.setAttribute("img_loaded", "true");
                 if (_this.imgLoadListener) {
                     _this.imgLoadListener();
+                }
+                if (_this.spritesheetCanvasProvider) {
+                    _this.spritesheet_canvas = _this.spritesheet_canvas || [];
+                    var sprite = (_a = _this.anm2.content) === null || _a === void 0 ? void 0 : _a.Spritesheets;
+                    if (sprite && sprite[i]) {
+                        _this.spritesheet_canvas[i] = _this.spritesheetCanvasProvider(sprite[i], img.src, img.width, img.height);
+                    }
                 }
             };
             this.sprites_htmlimg[i] = img;
@@ -391,6 +402,16 @@ var AnmPlayer = /** @class */ (function () {
                         ctx.fillStyle = this.layer_frame_color;
                         ctx.arc(frame.XPivot, frame.YPivot, 1, 0, Math.PI / 2);
                         ctx.fill();
+                        //draw spritesheet canvas
+                        var spritesheet_canvas = this.spritesheet_canvas && this.spritesheet_canvas[sprite_sheet_id];
+                        if (spritesheet_canvas) {
+                            spritesheet_canvas.beginPath();
+                            spritesheet_canvas.strokeStyle = this.layer_frame_color;
+                            spritesheet_canvas.lineWidth = 1;
+                            spritesheet_canvas.strokeRect(frame.XCrop + sheet_offset_x, frame.YCrop + sheet_offset_y, frame.Width, frame.Height);
+                            spritesheet_canvas.fillStyle = this.layer_frame_color;
+                            spritesheet_canvas.fill();
+                        }
                     }
                     if (this.debug_anchor) {
                         ctx.beginPath();

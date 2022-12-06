@@ -277,6 +277,12 @@ class AnmPlayer{
         this.anmEndEventListener = listener
     }
 
+    spritesheet_canvas?:Array<CanvasRenderingContext2D>
+    spritesheetCanvasProvider?:(spritesheed:Spritesheet,url:String, width:number, height:number)=>CanvasRenderingContext2D
+    public setSpritesheetCanvas(canvasProvider:(spritesheed:Spritesheet, url:String,width:number, height:number)=>CanvasRenderingContext2D){
+        this.spritesheetCanvasProvider = canvasProvider
+    }
+
     public update(){
         if(this.currentAnm){
             if(this.revert){
@@ -333,6 +339,13 @@ class AnmPlayer{
                 img.setAttribute("img_loaded","true")
                 if(this.imgLoadListener){
                     this.imgLoadListener()
+                }
+                if(this.spritesheetCanvasProvider){
+                    this.spritesheet_canvas = this.spritesheet_canvas || []
+                    let sprite = this.anm2.content?.Spritesheets
+                    if(sprite && sprite[i]){
+                        this.spritesheet_canvas[i] = this.spritesheetCanvasProvider(sprite[i],img.src,img.width,img.height)
+                    }
                 }
             }
             
@@ -466,6 +479,17 @@ class AnmPlayer{
                         ctx.fillStyle = this.layer_frame_color
                         ctx.arc(frame.XPivot,frame.YPivot,1,0,Math.PI/2)
                         ctx.fill()
+
+                        //draw spritesheet canvas
+                        let spritesheet_canvas = this.spritesheet_canvas && this.spritesheet_canvas[sprite_sheet_id]
+                        if(spritesheet_canvas){
+                            spritesheet_canvas.beginPath()
+                            spritesheet_canvas.strokeStyle = this.layer_frame_color
+                            spritesheet_canvas.lineWidth = 1
+                            spritesheet_canvas.strokeRect(frame.XCrop + sheet_offset_x,frame.YCrop + sheet_offset_y, frame.Width, frame.Height)
+                            spritesheet_canvas.fillStyle = this.layer_frame_color
+                            spritesheet_canvas.fill()
+                        }
                     }
 
                     if(this.debug_anchor){
