@@ -1458,14 +1458,22 @@ var AnmPlayer = /** @class */ (function () {
                         costume_B[i].layer_frame_color = "green"
                         costume_C[i].layer_frame_color = "yellow"
 
+                        var last_line_width = 0
                         function spritesheetProvicer(spritesheet, url,w,h){
                             if(!spritesheet_canvas_map.has(url)){
+                                
+                                if(last_line_width + w > canvas.width){
+                                    canvasdiv.appendChild(document.createElement("br"))
+                                    last_line_width = w
+                                }else{
+                                    last_line_width += w
+                                }
+
                                 var cvs = document.createElement("canvas")
                                 cvs.style.backgroundImage = "url("+ url+")"
                                 cvs.width = w
                                 cvs.height = h
                                 canvasdiv.appendChild(cvs)
-                                canvasdiv.appendChild(document.createElement("br"))
                                 spritesheet_canvas_map.set(url, cvs.getContext("2d"))
                             }
                             return spritesheet_canvas_map.get(url)
