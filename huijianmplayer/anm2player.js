@@ -5,6 +5,7 @@ layer_stack_exploded = layer_stack_exploded && layer_stack_exploded[1] == "1"
 
 function setup_anm2_player() {
 
+/* 以下注释区间内的内容由merge.py自动生成（编译自anm2player/player.ts） */
 /* == BEGIN_OF player.ts == */
 var FrameStatus = /** @class */ (function () {
     function FrameStatus() {
@@ -1461,7 +1462,7 @@ var AnmPlayer = /** @class */ (function () {
                         var last_line_width = 0
                         function spritesheetProvicer(spritesheet, url,w,h){
                             if(!spritesheet_canvas_map.has(url)){
-                                
+
                                 if(last_line_width + w > canvas.width){
                                     canvasdiv.appendChild(document.createElement("br"))
                                     last_line_width = w

@@ -2,6 +2,10 @@
 
 文件`huijianmplayer/anm2player.js`是以撒的结合中文维基上[anm2播放器](https://isaac.huijiwiki.com/wiki/%E5%B8%AE%E5%8A%A9:Anm2%E6%92%AD%E6%94%BE%E5%99%A8)的源代码
 
+# 调试方法
+
+在wiki设置中关闭Anm2Player小工具，然后在被测试的网页上将`huijianmplayer/anm2player.js`文件内容直接复制到F12控制台上执行。
+
 ## 开发现状
 
 anm2parser（xml解析）+anm2player（计算+渲染）可作为Javascript库独立使用，完成`.anm2`文件在html页面的canvas上的渲染过程。huijianmplayer是和灰机wiki网页紧密耦合的一个播放器。这三个部分是在维护中的。
