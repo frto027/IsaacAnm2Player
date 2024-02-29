@@ -358,7 +358,7 @@ class AnmPlayer{
     debug_anchor:boolean = false
     
 
-    public drawCanvas(ctx:CanvasRenderingContext2D, canvas:HTMLCanvasElement, centerX?:number, centerY?:number, rootScale?:number,layer_name?:string,transformFrame?:FrameStatus, blackPatch?:boolean /* 用于渲染犹大之影的身体 */){
+    public drawCanvas(ctx:CanvasRenderingContext2D, canvas:HTMLCanvasElement, centerX?:number, centerY?:number, rootScale?:number,layer_name?:string,transformFrame?:FrameStatus, blackPatch?:boolean /* 用于渲染犹大之影的身体 */, extraScaleX?:number, extraScaleY?:number, extraOffsetY?:number){
         ctx.save()
 
         ctx.setTransform(1,0,0,1,0,0)
@@ -376,14 +376,26 @@ class AnmPlayer{
         if(rootScale == undefined){
             rootScale = 1
         }
+        if(extraScaleX == undefined){
+            extraScaleX = 1
+        }
+        if(extraScaleY == undefined){
+            extraScaleY = 1
+        }
+        if(extraOffsetY == undefined){
+            extraOffsetY = 0
+        }
         
 
         let rootframe = this.currentAnm?.rootframes[this.currentFrame]
 
-
         ctx.translate(centerX, centerY)
 
         ctx.scale(this.flipX ? -rootScale:rootScale,rootScale)
+
+        ctx.translate(0, extraOffsetY)
+
+        ctx.scale(extraScaleX, extraScaleY)
 
         if(rootframe){
             ctx.translate(rootframe.XPosition, rootframe.YPosition)
@@ -396,6 +408,7 @@ class AnmPlayer{
             ctx.rotate(transformFrame.Rotation * Math.PI / 180)
             ctx.scale(transformFrame.XScale/100, transformFrame.YScale/100)
         }
+
 
         if(this.debug_anchor){
             ctx.beginPath()
@@ -622,9 +635,42 @@ class AnmPlayer{
         }
     }
 
+    private static getAdrenalineAnms(emptyHeart: number /* range: 0 ~ 12, maybe 0 ~ 24 with some item */, frameCount: number)
+        : [HeadOffsetY:number, HeadScaleX:number, HeadScaleY:number, BodyScaleX:number, BodyScaleY:number]{
+        if(emptyHeart == 0){
+            return [0,1,1,1,1]
+        }
+        
+        let EmptyHeartCount = emptyHeart / 24.00
+        
+
+        let v582 = 1.0 - ((1.0 - EmptyHeartCount) * (1.0 - EmptyHeartCount));
+        let v601 = ((EmptyHeartCount  * EmptyHeartCount * 9.0) + 1.0) * 2 * 3.1415927 / 30.0;
+        let v596 = v582 * 0.5;
+        let v191 = Math.cos(frameCount * v601);
+        let v192 = ((v191 * 0.5) + 0.5) * 1.2 * ((v191 * 0.5) + 0.5) * 1.2
+        let j = ((v192 - 0.2) * v596) + 1.0;
+        let v194 = Math.cos((frameCount - 3) * v601);
+        let v195 = ((v194 * 0.5) + 0.5) * 1.2 * ((v194 * 0.5) + 0.5) * 1.2
+        let v196 = (v195 - 0.2) * (EmptyHeartCount * EmptyHeartCount);
+        let v608 = ((((1.0 / j) - 1.0) * 0.5) + 1.0) + v196;//output
+        let v579 = (v196 * 0.5) + j; //output
+        let v198 = Math.cos((frameCount + 10) * v601);
+        let v199 = ((v198 * 0.5) + 0.5) * 1.2 * ((v198 * 0.5) + 0.5) * 1.2
+        j = (v199 - 0.2) * v596;
+        let v201 = Math.cos((frameCount + 20) * v601);
+        let v202 = ((v201 * 0.5) + 0.5) * 1.2 * ((v201 * 0.5) + 0.5) * 1.2
+        v582 = ((v202 - 0.2) * (v582 * 0.1)) + 1.0;//output
+        let SomeVariable = 1.0 / v582;//output
+
+        return [j*10, SomeVariable, v582, v608, v579]
+    }
+
     private static COSTUME_STEP = ["glow","back","body","body0","body1","head","head0","head1","head2","head3","head4","head5","top0","extra","ghost"]
 
-    public static renderCostume(anmA:CostumeInfo[],anmB:CostumeInfo[]|undefined,anmC:CostumeInfo[]|undefined,ctx:CanvasRenderingContext2D, canvas:HTMLCanvasElement, centerX:number, centerY:number, rootScale:number,shootFrame:number,walkFrame:number, blackBody:boolean, layer_stack_offset:[number,number]){
+    public static renderCostume(anmA:CostumeInfo[],anmB:CostumeInfo[]|undefined,anmC:CostumeInfo[]|undefined,ctx:CanvasRenderingContext2D, canvas:HTMLCanvasElement, centerX:number, centerY:number, rootScale:number,shootFrame:number,walkFrame:number,
+         blackBody:boolean /* 犹大之影 */, gameFrameCount:number, adrenalineLevel:number /* 肾上腺素 */
+         , layer_stack_offset:[number,number]){
         //anmA is leg,anmB is head
         let step_draw_candidates = new Map<string,(CostumeInfo|undefined)[]>()
 
@@ -703,6 +749,9 @@ class AnmPlayer{
         }
         let head_transform = undefined
 
+        let [adrenalineHeadOffsetY, adrenalineHeadScaleX, adrenalineHeadScaleY,adrenalineBodyScaleX, adrenalineBodyScaleY] =
+            this.getAdrenalineAnms(adrenalineLevel, gameFrameCount)
+
         let layer_stack_id = 0
         for(let step of this.COSTUME_STEP){
             layer_stack_id++
@@ -741,9 +790,13 @@ class AnmPlayer{
                             }
                         }
                         if(step.startsWith("head")){
-                            player.drawCanvas(ctx,canvas,centerX + layer_stack_xoffset,centerY + layer_stack_yoffset,rootScale,step,head_transform, false)
+                            player.drawCanvas(ctx,canvas,centerX + layer_stack_xoffset,centerY + layer_stack_yoffset,rootScale,step,head_transform, false,
+                                adrenalineHeadScaleX, adrenalineHeadScaleY, adrenalineHeadOffsetY)
                         }else{
-                            player.drawCanvas(ctx,canvas,centerX + layer_stack_xoffset,centerY + layer_stack_yoffset,rootScale,step,undefined, blackBody && step.startsWith("body"))
+                            let step_is_body = step.startsWith("body")
+                            player.drawCanvas(ctx,canvas,centerX + layer_stack_xoffset,centerY + layer_stack_yoffset,rootScale,step,undefined, blackBody && step_is_body, 
+                            adrenalineBodyScaleX,adrenalineBodyScaleY, 0
+                            )
                         }
 
                         if(fallback_restore){

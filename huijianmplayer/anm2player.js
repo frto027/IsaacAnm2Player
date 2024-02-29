@@ -324,7 +324,7 @@ var AnmPlayer = /** @class */ (function () {
         }
         return img;
     };
-    AnmPlayer.prototype.drawCanvas = function (ctx, canvas, centerX, centerY, rootScale, layer_name, transformFrame, blackPatch /* 用于渲染犹大之影的身体 */) {
+    AnmPlayer.prototype.drawCanvas = function (ctx, canvas, centerX, centerY, rootScale, layer_name, transformFrame, blackPatch /* 用于渲染犹大之影的身体 */, extraScaleX, extraScaleY, extraOffsetY) {
         var _a, _b, _c;
         ctx.save();
         ctx.setTransform(1, 0, 0, 1, 0, 0);
@@ -341,9 +341,20 @@ var AnmPlayer = /** @class */ (function () {
         if (rootScale == undefined) {
             rootScale = 1;
         }
+        if (extraScaleX == undefined) {
+            extraScaleX = 1;
+        }
+        if (extraScaleY == undefined) {
+            extraScaleY = 1;
+        }
+        if (extraOffsetY == undefined) {
+            extraOffsetY = 0;
+        }
         var rootframe = (_a = this.currentAnm) === null || _a === void 0 ? void 0 : _a.rootframes[this.currentFrame];
         ctx.translate(centerX, centerY);
         ctx.scale(this.flipX ? -rootScale : rootScale, rootScale);
+        ctx.translate(0, extraOffsetY);
+        ctx.scale(extraScaleX, extraScaleY);
         if (rootframe) {
             ctx.translate(rootframe.XPosition, rootframe.YPosition);
             ctx.rotate(rootframe.Rotation * Math.PI / 180);
@@ -557,7 +568,32 @@ var AnmPlayer = /** @class */ (function () {
             }
         }
     };
-    AnmPlayer.renderCostume = function (anmA, anmB, anmC, ctx, canvas, centerX, centerY, rootScale, shootFrame, walkFrame, blackBody, layer_stack_offset) {
+    AnmPlayer.getAdrenalineAnms = function (emptyHeart /* range: 0 ~ 12, maybe 0 ~ 24 with some item */, frameCount) {
+        if (emptyHeart == 0) {
+            return [0, 1, 1, 1, 1];
+        }
+        var EmptyHeartCount = emptyHeart / 24.00;
+        var v582 = 1.0 - ((1.0 - EmptyHeartCount) * (1.0 - EmptyHeartCount));
+        var v601 = ((EmptyHeartCount * EmptyHeartCount * 9.0) + 1.0) * 2 * 3.1415927 / 30.0;
+        var v596 = v582 * 0.5;
+        var v191 = Math.cos(frameCount * v601);
+        var v192 = ((v191 * 0.5) + 0.5) * 1.2 * ((v191 * 0.5) + 0.5) * 1.2;
+        var j = ((v192 - 0.2) * v596) + 1.0;
+        var v194 = Math.cos((frameCount - 3) * v601);
+        var v195 = ((v194 * 0.5) + 0.5) * 1.2 * ((v194 * 0.5) + 0.5) * 1.2;
+        var v196 = (v195 - 0.2) * (EmptyHeartCount * EmptyHeartCount);
+        var v608 = ((((1.0 / j) - 1.0) * 0.5) + 1.0) + v196; //output
+        var v579 = (v196 * 0.5) + j; //output
+        var v198 = Math.cos((frameCount + 10) * v601);
+        var v199 = ((v198 * 0.5) + 0.5) * 1.2 * ((v198 * 0.5) + 0.5) * 1.2;
+        j = (v199 - 0.2) * v596;
+        var v201 = Math.cos((frameCount + 20) * v601);
+        var v202 = ((v201 * 0.5) + 0.5) * 1.2 * ((v201 * 0.5) + 0.5) * 1.2;
+        v582 = ((v202 - 0.2) * (v582 * 0.1)) + 1.0; //output
+        var SomeVariable = 1.0 / v582; //output
+        return [j * 10, SomeVariable, v582, v608, v579];
+    };
+    AnmPlayer.renderCostume = function (anmA, anmB, anmC, ctx, canvas, centerX, centerY, rootScale, shootFrame, walkFrame, blackBody /* 犹大之影 */, gameFrameCount, adrenalineLevel /* 肾上腺素 */, layer_stack_offset) {
         var _a, _b, _c, _d, _e, _f, _g, _h, _j, _k, _l, _m, _o, _p;
         //anmA is leg,anmB is head
         var step_draw_candidates = new Map();
@@ -646,9 +682,10 @@ var AnmPlayer = /** @class */ (function () {
             }
         }
         var head_transform = undefined;
+        var _8 = this.getAdrenalineAnms(adrenalineLevel, gameFrameCount), adrenalineHeadOffsetY = _8[0], adrenalineHeadScaleX = _8[1], adrenalineHeadScaleY = _8[2], adrenalineBodyScaleX = _8[3], adrenalineBodyScaleY = _8[4];
         var layer_stack_id = 0;
-        for (var _8 = 0, _9 = this.COSTUME_STEP; _8 < _9.length; _8++) {
-            var step = _9[_8];
+        for (var _9 = 0, _10 = this.COSTUME_STEP; _9 < _10.length; _9++) {
+            var step = _10[_9];
             layer_stack_id++;
             var layer_stack_xoffset = (layer_stack_id % 8) * ((_f = layer_stack_offset[0]) !== null && _f !== void 0 ? _f : 0);
             var layer_stack_yoffset = Math.floor(layer_stack_id / 8) * ((_g = layer_stack_offset[1]) !== null && _g !== void 0 ? _g : 0);
@@ -686,10 +723,11 @@ var AnmPlayer = /** @class */ (function () {
                             }
                         }
                         if (step.startsWith("head")) {
-                            player.drawCanvas(ctx, canvas, centerX + layer_stack_xoffset, centerY + layer_stack_yoffset, rootScale, step, head_transform, false);
+                            player.drawCanvas(ctx, canvas, centerX + layer_stack_xoffset, centerY + layer_stack_yoffset, rootScale, step, head_transform, false, adrenalineHeadScaleX, adrenalineHeadScaleY, adrenalineHeadOffsetY);
                         }
                         else {
-                            player.drawCanvas(ctx, canvas, centerX + layer_stack_xoffset, centerY + layer_stack_yoffset, rootScale, step, undefined, blackBody && step.startsWith("body"));
+                            var step_is_body = step.startsWith("body");
+                            player.drawCanvas(ctx, canvas, centerX + layer_stack_xoffset, centerY + layer_stack_yoffset, rootScale, step, undefined, blackBody && step_is_body, adrenalineBodyScaleX, adrenalineBodyScaleY, 0);
                         }
                         if (fallback_restore) {
                             player.currentAnm = fallback_restore;
@@ -940,6 +978,8 @@ var AnmPlayer = /** @class */ (function () {
         var players = []
         //anms存储AmpPlayer
         var anms = []
+
+        var gameFrameCount = 0 // 用于某些效果渲染（肾上腺素）
         //接口
         var htmlrule = undefined
         var htmlrule_constructor = undefined
@@ -994,6 +1034,11 @@ var AnmPlayer = /** @class */ (function () {
         var PATCH_noAttack = patch.has("noAttack")
         var PATCH_moveChara = patch.has("moveChara")
         var PATCH_shadowBody = patch.has("shadowBody")
+        var PATCH_adrenaline_level = patch.has("adrenaline_level")
+        
+        var adrenaline_level = 0
+        if(PATCH_adrenaline_level)
+            adrenaline_level = 6
 
         //在控制台中执行window.enableMoveChara以启用角色移动
         {
@@ -1006,6 +1051,38 @@ var AnmPlayer = /** @class */ (function () {
                     }
                 }
             })()
+            {
+                var today = new Date()
+                if(today.getMonth() == 3 && today.getDate() == 1){
+                    PATCH_moveChara = true
+                }
+            }
+        }
+
+        adrenaline_leven_change_notification = undefined
+        function handleAdrenalineKey(key){
+            if(!PATCH_adrenaline_level)
+                return false
+            if(key != '.')
+                return false
+            adrenaline_level = adrenaline_level + 1
+            if(adrenaline_level >= 24){
+                adrenaline_level = 1
+            }
+            var notification = "空白心之容器数量："+adrenaline_level
+            if(adrenaline_leven_change_notification){
+                adrenaline_leven_change_notification.content = notification
+            }else{
+                adrenaline_leven_change_notification = $notification.create(
+                    {
+                        title:'肾上腺素角色形象',
+                        content:notification,
+                        onClose:function(){
+                            adrenaline_leven_change_notification = undefined
+                        }
+                    }
+                )
+            }
         }
 
         //加载htmlrule
@@ -1767,6 +1844,9 @@ var AnmPlayer = /** @class */ (function () {
                     if(handleColorKey(key)){
                         catched = true
                     }
+                    if(handleAdrenalineKey(key)){
+                        catched = true
+                    }
                     if(catched){
                         e.preventDefault()
                     }
@@ -2098,17 +2178,26 @@ var AnmPlayer = /** @class */ (function () {
                         }
                         if(costume_status == 'Walk'){
                             if(PATCH_csection){
-                                AnmPlayer.renderCostume(costumeInfoB,costumeInfoA,costumeInfoC,ctx, canvas, players[0].x, players[0].y, 1,0,Math.floor(costume_walking_frame),PATCH_shadowBody,[layer_stack_exploded_x, layer_stack_exploded_y])
+                                AnmPlayer.renderCostume(costumeInfoB,costumeInfoA,costumeInfoC,ctx, canvas, players[0].x, players[0].y, 1,0,Math.floor(costume_walking_frame),
+                                PATCH_shadowBody,gameFrameCount,adrenaline_level,
+                                [layer_stack_exploded_x, layer_stack_exploded_y])
                             }else if(render_random_idle){
                                 //PATCH_randomIdle
-                                AnmPlayer.renderCostume(costumeInfoB,undefined,undefined,ctx, canvas, players[0].x, players[0].y, 1,Math.floor(costume_shooting_frame),Math.floor(costume_walking_frame),PATCH_shadowBody,[layer_stack_exploded_x, layer_stack_exploded_y])
+                                AnmPlayer.renderCostume(costumeInfoB,undefined,undefined,ctx, canvas, players[0].x, players[0].y, 1,Math.floor(costume_shooting_frame),Math.floor(costume_walking_frame),
+                                PATCH_shadowBody, gameFrameCount,adrenaline_level,
+                                [layer_stack_exploded_x, layer_stack_exploded_y])
                                 random_idle_anm.drawCanvas(ctx,canvas,players[0].x,players[0].y - 17,1)
                             }else{
-                                AnmPlayer.renderCostume(costumeInfoB,costumeInfoA,costumeInfoC,ctx, canvas, players[0].x, players[0].y, 1,Math.floor(costume_shooting_frame),Math.floor(costume_walking_frame),PATCH_shadowBody,[layer_stack_exploded_x, layer_stack_exploded_y])
+                                AnmPlayer.renderCostume(costumeInfoB,costumeInfoA,costumeInfoC,ctx, canvas, players[0].x, players[0].y, 1,Math.floor(costume_shooting_frame),Math.floor(costume_walking_frame),
+                                PATCH_shadowBody, gameFrameCount,adrenaline_level,
+                                [layer_stack_exploded_x, layer_stack_exploded_y])
                             }
                         }else{
-                            AnmPlayer.renderCostume(costumeInfoA,undefined,undefined,ctx, canvas, players[0].x, players[0].y, 1,Math.floor(costume_shooting_frame),Math.floor(costume_walking_frame),PATCH_shadowBody,[layer_stack_exploded_x, layer_stack_exploded_y])
+                            AnmPlayer.renderCostume(costumeInfoA,undefined,undefined,ctx, canvas, players[0].x, players[0].y, 1,Math.floor(costume_shooting_frame),Math.floor(costume_walking_frame),
+                            PATCH_shadowBody, gameFrameCount,adrenaline_level,
+                            [layer_stack_exploded_x, layer_stack_exploded_y])
                         }
+                        gameFrameCount++
                     }else{
                         if(!noUpdate){
                             for (var i = 0; i < anms.length; i++) {
@@ -2128,7 +2217,6 @@ var AnmPlayer = /** @class */ (function () {
                         for (var i = anms.length - 1; i >= 0; i--) {
                             anms[i].drawCanvas(ctx, canvas, players[i].x, players[i].y, 1)
                         }
-
                     }
                 }
 
