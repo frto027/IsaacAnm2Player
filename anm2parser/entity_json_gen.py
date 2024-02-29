@@ -15,6 +15,8 @@ with xml.open("r") as f:
 
 PrettyPrint = True
 
+infobox_page = []
+
 class AnmInfo:
     def __init__(self, Anm2Fullpath : Path) -> None:
         self.path = Anm2Fullpath
@@ -575,13 +577,16 @@ rules.extend([
 ])
 rules.append(DefaultRule("Float"))
 rules.append(DefaultRule("Walking"))
+rules.append(OneClickChange("Idle","Pulse"))
+rules.append(DefaultRule("Pulse"))
 rules.append(DefaultRule("Idle"))
 # rules.append(IdleRule())
 
 #######################################################################
 
 ForceRuleDict:dict[str,AnmGenRule] = {
-    "2.4.0": OneClickChange("Idle","Appear")
+    "2.4.0": OneClickChange("Idle","Appear"),
+    "4.20.0": DefaultRule("Pulse"),
 }
 
 solid_template = 0
@@ -642,7 +647,7 @@ def main():
 
         if Type == "1":
             continue
-        if Type != "3":
+        if Type != "4":
             continue
         if File == "":
             continue
@@ -656,6 +661,11 @@ def main():
         #     continue
         ParseAnimFile(Type,Variant,Subtype,RelativePath, Fullpath)
 
+        infobox_page.append("{{infobox entity|" + f"{Type}|{Variant}|{Subtype}" + "}}")
+        infobox_page.append("{{infobox entity/anm|" + f"{Type}|{Variant}|{Subtype}" + "}}")
+
+    with open("infobox.wikitext","w") as f:
+        f.write('\n'.join(infobox_page))
     print("template:", solid_template, "matched:", rule_matched,"not matched:", rule_notmatched)
 
 if __name__ == "__main__":
