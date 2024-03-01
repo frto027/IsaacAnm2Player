@@ -176,6 +176,8 @@ class Anm2(Template):
 
         self.width = r-l
         self.height = d-u
+        if self.width * self.scale > 280:
+            self.scale = 280 / self.width
         anm2Anm.pos(-l, -u)
 
     def __str__(self) -> str:
@@ -417,6 +419,7 @@ rules.extend([
     OneClickChange("Small","Death"),
     OneClickChange("GrabLoop","Grab"),
     OneClickChange("Idle","PayPrize"),
+    OneClickChange("RedLaser","RedLaserEnd"),
 ])
 
 class MachineRule(AnmGenRule):
@@ -695,7 +698,7 @@ def main():
 
         if Type == "1":
             continue
-        if Type != "6":
+        if Type != "7":
             continue
         if File == "":
             continue
