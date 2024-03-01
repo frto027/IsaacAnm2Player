@@ -416,7 +416,51 @@ rules.extend([
     OneClickChange("Medium","Death"),
     OneClickChange("Small","Death"),
     OneClickChange("GrabLoop","Grab"),
+    OneClickChange("Idle","PayPrize"),
 ])
+
+class MachineRule(AnmGenRule):
+    def Match(self, AnmInfo: AnmInfo):
+        return "Idle" in AnmInfo.AnmNames and "Initiate" in AnmInfo.AnmNames and "Wiggle" in AnmInfo.AnmNames
+    def GenPlayRule(self, AnmInfo: AnmInfo) -> Anm2:
+        r = Anm2(AnmInfo)
+        anm = r.addAnm(AnmInfo.path)
+        anm.name("Idle")
+        anm.addrule("when:Idle,next:Idle")
+        anm.addrule("when:Idle,clicknext:Initiate")
+        anm.addrule("when:Initiate,next:Wiggle")
+        if "Prize" in AnmInfo.AnmNames:
+            anm.addrule("when:Wiggle,next:Prize,rate:0.5")
+            anm.addrule("when:Prize,next:Idle")
+        
+        if "NoPrize" in AnmInfo.AnmNames:
+            anm.addrule("when:Wiggle,next:NoPrize")
+            anm.addrule("when:NoPrize,next:Idle")
+        else:
+            anm.addrule("when:Wiggle,next:Idle")
+        r.updateSize(["Idle","Wiggle","Initiate"], anm)
+        return r
+class MachineRule2(AnmGenRule):
+    def Match(self, AnmInfo: AnmInfo):
+        return "Idle" in AnmInfo.AnmNames and "PayShuffle" in AnmInfo.AnmNames and \
+        "Shell1Prize" in AnmInfo.AnmNames and "Shell2Prize" in AnmInfo.AnmNames and\
+        "Shell3Prize" in AnmInfo.AnmNames
+    def GenPlayRule(self, AnmInfo: AnmInfo) -> Anm2:
+        r = Anm2(AnmInfo)
+        anm = r.addAnm(AnmInfo.path)
+        anm.name("Idle")
+        anm.addrule("when:Idle,next:Idle")
+        anm.addrule("when:Idle,clicknext:PayShuffle")
+        anm.addrule("when:PayShuffle,next:Shell2Prize,rate:0.36")
+        anm.addrule("when:PayShuffle,next:Shell1Prize,rate:0.5")
+        anm.addrule("when:PayShuffle,next:Shell3Prize")
+        anm.addrule("when:Shell2Prize,next:Idle")
+        anm.addrule("when:Shell1Prize,next:Idle")
+        anm.addrule("when:Shell3Prize,next:Idle")
+        r.updateSize(["Idle","PayShuffle","Shell1Prize"], anm)
+        return r
+rules.append(MachineRule())
+rules.append(MachineRule2())
 
 class LoopAnms(AnmGenRule):
     def __init__(self, namelist) -> None:
@@ -580,6 +624,7 @@ rules.append(DefaultRule("Walking"))
 rules.append(OneClickChange("Idle","Pulse"))
 rules.append(DefaultRule("Pulse"))
 rules.append(DefaultRule("Idle"))
+rules.append(DefaultRule("NumbersWhite"))
 # rules.append(IdleRule())
 
 #######################################################################
@@ -587,6 +632,9 @@ rules.append(DefaultRule("Idle"))
 ForceRuleDict:dict[str,AnmGenRule] = {
     "2.4.0": OneClickChange("Idle","Appear"),
     "4.20.0": DefaultRule("Pulse"),
+    "5.40.4": DefaultRule("Idle"),
+    "5.40.1": DefaultRule("Idle"),
+    "5.40.2": DefaultRule("Idle"),
 }
 
 solid_template = 0
@@ -647,7 +695,7 @@ def main():
 
         if Type == "1":
             continue
-        if Type != "4":
+        if Type != "6":
             continue
         if File == "":
             continue
