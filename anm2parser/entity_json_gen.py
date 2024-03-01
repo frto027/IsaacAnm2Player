@@ -417,11 +417,13 @@ class OneClickChange(AnmGenRule):
 rules.extend([
     OneClickChange("Fly", "Die"),
     OneClickChange("Fly","Attack"),
+    OneClickChange("Idle","Shoot"),
     OneClickChange("Float","Drop"),
     OneClickChange("Wiggle","Attack"),
     OneClickChange("WalkHori","Attack"),
     OneClickChange("Fly","Explode"),
     OneClickChange("Fly","Appear"),
+    OneClickChange("Move Hori", "Attack Hori"),
     OneClickChange("Move Down", "Attack Down"),
     OneClickChange("Float","Shield"),
     OneClickChange("Heart","HeartAttack"),
@@ -474,7 +476,23 @@ rules.extend([
     PinnnnRule(["ButtHori","Body3Hori","Body3Hori","WalkHeadHori"],18),
     PinnnnRule(["WalkBodyHori","WalkBodyHori","WalkBodyHori","WalkHeadHori"],18),
     PinnnnRule(["WalkBodyRef","WalkBodyRef","WalkBodyRef","WalkHeadRef"],18),
+    PinnnnRule(["WalkBody02","WalkBody01","WalkNormalHori"],24),
 ])
+
+class HopRule(AnmGenRule):
+    def Match(self, AnmInfo: AnmInfo):
+        return "Hop" in AnmInfo.AnmNames and "BigJumpUp" in AnmInfo.AnmNames and "BigJumpDown" in AnmInfo.AnmNames
+    def GenPlayRule(self, AnmInfo: AnmInfo) -> Anm2:
+        r = Anm2(AnmInfo)
+        anm = r.addAnm(AnmInfo.path)
+        anm.name("Hop")
+        anm.addrule("when:Hop,next:Hop")
+        anm.addrule("when:Hop,clicknext:BigJumpUp")
+        anm.addrule("when:BigJumpUp,next:BigJumpDown")
+        anm.addrule("when:BigJumpDown,next:Hop")
+        r.updateSize(["Hop","BigJumpUp","BigJumpDown"],anm)
+        return r
+rules.append(HopRule())
 class MachineRule(AnmGenRule):
     def Match(self, AnmInfo: AnmInfo):
         return "Idle" in AnmInfo.AnmNames and "Initiate" in AnmInfo.AnmNames and "Wiggle" in AnmInfo.AnmNames
@@ -675,6 +693,7 @@ rules.extend([
     MatchOnly(["Idle","Idle2","Idle3","Fall"],"Idle"),
     MatchOnly(['Idle', 'Walk', 'Spawn'],"Walk")
 ])
+rules.append(DefaultRule("Bestiary"))
 rules.append(DefaultRule("Float"))
 rules.append(DefaultRule("Walking"))
 rules.append(OneClickChange("Idle","Pulse"))
@@ -690,6 +709,7 @@ ForceRuleDict:dict[str,AnmGenRule] = {
     "5.40.4": DefaultRule("Idle"),
     "5.40.1": DefaultRule("Idle"),
     "5.40.2": DefaultRule("Idle"),
+    "23.3.0": OneClickChange("Move Hori", "Attack Down"),
 }
 
 solid_template = 0
@@ -751,7 +771,7 @@ def main():
         if Type == "1":
             continue
         TypeNum = int(Type)
-        if TypeNum <= 10 or TypeNum >= 20:
+        if TypeNum < 20 or TypeNum >= 30:
             continue
         if File == "":
             continue
