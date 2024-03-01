@@ -240,21 +240,25 @@ class WalkRule(AnmGenRule):
         anm.name(self.normalName)
         anm.addrule(f"when:{self.normalName},next:{self.normalName}")
 
+        names = [self.normalName]
+
         if "WalkOpenEye" in AnmInfo.AnmNames:
+            names.append("WalkOpenEye")
             anm.addrule(f"when:{self.normalName},clicknext:WalkOpenEye")
             anm.addrule(f"when:WalkOpenEye,next:{self.normalName}")
 
-        r.updateSize([self.normalName], anm)
 
         if "WalkHori" in AnmInfo.AnmNames:
             walkAnm = r.addAnm(AnmInfo.path)
+            names.append("WalkHori")
             walkAnm.name("WalkHori")
             walkAnm.addrule("when:WalkHori,next:WalkHori")
             otherAnms.append(walkAnm)
 
+        r.updateSize(names, anm)
 
         for a in otherAnms:
-            a.pos(anm.getattr("x"), anm.getattr("y"))
+            a.pos_to(anm)
         return r
     def __str__(self) -> str:
         return f"WalkRule({self.normalName})"
@@ -715,7 +719,7 @@ def main():
 
         if Type == "1":
             continue
-        if Type != "8":
+        if Type != "10":
             continue
         if File == "":
             continue
