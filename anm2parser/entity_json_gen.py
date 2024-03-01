@@ -443,6 +443,7 @@ rules.extend([
     OneClickChange("GrabLoop","Grab"),
     OneClickChange("Idle","PayPrize"),
     OneClickChange("RedLaser","RedLaserEnd"),
+    OneClickChange("WalkHori","Attack04Horiz"),
 ])
 class PinnnnRule(AnmGenRule):
     def __init__(self, segments:list[str], delta:float) -> None:
@@ -587,6 +588,22 @@ rules.extend([
     LoopAnms(["Float","ShootSide"]),
 ])
 
+class FireplaceRule(AnmGenRule):
+    def Match(self, AnmInfo: AnmInfo):
+        return "Flickering" in AnmInfo.AnmNames and "Dissapear" in AnmInfo.AnmNames and "NoFire" in AnmInfo.AnmNames
+    def GenPlayRule(self, AnmInfo: AnmInfo) -> Anm2:
+        r = Anm2(AnmInfo)
+        anm = r.addAnm(AnmInfo.path)
+        anm.name("Flickering")
+        anm.addrule("when:Flickering,next:Flickering")
+        anm.addrule("when:Flickering,clicknext:Dissapear")
+        anm.addrule("when:Dissapear,next:NoFire")
+        anm.addrule("when:NoFire,next:NoFire")
+        anm.addrule("when:NoFire,clicknext:Flickering")
+        r.updateSize(["Flickering","Dissapear","NoFire"],anm)
+        return r
+rules.append(FireplaceRule())
+
 
 class SequenceRule(AnmGenRule):
     def __init__(self, sequenceName:str, sequenceNameAfter:str = "") -> None:
@@ -653,6 +670,20 @@ rules.extend([
     AutoLoopAnms(["Appear","Disappear"])
 ])
 
+class AppearIdleClickRule(AnmGenRule):
+    def Match(self, AnmInfo: AnmInfo):
+        return "Appear" in AnmInfo.AnmNames and "Idle" in AnmInfo.AnmNames and "Disappear" in AnmInfo.AnmNames
+    def GenPlayRule(self, AnmInfo: AnmInfo) -> Anm2:
+        r = Anm2(AnmInfo)
+        anm = r.addAnm(AnmInfo.path)
+        anm.name("Idle")
+        anm.addrule("when:Idle,next:Idle")
+        anm.addrule("when:Idle,clicknext:Disappear")
+        anm.addrule("when:Disappear,next:Appear")
+        anm.addrule("when:Appear,next:Idle")
+        r.updateSize(["Idle","Appear","Disappear"],anm)
+        return r
+
 class DefaultRule(AnmGenRule):
     def __init__(self, defaultNam:str) -> None:
         super().__init__()
@@ -710,6 +741,12 @@ ForceRuleDict:dict[str,AnmGenRule] = {
     "5.40.1": DefaultRule("Idle"),
     "5.40.2": DefaultRule("Idle"),
     "23.3.0": OneClickChange("Move Hori", "Attack Down"),
+    "33.1.0":FireplaceRule(),
+    "33.3.0":FireplaceRule(),
+    "33.4.0":FireplaceRule(),
+    "33.10.0":AppearIdleClickRule(),
+    "33.12.0":AppearIdleClickRule(),
+    "33.13.0":AppearIdleClickRule(),
 }
 
 solid_template = 0
@@ -771,7 +808,7 @@ def main():
         if Type == "1":
             continue
         TypeNum = int(Type)
-        if TypeNum < 20 or TypeNum >= 30:
+        if TypeNum < 30 or TypeNum >= 40:
             continue
         if File == "":
             continue
