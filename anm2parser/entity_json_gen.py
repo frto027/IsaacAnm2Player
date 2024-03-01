@@ -314,6 +314,23 @@ rules.extend([
     MatchOnly(['Fly', 'AttackStart', 'AttackLoop', 'AttackEnd', 'AttackBackStart', 'AttackBackLoop', 'AttackBackEnd'], "Fly"),
 ])
 
+class SwardRule(AnmGenRule):
+    def Match(self, AnmInfo: AnmInfo):
+        return "AttackRight" in AnmInfo.AnmNames and "IdleRight" in AnmInfo.AnmNames and "ChargedRight" in AnmInfo.AnmNames and "SpinRight" in AnmInfo.AnmNames
+    def GenPlayRule(self, AnmInfo: AnmInfo) -> Anm2:
+        r = Anm2(AnmInfo)
+        anm = r.addAnm(AnmInfo.path)
+        anm.name("IdleRight")
+        anm.addrule("when:IdleRight,next:IdleRight")
+        anm.addrule("when:IdleRight,clicknext:AttackRight")
+        anm.addrule("when:AttackRight,next:ChargedRight")
+        anm.addrule("when:ChargedRight,next:ChargedRight")
+        anm.addrule("when:ChargedRight,clicknext:SpinRight")
+        anm.addrule("when:SpinRight,next:IdleRight")
+        r.updateSize(["IdleRight","AttackRight","ChargedRight","SpinRight"],anm)
+        return r
+rules.append(SwardRule())
+
 class LoopStartEnd(AnmGenRule):
     def Match(self, AnmInfo: AnmInfo):
         return "Loop" in AnmInfo.AnmNames and "Start" in AnmInfo.AnmNames and "End" in AnmInfo.AnmNames
@@ -611,7 +628,7 @@ class DefaultRule(AnmGenRule):
         return r
     def __str__(self) -> str:
         return f"DefaultRule({self.defaultName})"
-
+rules.append(OneClickChange("Idle","Swing"))
 rules.extend([
     MatchOnly(["Idle","Flying","IdleTransparent","FlyingTransparent"], "Flying"),
     MatchOnly(['Idle', 'StompArm', 'StompLeg'], "StompArm"),
@@ -698,7 +715,7 @@ def main():
 
         if Type == "1":
             continue
-        if Type != "7":
+        if Type != "8":
             continue
         if File == "":
             continue
