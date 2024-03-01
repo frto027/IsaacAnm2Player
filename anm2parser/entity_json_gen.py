@@ -442,7 +442,39 @@ rules.extend([
     OneClickChange("Idle","PayPrize"),
     OneClickChange("RedLaser","RedLaserEnd"),
 ])
-
+class PinnnnRule(AnmGenRule):
+    def __init__(self, segments:list[str], delta:float) -> None:
+        super().__init__()
+        self.segments = segments
+        self.delta = delta
+    def Match(self, AnmInfo: AnmInfo):
+        for seg in self.segments:
+            if not seg in AnmInfo.AnmNames:
+                return False
+        return True
+    def GenPlayRule(self, AnmInfo: AnmInfo) -> Anm2:
+        r = Anm2(AnmInfo)
+        anm = r.addAnm(AnmInfo.path)
+        anm.name(self.segments[0])
+        anm.addrule(f"when:{self.segments[0]},next:{self.segments[0]}")
+        r.updateSize(self.segments, anm)
+        r.width += (len(self.segments) - 1) * self.delta
+        delta = self.delta
+        for seg in self.segments[1:]:
+            later = r.addAnm(AnmInfo.path)
+            later.name(seg)
+            later.addrule(f"when:{seg},next:{seg}")
+            later.pos(anm.getattr("x") + delta, anm.getattr("y"))
+            delta += self.delta
+        r.body.reverse()
+        return r
+    def __str__(self) -> str:
+        return f"PinnnnnRule([{','.join(self.segments)}, {self.delta}])"
+rules.extend([
+    PinnnnRule(["ButtHori","Body3Hori","Body3Hori","WalkHeadHori"],18),
+    PinnnnRule(["WalkBodyHori","WalkBodyHori","WalkBodyHori","WalkHeadHori"],18),
+    PinnnnRule(["WalkBodyRef","WalkBodyRef","WalkBodyRef","WalkHeadRef"],18),
+])
 class MachineRule(AnmGenRule):
     def Match(self, AnmInfo: AnmInfo):
         return "Idle" in AnmInfo.AnmNames and "Initiate" in AnmInfo.AnmNames and "Wiggle" in AnmInfo.AnmNames
@@ -650,7 +682,6 @@ rules.append(DefaultRule("Pulse"))
 rules.append(DefaultRule("Idle"))
 rules.append(DefaultRule("NumbersWhite"))
 # rules.append(IdleRule())
-
 #######################################################################
 
 ForceRuleDict:dict[str,AnmGenRule] = {
@@ -719,7 +750,8 @@ def main():
 
         if Type == "1":
             continue
-        if Type != "10":
+        TypeNum = int(Type)
+        if TypeNum <= 10 or TypeNum >= 20:
             continue
         if File == "":
             continue
