@@ -318,6 +318,24 @@ rules.extend([
     MatchOnly(['Fly', 'AttackStart', 'AttackLoop', 'AttackEnd', 'AttackBackStart', 'AttackBackLoop', 'AttackBackEnd'], "Fly"),
 ])
 
+class CloseEyeIdleClickRule(AnmGenRule):
+    def Match(self, AnmInfo: AnmInfo):
+        return "Appear" in AnmInfo.AnmNames and "CloseEyes" in AnmInfo.AnmNames and "Idle" in AnmInfo.AnmNames and "ClosedEyes" in AnmInfo.AnmNames
+    def GenPlayRule(self, AnmInfo: AnmInfo) -> Anm2:
+        r = Anm2(AnmInfo)
+        anm = r.addAnm(AnmInfo.path)
+        anm.name("Idle")
+        anm.addrule("when:Idle,next:Idle")
+        anm.addrule("when:Appear,next:Idle")
+        anm.addrule("when:Idle,clicknext:CloseEyes")
+        anm.addrule("when:CloseEyes,next:ClosedEyes")
+        anm.addrule("when:ClosedEyes,next:ClosedEyes")
+        anm.addrule("when:ClosedEyes,clicknext:Appear")
+        r.updateSize(["Idle","ClosedEyes","CloseEyes", "Appear"],anm)
+        return r
+
+rules.append(CloseEyeIdleClickRule())
+
 class SwardRule(AnmGenRule):
     def Match(self, AnmInfo: AnmInfo):
         return "AttackRight" in AnmInfo.AnmNames and "IdleRight" in AnmInfo.AnmNames and "ChargedRight" in AnmInfo.AnmNames and "SpinRight" in AnmInfo.AnmNames
@@ -586,6 +604,7 @@ rules.extend([
     LoopAnms(["FloadDown","FloatUp"]),
     LoopAnms(["FloatDown","FloatDownRage"]),
     LoopAnms(["Float","ShootSide"]),
+    LoopAnms(["Eye","ArmOpen","DoorOpen","DoorOpenArm","Fat01","Fat02"])
 ])
 
 class FireplaceRule(AnmGenRule):
@@ -722,7 +741,8 @@ rules.extend([
     MatchOnly(["Idle","Rotation"],"Rotation"),
     MatchOnly(["Idle","Move"],"Move"),
     MatchOnly(["Idle","Idle2","Idle3","Fall"],"Idle"),
-    MatchOnly(['Idle', 'Walk', 'Spawn'],"Walk")
+    MatchOnly(['Idle', 'Walk', 'Spawn'],"Walk"),
+    MatchOnly(['Stomp', 'QuickStompBegin', 'QuickStomp', 'QuickStompEnd'], "Stomp"),
 ])
 rules.append(DefaultRule("Bestiary"))
 rules.append(DefaultRule("Float"))
@@ -808,7 +828,7 @@ def main():
         if Type == "1":
             continue
         TypeNum = int(Type)
-        if TypeNum < 30 or TypeNum >= 40:
+        if TypeNum < 40 or TypeNum >= 50:
             continue
         if File == "":
             continue
