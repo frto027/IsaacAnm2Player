@@ -125,7 +125,7 @@ class Template:
 class Anm2Anm(Template):
     def __init__(self, anm2_full_path:Path) -> None:
         super().__init__("Anm2/Anm")
-        self.setattr("anm", "Anm2/" + str(anm2_full_path.relative_to(folder)).replace(".anm2", ".json").replace("\\","/").replace(" ","_").lower())
+        self.setattr("anm", "Anm2/" + str(anm2_full_path.relative_to(folder)).replace(".anm2", ".json").replace("\\","/").replace(" ","_").replace("__","_").lower())
         self.rules = []
     def name(self, n:str):
         self.setattr("name", n)
@@ -902,7 +902,7 @@ def main():
         if Type == "1":
             continue
         TypeNum = int(Type)
-        if TypeNum < 60 or TypeNum >= 100:
+        if TypeNum < 100 or TypeNum >= 200:
             continue
         if File == "":
             continue
