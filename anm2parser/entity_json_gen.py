@@ -448,6 +448,7 @@ rules.extend([
     OneClickChange("Laser","Fade"),
     OneClickChange("Shake","Attack"),
     OneClickChange("Shake","Shoot"),
+    OneClickChange("Hori","Appear"),
     OneClickChange("Down","Appear"),
     OneClickChange("WalkHori","Attack01Horiz"),
     OneClickChange("Roll","Appear"),
