@@ -287,8 +287,36 @@ class HeadAndWalk(AnmGenRule):
         r.updateSize(names, anm)
         if top != None:
             top.pos_to(anm)
+        r.body.reverse()
         return r
 rules.append(HeadAndWalk())
+
+class HeadAndWalkHori(AnmGenRule):
+    def Match(self, AnmInfo: AnmInfo):
+        return "WalkHori" in AnmInfo.AnmNames
+    def GenPlayRule(self, AnmInfo: AnmInfo) -> Anm2:
+        r = Anm2(AnmInfo)
+        anm = r.addAnm(AnmInfo.path)
+        anm.name("WalkHori")
+        names = ["WalkHori"]
+        anm.addrule("when:WalkHori,next:WalkHori")
+        top = None
+        if "HeadDown" in AnmInfo.AnmNames:
+            names.append("HeadDown")
+            top = r.addAnm(AnmInfo.path)
+            top.name("HeadDown")
+            top.addrule("when:HeadDown,next:HeadDown")
+        elif "Head" in AnmInfo.AnmNames:
+            names.append("Head")
+            top = r.addAnm(AnmInfo.path)
+            top.name("Head")
+            top.addrule("when:Head,next:Head")
+        r.updateSize(names, anm)
+        if top != None:
+            top.pos_to(anm)
+        r.body.reverse()
+        return r
+rules.append(HeadAndWalkHori())
 
 class MatchOnly(AnmGenRule):
     def __init__(self, list, use) -> None:
@@ -452,7 +480,7 @@ rules.extend([
     OneClickChange("Down","Appear"),
     OneClickChange("WalkHori","Attack01Horiz"),
     OneClickChange("Roll","Appear"),
-    OneClickChange("Eye Open","Shoot"),
+    OneClickChange("Eye Opened","Shoot"),
     OneClickChange("Throw","Appear"),
     OneClickChange("Dash","Death"),
     OneClickChange("Biggest","Death"),
@@ -498,6 +526,33 @@ rules.extend([
     PinnnnRule(["WalkBodyRef","WalkBodyRef","WalkBodyRef","WalkHeadRef"],18),
     PinnnnRule(["WalkBody02","WalkBody01","WalkNormalHori"],24),
 ])
+class PinnnnRuleVert(AnmGenRule):
+    def __init__(self, segments:list[str], delta:float) -> None:
+        super().__init__()
+        self.segments = segments
+        self.delta = delta
+    def Match(self, AnmInfo: AnmInfo):
+        for seg in self.segments:
+            if not seg in AnmInfo.AnmNames:
+                return False
+        return True
+    def GenPlayRule(self, AnmInfo: AnmInfo) -> Anm2:
+        r = Anm2(AnmInfo)
+        anm = r.addAnm(AnmInfo.path)
+        anm.name(self.segments[0])
+        anm.addrule(f"when:{self.segments[0]},next:{self.segments[0]}")
+        r.updateSize(self.segments, anm)
+        r.height += (len(self.segments) - 1) * self.delta
+        delta = self.delta
+        for seg in self.segments[1:]:
+            later = r.addAnm(AnmInfo.path)
+            later.name(seg)
+            later.addrule(f"when:{seg},next:{seg}")
+            later.pos(anm.getattr("x"), anm.getattr("y") + delta)
+            delta += self.delta
+        return r
+    def __str__(self) -> str:
+        return f"PinnnnnRule([{','.join(self.segments)}, {self.delta}])"
 
 class HopRule(AnmGenRule):
     def Match(self, AnmInfo: AnmInfo):
@@ -749,9 +804,19 @@ rules.append(DefaultRule("Bestiary"))
 rules.append(DefaultRule("Float"))
 rules.append(DefaultRule("Walking"))
 rules.append(OneClickChange("Idle","Pulse"))
+rules.append(OneClickChange("Shake","Spit"))
 rules.append(DefaultRule("Pulse"))
 rules.append(DefaultRule("Idle"))
 rules.append(DefaultRule("NumbersWhite"))
+rules.append(DefaultRule("JumpDownHead"))
+rules.append(DefaultRule("Rotate"))
+rules.append(PinnnnRuleVert(["HeadWiggle","Body1Wiggle","Body2Wiggle","Ground"], 12))
+rules.append(LoopAnms(["Walk01","Walk02"]))
+rules.append(OneClickChange("Walk01","Attack01"))
+rules.append(OneClickChange("Stomp","Death"))
+rules.append(LoopAnms(['SadMaskDown', 'SadMaskRight', 'SadMaskUp', 'SadMaskLeft']))
+rules.append(OneClickChange("HeartBeat","HeartAttack"))
+rules.append(PinnnnRuleVert(["HeadFrontWiggleOpen","Body2Wiggle","Body1Wiggle"],18))
 # rules.append(IdleRule())
 #######################################################################
 
@@ -768,6 +833,14 @@ ForceRuleDict:dict[str,AnmGenRule] = {
     "33.10.0":AppearIdleClickRule(),
     "33.12.0":AppearIdleClickRule(),
     "33.13.0":AppearIdleClickRule(),
+    "51.0.0":DefaultRule("Walk0"),
+    "51.10.0":DefaultRule("Walk1"),
+    "51.20.0":DefaultRule("Walk2"),
+    "51.30.0":DefaultRule("Walk3"),
+    "51.1.0":DefaultRule("Walk0"),
+    "51.11.0":DefaultRule("Walk2"),
+    "51.21.0":DefaultRule("Walk3"),
+    "51.31.0":DefaultRule("Walk4"),
 }
 
 solid_template = 0
@@ -829,7 +902,7 @@ def main():
         if Type == "1":
             continue
         TypeNum = int(Type)
-        if TypeNum < 40 or TypeNum >= 50:
+        if TypeNum < 60 or TypeNum >= 100:
             continue
         if File == "":
             continue
