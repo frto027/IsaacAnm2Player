@@ -2202,7 +2202,11 @@ var AnmPlayer = /** @class */ (function () {
                         if(!noUpdate){
                             for (var i = 0; i < anms.length; i++) {
                                 if (currentFps % (commonFps / anms[i].getFps()) == 0) {
-                                    anms[i].update()
+                                    if(htmlrule && htmlrule.update){
+                                        htmlrule.update(i)
+                                    }else{
+                                        anms[i].update()
+                                    }
                                     players[i].played_frame++
                                 }
                             }
