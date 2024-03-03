@@ -125,7 +125,7 @@ class Template:
 class Anm2Anm(Template):
     def __init__(self, anm2_full_path:Path) -> None:
         super().__init__("Anm2/Anm")
-        self.setattr("anm", "Anm2/" + str(anm2_full_path.relative_to(folder)).replace(".anm2", ".json").replace("\\","/").replace(" ","_").replace("__","_").lower())
+        self.setattr("anm", "Anm2/" + str(anm2_full_path.relative_to(folder)).replace(".anm2", ".json").replace("\\","/").replace(" ","_").lower())
         self.rules = []
     def name(self, n:str):
         self.setattr("name", n)
@@ -264,6 +264,38 @@ class WalkRule(AnmGenRule):
         return f"WalkRule({self.normalName})"
 rules.extend([WalkRule("Walk"), WalkRule("Head"), WalkRule("HeadWalk")])
 
+class HeadAndWalkRight(AnmGenRule):
+    def Match(self, AnmInfo: AnmInfo):
+        return "WalkRight" in AnmInfo.AnmNames
+    def GenPlayRule(self, AnmInfo: AnmInfo) -> Anm2:
+        r = Anm2(AnmInfo)
+        anm = r.addAnm(AnmInfo.path)
+        anm.name("WalkRight")
+        names = ["WalkRight"]
+        anm.addrule("when:WalkRight,next:WalkRight")
+        top = None
+        if "HeadRight" in AnmInfo.AnmNames:
+            names.append("HeadRight")
+            top = r.addAnm(AnmInfo.path)
+            top.name("HeadRight")
+            top.addrule("when:HeadRight,next:HeadRight")
+        elif "BodyWalkRight" in AnmInfo.AnmNames:
+            names.append("BodyWalkRight")
+            top = r.addAnm(AnmInfo.path)
+            top.name("BodyWalkRight")
+            top.addrule("when:BodyWalkRight,next:BodyWalkRight")
+        elif "Head" in AnmInfo.AnmNames:
+            names.append("Head")
+            top = r.addAnm(AnmInfo.path)
+            top.name("Head")
+            top.addrule("when:Head,next:Head")
+        r.updateSize(names, anm)
+        if top != None:
+            top.pos_to(anm)
+        #r.body.reverse()
+        return r
+#rules.append(HeadAndWalkRight())
+
 class HeadAndWalk(AnmGenRule):
     def Match(self, AnmInfo: AnmInfo):
         return "WalkDown" in AnmInfo.AnmNames
@@ -290,7 +322,6 @@ class HeadAndWalk(AnmGenRule):
         r.body.reverse()
         return r
 rules.append(HeadAndWalk())
-
 class HeadAndWalkHori(AnmGenRule):
     def Match(self, AnmInfo: AnmInfo):
         return "WalkHori" in AnmInfo.AnmNames
@@ -311,10 +342,19 @@ class HeadAndWalkHori(AnmGenRule):
             top = r.addAnm(AnmInfo.path)
             top.name("Head")
             top.addrule("when:Head,next:Head")
+        elif "Blood" in AnmInfo.AnmNames:
+            names.append("Blood")
+            top = r.addAnm(AnmInfo.path)
+            top.name("Blood")
+            top.addrule("when:Blood,next:Blood")
+        elif "Shoot" in AnmInfo.AnmNames:
+            names.append("Shoot")
+            top = r.addAnm(AnmInfo.path)
+            top.name("Shoot")
+            top.addrule("when:Shoot,next:Shoot")
         r.updateSize(names, anm)
         if top != None:
             top.pos_to(anm)
-        r.body.reverse()
         return r
 rules.append(HeadAndWalkHori())
 
@@ -363,6 +403,24 @@ class CloseEyeIdleClickRule(AnmGenRule):
         return r
 
 rules.append(CloseEyeIdleClickRule())
+
+class CloseEyeIdleDownClickRule(AnmGenRule):
+    def Match(self, AnmInfo: AnmInfo):
+        return "Appear" in AnmInfo.AnmNames and "CloseEyes" in AnmInfo.AnmNames and "IdleDown" in AnmInfo.AnmNames and "ClosedEyes" in AnmInfo.AnmNames
+    def GenPlayRule(self, AnmInfo: AnmInfo) -> Anm2:
+        r = Anm2(AnmInfo)
+        anm = r.addAnm(AnmInfo.path)
+        anm.name("IdleDown")
+        anm.addrule("when:IdleDown,next:IdleDown")
+        anm.addrule("when:Appear,next:IdleDown")
+        anm.addrule("when:IdleDown,clicknext:CloseEyes")
+        anm.addrule("when:CloseEyes,next:ClosedEyes")
+        anm.addrule("when:ClosedEyes,next:ClosedEyes")
+        anm.addrule("when:ClosedEyes,clicknext:Appear")
+        r.updateSize(["IdleDown","ClosedEyes","CloseEyes", "Appear"],anm)
+        return r
+
+rules.append(CloseEyeIdleDownClickRule())
 
 class SwardRule(AnmGenRule):
     def Match(self, AnmInfo: AnmInfo):
@@ -491,6 +549,8 @@ rules.extend([
     OneClickChange("Idle","PayPrize"),
     OneClickChange("RedLaser","RedLaserEnd"),
     OneClickChange("WalkHori","Attack04Horiz"),
+    OneClickChange("Idle","DigOut"),
+    OneClickChange("Stunned","Grab"),
 ])
 class PinnnnRule(AnmGenRule):
     def __init__(self, segments:list[str], delta:float) -> None:
@@ -516,13 +576,13 @@ class PinnnnRule(AnmGenRule):
             later.addrule(f"when:{seg},next:{seg}")
             later.pos(anm.getattr("x") + delta, anm.getattr("y"))
             delta += self.delta
-        r.body.reverse()
+        #r.body.reverse()
         return r
     def __str__(self) -> str:
         return f"PinnnnnRule([{','.join(self.segments)}, {self.delta}])"
 rules.extend([
     PinnnnRule(["ButtHori","Body3Hori","Body3Hori","WalkHeadHori"],18),
-    PinnnnRule(["WalkBodyHori","WalkBodyHori","WalkBodyHori","WalkHeadHori"],18),
+    PinnnnRule(["WalkBodyHori","WalkBodyHori","WalkBodyHori","WalkHeadHori"],24),
     PinnnnRule(["WalkBodyRef","WalkBodyRef","WalkBodyRef","WalkHeadRef"],18),
     PinnnnRule(["WalkBody02","WalkBody01","WalkNormalHori"],24),
 ])
@@ -800,11 +860,14 @@ rules.extend([
     MatchOnly(['Idle', 'Walk', 'Spawn'],"Walk"),
     MatchOnly(['Stomp', 'QuickStompBegin', 'QuickStomp', 'QuickStompEnd'], "Stomp"),
 ])
+rules.append(DefaultRule("Sucking"))
 rules.append(DefaultRule("Bestiary"))
 rules.append(DefaultRule("Float"))
 rules.append(DefaultRule("Walking"))
 rules.append(OneClickChange("Idle","Pulse"))
 rules.append(OneClickChange("Shake","Spit"))
+rules.append(OneClickChange("FloatDown","ShootDown"))
+rules.append(DefaultRule("PulseOut"))
 rules.append(DefaultRule("Pulse"))
 rules.append(DefaultRule("Idle"))
 rules.append(DefaultRule("NumbersWhite"))
@@ -902,7 +965,7 @@ def main():
         if Type == "1":
             continue
         TypeNum = int(Type)
-        if TypeNum < 100 or TypeNum >= 200:
+        if TypeNum < 200 or TypeNum >= 250:
             continue
         if File == "":
             continue
@@ -916,8 +979,8 @@ def main():
         #     continue
         ParseAnimFile(Type,Variant,Subtype,RelativePath, Fullpath)
 
-        infobox_page.append("{{infobox entity|" + f"{Type}|{Variant}|{Subtype}" + "}}")
-        infobox_page.append("{{infobox entity/anm|" + f"{Type}|{Variant}|{Subtype}" + "}}")
+        infobox_page.append("[[文件:" + f"Entity {Type}.{Variant}.{Subtype}" + ".png]]")
+        infobox_page.append("{{实体动画/" + f"{Type}.{Variant}.{Subtype}" + "}}")
 
     with open("infobox.wikitext","w") as f:
         f.write('\n'.join(infobox_page))
