@@ -551,6 +551,7 @@ rules.extend([
     OneClickChange("WalkHori","Attack04Horiz"),
     OneClickChange("Idle","DigOut"),
     OneClickChange("Stunned","Grab"),
+    OneClickChange("Move","Attack"),
 ])
 class PinnnnRule(AnmGenRule):
     def __init__(self, segments:list[str], delta:float) -> None:
@@ -720,7 +721,12 @@ rules.extend([
     LoopAnms(["FloadDown","FloatUp"]),
     LoopAnms(["FloatDown","FloatDownRage"]),
     LoopAnms(["Float","ShootSide"]),
-    LoopAnms(["Eye","ArmOpen","DoorOpen","DoorOpenArm","Fat01","Fat02"])
+    LoopAnms(["Eye","ArmOpen","DoorOpen","DoorOpenArm","Fat01","Fat02"]),
+    LoopAnms(["IdleSkin","IdleNoSkin"]),
+    OneClickChange("Opened","Open"),
+    OneClickChange("Idle","Whistle"),
+    OneClickChange("FloatChase","Shoot"),
+    OneClickChange("Idle","Sucking"),
 ])
 
 class FireplaceRule(AnmGenRule):
@@ -965,7 +971,7 @@ def main():
         if Type == "1":
             continue
         TypeNum = int(Type)
-        if TypeNum < 200 or TypeNum >= 250:
+        if TypeNum < 250 or TypeNum >= 300:
             continue
         if File == "":
             continue
