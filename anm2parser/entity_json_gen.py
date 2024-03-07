@@ -694,6 +694,7 @@ class LoopAnms(AnmGenRule):
         return f"LoopAnms({','.join(self.namelist)})"
     
 rules.extend([
+    LoopAnms(["Walking","SlotStart"]),
     LoopAnms(["SpinningNeutral", "SpinningKey", "SpinningBomb", "SpinningHeart"]),
     OneClickChange("FloatDown", "FloatShootDown"),
     LoopAnms(["FloatDown", "IdleDown"]),
@@ -866,6 +867,10 @@ rules.extend([
     MatchOnly(['Idle', 'Walk', 'Spawn'],"Walk"),
     MatchOnly(['Stomp', 'QuickStompBegin', 'QuickStomp', 'QuickStompEnd'], "Stomp"),
 ])
+
+rules.append(LoopAnms(["RollRight","RollDown","RollLeft","RollUp"]))
+rules.append(LoopAnms(["Idle_Happy","Idle_Upset","Idle_Angry"]))
+rules.append(DefaultRule("Spew"))
 rules.append(DefaultRule("Sucking"))
 rules.append(DefaultRule("Bestiary"))
 rules.append(DefaultRule("Float"))
@@ -971,7 +976,7 @@ def main():
         if Type == "1":
             continue
         TypeNum = int(Type)
-        if TypeNum < 250 or TypeNum >= 300:
+        if TypeNum < 300 or TypeNum >= 800:
             continue
         if File == "":
             continue
