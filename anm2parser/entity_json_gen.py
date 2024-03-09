@@ -878,6 +878,11 @@ rules.extend([
 rules.append(LoopAnms(["RollRight","RollDown","RollLeft","RollUp"]))
 rules.append(LoopAnms(["Idle_Happy","Idle_Upset","Idle_Angry"]))
 rules.append(LoopAnms(["HopRight","SwimRight"]))
+rules.append(OneClickChange("MoveHori","Bullet"))
+rules.append(OneClickChange("MoveHori","Burrow"))
+rules.append(OneClickChange("Idle_ref","Poot_ref"))
+rules.append(LoopAnms(["Look","No-Spikes"]))
+rules.append(OneClickChange("ChaseDown","AttackDown"))
 rules.append(OneClickChange("WalkRight","AttackRight"))
 rules.append(OneClickChange("Shoot","DigOut"))
 rules.append(DefaultRule("Spew"))
@@ -901,6 +906,8 @@ rules.append(OneClickChange("Stomp","Death"))
 rules.append(LoopAnms(['SadMaskDown', 'SadMaskRight', 'SadMaskUp', 'SadMaskLeft']))
 rules.append(OneClickChange("HeartBeat","HeartAttack"))
 rules.append(PinnnnRuleVert(["HeadFrontWiggleOpen","Body2Wiggle","Body1Wiggle"],18))
+
+rules.append(OneClickChange("Walk_ref","Fall_ref"))
 # rules.append(IdleRule())
 #######################################################################
 
@@ -986,7 +993,7 @@ def main():
         if Type == "1":
             continue
         TypeNum = int(Type)
-        if TypeNum < 800 or TypeNum >= 850:
+        if TypeNum < 850 or TypeNum >= 900:
             continue
         if File == "":
             continue
