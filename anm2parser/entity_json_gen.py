@@ -914,6 +914,7 @@ rules.append(LoopAnms(["MoveRight","MoveAngryRight"]))
 rules.append(DefaultRule("HeadWalkRef"))
 rules.append(OneClickChange("IdleDown","Attack1Left"))
 rules.append(DefaultRule("MoveDownRight"))
+rules.append(DefaultRule("Top"))
 # rules.append(IdleRule())
 #######################################################################
 
@@ -1003,7 +1004,7 @@ def main():
         if Type == "1":
             continue
         TypeNum = int(Type)
-        if TypeNum < 900 or TypeNum >= 950:
+        if TypeNum < 951 or TypeNum >= 1000:
             continue
         if File == "":
             continue
