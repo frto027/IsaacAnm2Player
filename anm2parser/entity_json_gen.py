@@ -295,6 +295,48 @@ class HeadAndWalkRight(AnmGenRule):
         #r.body.reverse()
         return r
 #rules.append(HeadAndWalkRight())
+class HeadAndWalkHori(AnmGenRule):
+    def Match(self, AnmInfo: AnmInfo):
+        return "WalkHori" in AnmInfo.AnmNames
+    def GenPlayRule(self, AnmInfo: AnmInfo) -> Anm2:
+        r = Anm2(AnmInfo)
+        anm = r.addAnm(AnmInfo.path)
+        anm.name("WalkHori")
+        names = ["WalkHori"]
+        anm.addrule("when:WalkHori,next:WalkHori")
+        top = None
+        if "HeadDown" in AnmInfo.AnmNames:
+            names.append("HeadDown")
+            top = r.addAnm(AnmInfo.path)
+            top.name("HeadDown")
+            top.addrule("when:HeadDown,next:HeadDown")
+        elif "Head" in AnmInfo.AnmNames:
+            names.append("Head")
+            top = r.addAnm(AnmInfo.path)
+            top.name("Head")
+            top.addrule("when:Head,next:Head")
+        elif "HeadWalkHori" in AnmInfo.AnmNames:
+            names.append("HeadWalkHori")
+            top = r.addAnm(AnmInfo.path)
+            top.name("HeadWalkHori")
+            top.addrule("when:HeadWalkHori,next:HeadWalkHori")
+        elif "Blood" in AnmInfo.AnmNames:
+            names.append("Blood")
+            top = r.addAnm(AnmInfo.path)
+            top.name("Blood")
+            top.addrule("when:Blood,next:Blood")
+        elif "Shoot" in AnmInfo.AnmNames:
+            names.append("Shoot")
+            top = r.addAnm(AnmInfo.path)
+            top.name("Shoot")
+            top.addrule("when:Shoot,next:Shoot")
+        r.updateSize(names, anm)
+        if top != None:
+            top.pos_to(anm)
+        
+        r.body.reverse()
+        return r
+rules.append(HeadAndWalkHori())
 
 class HeadAndWalk(AnmGenRule):
     def Match(self, AnmInfo: AnmInfo):
@@ -322,41 +364,6 @@ class HeadAndWalk(AnmGenRule):
         r.body.reverse()
         return r
 rules.append(HeadAndWalk())
-class HeadAndWalkHori(AnmGenRule):
-    def Match(self, AnmInfo: AnmInfo):
-        return "WalkHori" in AnmInfo.AnmNames
-    def GenPlayRule(self, AnmInfo: AnmInfo) -> Anm2:
-        r = Anm2(AnmInfo)
-        anm = r.addAnm(AnmInfo.path)
-        anm.name("WalkHori")
-        names = ["WalkHori"]
-        anm.addrule("when:WalkHori,next:WalkHori")
-        top = None
-        if "HeadDown" in AnmInfo.AnmNames:
-            names.append("HeadDown")
-            top = r.addAnm(AnmInfo.path)
-            top.name("HeadDown")
-            top.addrule("when:HeadDown,next:HeadDown")
-        elif "Head" in AnmInfo.AnmNames:
-            names.append("Head")
-            top = r.addAnm(AnmInfo.path)
-            top.name("Head")
-            top.addrule("when:Head,next:Head")
-        elif "Blood" in AnmInfo.AnmNames:
-            names.append("Blood")
-            top = r.addAnm(AnmInfo.path)
-            top.name("Blood")
-            top.addrule("when:Blood,next:Blood")
-        elif "Shoot" in AnmInfo.AnmNames:
-            names.append("Shoot")
-            top = r.addAnm(AnmInfo.path)
-            top.name("Shoot")
-            top.addrule("when:Shoot,next:Shoot")
-        r.updateSize(names, anm)
-        if top != None:
-            top.pos_to(anm)
-        return r
-rules.append(HeadAndWalkHori())
 
 class MatchOnly(AnmGenRule):
     def __init__(self, list, use) -> None:
@@ -870,6 +877,9 @@ rules.extend([
 
 rules.append(LoopAnms(["RollRight","RollDown","RollLeft","RollUp"]))
 rules.append(LoopAnms(["Idle_Happy","Idle_Upset","Idle_Angry"]))
+rules.append(LoopAnms(["HopRight","SwimRight"]))
+rules.append(OneClickChange("WalkRight","AttackRight"))
+rules.append(OneClickChange("Shoot","DigOut"))
 rules.append(DefaultRule("Spew"))
 rules.append(DefaultRule("Sucking"))
 rules.append(DefaultRule("Bestiary"))
@@ -976,7 +986,7 @@ def main():
         if Type == "1":
             continue
         TypeNum = int(Type)
-        if TypeNum < 300 or TypeNum >= 800:
+        if TypeNum < 800 or TypeNum >= 850:
             continue
         if File == "":
             continue
