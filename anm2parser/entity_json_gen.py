@@ -901,13 +901,19 @@ rules.append(DefaultRule("JumpDownHead"))
 rules.append(DefaultRule("Rotate"))
 rules.append(PinnnnRuleVert(["HeadWiggle","Body1Wiggle","Body2Wiggle","Ground"], 12))
 rules.append(LoopAnms(["Walk01","Walk02"]))
+rules.append(LoopAnms(["Whip1","Whip2"]))
 rules.append(OneClickChange("Walk01","Attack01"))
 rules.append(OneClickChange("Stomp","Death"))
 rules.append(LoopAnms(['SadMaskDown', 'SadMaskRight', 'SadMaskUp', 'SadMaskLeft']))
 rules.append(OneClickChange("HeartBeat","HeartAttack"))
 rules.append(PinnnnRuleVert(["HeadFrontWiggleOpen","Body2Wiggle","Body1Wiggle"],18))
 
+rules.append(DefaultRule("Heartbeat"))
 rules.append(OneClickChange("Walk_ref","Fall_ref"))
+rules.append(LoopAnms(["MoveRight","MoveAngryRight"]))
+rules.append(DefaultRule("HeadWalkRef"))
+rules.append(OneClickChange("IdleDown","Attack1Left"))
+rules.append(DefaultRule("MoveDownRight"))
 # rules.append(IdleRule())
 #######################################################################
 
@@ -990,10 +996,14 @@ def main():
         Subtype = entity.attrib["subtype"] if "subtype" in entity.attrib else "0"
         File = entity.attrib["anm2path"]
 
+        for child in entity:
+            if child.tag == "bestiary" and "anm2path" in child.attrib:
+                File = child.attrib["anm2path"]
+
         if Type == "1":
             continue
         TypeNum = int(Type)
-        if TypeNum < 850 or TypeNum >= 900:
+        if TypeNum < 900 or TypeNum >= 950:
             continue
         if File == "":
             continue
