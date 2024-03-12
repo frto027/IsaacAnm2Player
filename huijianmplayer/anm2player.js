@@ -1714,7 +1714,7 @@ var AnmPlayer = /** @class */ (function () {
                 }
 
                 if(htmlrule_constructor){
-                    htmlrule = htmlrule_constructor(anms)
+                    htmlrule = htmlrule_constructor(anms, canvas)
                 }
             }else{
                 if(waiting_for_click){
