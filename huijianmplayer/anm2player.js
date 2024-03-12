@@ -2421,6 +2421,7 @@ var AnmPlayer = /** @class */ (function () {
             var nextAnimation = undefined
             var isAnimating = false
 
+            select_pannel.style.borderTop = "groove #595959 1px"
             function flushButtonUI(nextButton){
                 for(var j=0;j<elems.length;j++){
                     if(elems[j].getAttribute('data-chara-target') != nextButton){
@@ -2436,8 +2437,9 @@ var AnmPlayer = /** @class */ (function () {
                     for(var j=0;j<elems.length;j++){
                         if(elems[j].getAttribute('data-chara-target') != selected){
                             elems[j].style.visibility = 'hidden'
+                            btns[j].style.filter = 'brightness(0.4)'
                         }else{
-                            btns[j].style.borderBottom = 'solid 1px gray'
+                            btns[j].style.filter = ''
                             last_selected = j
                         }
                     }
@@ -2473,7 +2475,7 @@ var AnmPlayer = /** @class */ (function () {
                             }
                         }
                         // $(elems[j]).hide()
-                        btns[j].style.borderBottom = ''
+                        btns[j].style.filter = 'brightness(0.4)'
                     }else{
                         //play anim
                         if(target_anm_ctrl){
@@ -2501,7 +2503,7 @@ var AnmPlayer = /** @class */ (function () {
                         new_selected = j
                         
                         // $(elems[j]).show(1000)
-                        btns[j].style.borderBottom = 'solid 1px gray'
+                        btns[j].style.filter = ''
                     }
                 }
                 last_selected = new_selected
