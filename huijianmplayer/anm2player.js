@@ -1098,7 +1098,9 @@ var AnmPlayer = /** @class */ (function () {
 
         for (var i = 0; i < canvasdiv.children.length; i++) {
             var anm = canvasdiv.children[i]
-
+            if(!anm.hasAttribute("data-anm2")){
+                continue
+            }
             var rule = []
             var replace_sheet_map = new Map()
             //parse rule
