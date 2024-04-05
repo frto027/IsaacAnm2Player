@@ -1407,8 +1407,10 @@ var AnmPlayer = /** @class */ (function () {
             return false
         }
 
-        canvasdiv.innerHTML = ''
-        var color_div = document.createElement("div")
+        var color_div;
+        var canvas;
+
+        var BACKGROUND_COLORS
         function setBackgroundColor(color){
             if(color){
                 color_div.style = 'margin:0;padding:0;'+color
@@ -1416,78 +1418,86 @@ var AnmPlayer = /** @class */ (function () {
                 color_div.style = 'margin:0;padding:0;'
             }
         }
-        var BACKGROUND_COLORS = [
-            /* 按键0：透明 */
-            '',
-            /* 按键1：灰色 */
-            'background-color:gray',
-            /* 按键2：棋盘格 */
-            'background-image:url("data:image/svg+xml,' + encodeURIComponent('<svg viewBox="0 0 2 2" width="14" height="14" xmlns="http://www.w3.org/2000/svg">' +
-            '    <rect width="1" height="1" fill="#dcdcdc"/>' +
-            '    <rect x="1" y="1" width="1" height="1" fill="#dcdcdc"/>' +
-            '    <rect y="1" width="1" height="1" fill="white"/>' +
-            '    <rect x="1" width="1" height="1" fill="white"/>' +
-            '</svg>') + '")',
-            /* 按键3：绿色 */
-            'background-color:#0F0',
-            /* 按键4：白色 */
-            'background-color:white',
-            /* 按键5：黑色 */
-            'background-color:black',
-        ]
-        if(layer_stack_exploded){
-            /* 按键6：layer_stack_exploded限定背景色 */
-            BACKGROUND_COLORS.push('background-image:url("data:image/svg+xml,' + encodeURIComponent('<svg viewBox="0 0 2 2" width="' + (4*+canvasdiv.getAttribute("data-width")) +'" height="' + (4*+canvasdiv.getAttribute("data-height")) +'" xmlns="http://www.w3.org/2000/svg">' +
-            '    <rect width="1" height="1" fill="#dcdcdc"/>' +
-            '    <rect x="1" y="1" width="1" height="1" fill="#dcdcdc"/>' +
-            '    <rect y="1" width="1" height="1" fill="white"/>' +
-            '    <rect x="1" width="1" height="1" fill="white"/>' +
-            '</svg>') + '")')
-        }
         function handleColorKey(key){
             if(typeof(key) == 'string' && key.match("^[0-9]$")){
                 setBackgroundColor(BACKGROUND_COLORS[+key] || '')
                 return true
             }
         }
-        setBackgroundColor()
-
-        canvasdiv.appendChild(color_div)
-
         var moveChara_x = 0, moveChara_y = 0
-        /*if(PATCH_moveChara)*/{
-            function UpdateCharaTransform(){
-                canvasdiv.style.transform = 'translate(' + moveChara_x + 'px,' + moveChara_y + 'px)'
+        function UpdateCharaTransform(){
+            canvasdiv.style.transform = 'translate(' + moveChara_x + 'px,' + moveChara_y + 'px)'
+        }
+
+
+        function init_canvas_div(){
+            canvasdiv.innerHTML = ''
+            color_div = document.createElement("div")
+            BACKGROUND_COLORS = [
+                /* 按键0：透明 */
+                '',
+                /* 按键1：灰色 */
+                'background-color:gray',
+                /* 按键2：棋盘格 */
+                'background-image:url("data:image/svg+xml,' + encodeURIComponent('<svg viewBox="0 0 2 2" width="14" height="14" xmlns="http://www.w3.org/2000/svg">' +
+                '    <rect width="1" height="1" fill="#dcdcdc"/>' +
+                '    <rect x="1" y="1" width="1" height="1" fill="#dcdcdc"/>' +
+                '    <rect y="1" width="1" height="1" fill="white"/>' +
+                '    <rect x="1" width="1" height="1" fill="white"/>' +
+                '</svg>') + '")',
+                /* 按键3：绿色 */
+                'background-color:#0F0',
+                /* 按键4：白色 */
+                'background-color:white',
+                /* 按键5：黑色 */
+                'background-color:black',
+            ]
+            if(layer_stack_exploded){
+                /* 按键6：layer_stack_exploded限定背景色 */
+                BACKGROUND_COLORS.push('background-image:url("data:image/svg+xml,' + encodeURIComponent('<svg viewBox="0 0 2 2" width="' + (4*+canvasdiv.getAttribute("data-width")) +'" height="' + (4*+canvasdiv.getAttribute("data-height")) +'" xmlns="http://www.w3.org/2000/svg">' +
+                '    <rect width="1" height="1" fill="#dcdcdc"/>' +
+                '    <rect x="1" y="1" width="1" height="1" fill="#dcdcdc"/>' +
+                '    <rect y="1" width="1" height="1" fill="white"/>' +
+                '    <rect x="1" width="1" height="1" fill="white"/>' +
+                '</svg>') + '")')
             }
-            UpdateCharaTransform()
-        }
+            setBackgroundColor()
+    
+            canvasdiv.appendChild(color_div)
+    
+            /*if(PATCH_moveChara)*/{
+                UpdateCharaTransform()
+            }
 
-        var canvas = document.createElement("canvas")
-        canvas.width = +canvasdiv.getAttribute("data-width")
-        canvas.height = +canvasdiv.getAttribute("data-height")
-        if(layer_stack_exploded){
-            canvas.width *=8
-            canvas.height*=2
+    
+            canvas = document.createElement("canvas")
+            canvas.width = +canvasdiv.getAttribute("data-width")
+            canvas.height = +canvasdiv.getAttribute("data-height")
+            if(layer_stack_exploded){
+                canvas.width *=8
+                canvas.height*=2
+            }
+            color_div.appendChild(canvas)
+            var canvas_style = "vertical-align:middle;"
+            if(canvasdiv.getAttribute("data-scale")){
+                var scale = +canvasdiv.getAttribute("data-scale")
+                canvas_style += "transform:scale("+scale+");margin:" + (canvas.height * (scale-1)/2) + "px " + (canvas.width * (scale-1)/2) +"px;"
+            }
+    
+            if(PATCH_blueFilter){
+                canvas_style += "filter:url(#" + AnmPlayer.createSvgFilterElement(1.5,1.7,2,1,0.05,0.12,0.2) + ");"
+            }
+    
+            canvas.style = canvas_style
+            if(btndiv){
+                var btndiv_contariner = document.createElement("div")
+                btndiv_contariner.style="text-align:center"
+                btndiv_contariner.appendChild(btndiv)
+                // canvasdiv.appendChild(document.createElement("hr"))
+                color_div.appendChild(btndiv_contariner)
+            }
         }
-        color_div.appendChild(canvas)
-        var canvas_style = "vertical-align:middle;"
-        if(canvasdiv.getAttribute("data-scale")){
-            var scale = +canvasdiv.getAttribute("data-scale")
-            canvas_style += "transform:scale("+scale+");margin:" + (canvas.height * (scale-1)/2) + "px " + (canvas.width * (scale-1)/2) +"px;"
-        }
-
-        if(PATCH_blueFilter){
-            canvas_style += "filter:url(#" + AnmPlayer.createSvgFilterElement(1.5,1.7,2,1,0.05,0.12,0.2) + ");"
-        }
-
-        canvas.style = canvas_style
-        if(btndiv){
-            var btndiv_contariner = document.createElement("div")
-            btndiv_contariner.style="text-align:center"
-            btndiv_contariner.appendChild(btndiv)
-            // canvasdiv.appendChild(document.createElement("hr"))
-            color_div.appendChild(btndiv_contariner)
-        }
+        
         var filter = { "$or": [] }
         for (var i = 0; i < players.length; i++) {
             filter["$or"].push({ "_id": players[i].anm2 })
@@ -2273,10 +2283,11 @@ var AnmPlayer = /** @class */ (function () {
                     AnmPlayer.expandActor(msg._embedded[i], keymap)
                     resources.set(msg._embedded[i]._id, msg._embedded[i])
                 }
-
+                init_canvas_div()
                 // console.log(resources)
                 loadAnm(resources)
             }).fail(function (jqXHR, textStatus) {
+                canvasdiv.innerHTML("动画加载失败")
                 console.log("anm2 json download failed.", textStatus, jqXHR)
             })
         }
