@@ -996,6 +996,7 @@ var AnmPlayer = /** @class */ (function () {
         var costume_leg_dir = 'Down',costume_head_dir = 'Down',costume_shooting = {u:false,d:false,l:false,r:false},
             costume_walking = {u:false,d:false,l:false,r:false} ,costume_shooting_frame=0,costume_walking_frame=0
         var is_pausing = false
+        var is_out_of_webbrowser_view = false
         var suggest_moving = false; //控制器的建议移动方向
 
         var layer_stack_exploded_x = 0, layer_stack_exploded_y = 0
@@ -1205,7 +1206,7 @@ var AnmPlayer = /** @class */ (function () {
                                     }
                                     if(waiting_for_click){
                                         waiting_for_click = false
-                                        anmbtn_startdraw(false)
+                                        anmbtn_startdraw()
                                     }
 
                                     if(group_name == undefined){
@@ -1266,7 +1267,7 @@ var AnmPlayer = /** @class */ (function () {
                                     }
                                     if(waiting_for_click){
                                         waiting_for_click = false
-                                        anmbtn_startdraw(false)
+                                        anmbtn_startdraw()
                                     }
                                     //设置按钮状态为“按下”
                                     btn.triggered_anm2 = new Set()
@@ -1668,7 +1669,7 @@ var AnmPlayer = /** @class */ (function () {
                 canvas.onclick = function () {
                     if(waiting_for_click){
                         waiting_for_click = false
-                        startDraw(false)
+                        startDraw()
                     }
                     is_pausing = false
                     //window.luaPostMessage && window.luaPostMessage("Anm2:event:click:" + my_start_player_lua_id,"","");
@@ -1732,7 +1733,7 @@ var AnmPlayer = /** @class */ (function () {
                 if(waiting_for_click){
                     canvas.onclick = function(){
                         waiting_for_click = false
-                        startDraw(false)
+                        startDraw()
                         canvas.onclick = undefined
                     }
                 }
@@ -1909,7 +1910,7 @@ var AnmPlayer = /** @class */ (function () {
                 canvas.addEventListener('touchstart',function(ev){
                     if(waiting_for_click){
                         waiting_for_click = false
-                        startDraw(false)
+                        startDraw()
                     }
                     var touch = ev.touches[0]
                     if(touch){
@@ -1990,17 +1991,40 @@ var AnmPlayer = /** @class */ (function () {
                 })
 
             }
-            var drawStarted = false
+            var drawIntervalID = undefined
             function startDraw(){
-                if(!drawStarted){
-                    drawStarted = true
-                    draw(false)
+                if(drawIntervalID == undefined){
+                    drawIntervalID = setInterval(draw, 1000/commonFps)
                 }
+            }
+            function stopDraw(){
+                if(drawIntervalID != undefined){
+                    clearInterval(drawIntervalID)
+                    drawIntervalID = undefined
+                }
+            }
+
+            if(IntersectionObserver){
+                (new IntersectionObserver(function(entry){
+                    for(var i=0;i<entry.length;i++){
+                        if(entry[i].target != canvas){
+                            continue
+                        }
+                        if(entry[i].isIntersecting){
+                            is_out_of_webbrowser_view = false
+                            startDraw()
+                        }else{
+                            is_out_of_webbrowser_view = true
+                        }
+                    }
+                })).observe(canvas)
             }
 
             var init_event_emited = false
             function draw(noUpdate) {
                 //update
+                if(waiting_for_click)
+                    noUpdate = true
                 if(!is_pausing){
                     if(!noUpdate && !init_event_emited){
                         init_event_emited = true;
@@ -2236,14 +2260,18 @@ var AnmPlayer = /** @class */ (function () {
                     }
                 }
 
-                //loop
-                if(!noUpdate && !waiting_for_click){
-                    setTimeout(draw, 1000 / commonFps)
+                //只在draw函数中停止未来的draw函数，以确保不会出现少渲染的情况
+                if(waiting_for_click || is_pausing){
+                    stopDraw()
+                }
+                if(is_out_of_webbrowser_view && !PATCH_moveChara){
+                    //if(!canvas.hasFocus()) 非焦点也可以不渲染——我们大概还可以继续优化性能
+                    stopDraw()
                 }
             }
             anmbtn_startdraw = startDraw
             if(!waiting_for_click){
-                startDraw(false)
+                startDraw()
             }
 
             canvasdiv.AnmCostumeController = {
@@ -2251,7 +2279,7 @@ var AnmPlayer = /** @class */ (function () {
                     is_pausing = false
                     if(waiting_for_click){
                         waiting_for_click = false
-                        startDraw(false)
+                        startDraw()
                     }
                 },
                 SuggestMoveLeft:function(){
