@@ -90,6 +90,20 @@ interface LoadedAnms{
     nullFrames:LayerStatus[]
 }
 
+interface LayerAdjustParameter{
+    red?:number
+    green?:number
+    blue?:number
+    alpha?:number
+    redOffset?:number
+    greenOffset?:number
+    blueOffset?:number
+
+    xscale?:number
+    yscale?:number
+
+    hide?:boolean
+}
 
 class AnmPlayer{
     static svgfilter_incrid:number = 0
@@ -101,6 +115,8 @@ class AnmPlayer{
     sprites_htmlimg:HTMLImageElement[] = new Array()
     layers:Layer[/* layer id */] = new Array()
     events:string[/* event id */] = new Array()
+
+    layerAdjustParameters: LayerAdjustParameter[/* layer id */] = new Array()
 
     currentFrame:number = -1
     currentAnm?:LoadedAnms
@@ -428,8 +444,10 @@ class AnmPlayer{
                 }
             }
             if(layer?.Visible){
+                let layerAdjuster = this.layerAdjustParameters[layer.LayerId]
+
                 let frame = layer.frames[this.currentFrame]
-                if(frame && frame.Visible){
+                if(frame && frame.Visible && !(layerAdjuster && layerAdjuster.hide)){
                     ctx.save()
 
                     let sprite_sheet_id = this.layers[layer.LayerId].SpritesheetId
@@ -441,6 +459,9 @@ class AnmPlayer{
                     ctx.rotate(frame.Rotation * Math.PI / 180)
                     // ctx.translate(-canvas.width/2,-canvas.height/2)
                     ctx.scale(frame.XScale/100, frame.YScale/100)
+                    if(layerAdjuster){
+                        ctx.scale((layerAdjuster.xscale || 100)/100, (layerAdjuster.yscale || 100)/100)
+                    }
                     // ctx.translate(canvas.width/2,canvas.height/2)
 
                     ctx.translate(-frame.XPivot, -frame.YPivot)
@@ -450,7 +471,17 @@ class AnmPlayer{
                     //draw frame
                     if(!frame.filterGenerated){
                         frame.filterGenerated = true
-                        if(blackPatch){
+                        if(layerAdjuster){
+                            frame.filterId = 'url(#' + AnmPlayer.createSvgFilterElement(
+                                (rootframe?.RedTint || 255) * frame.RedTint * ((layerAdjuster.red || 255) / 255) /(255*255),
+                                (rootframe?.GreenTint || 255) * frame.GreenTint  * ((layerAdjuster.green || 255) / 255)    /(255*255),
+                                (rootframe?.BlueTint || 255) * frame.BlueTint * ((layerAdjuster.blue || 255) / 255)       /(255*255),
+                                ((layerAdjuster.alpha || 255) / 255), //(rootframe?.AlphaTint || 255) * frame.AlphaTint     /(255*255),
+                                frame.RedOffset + (layerAdjuster.redOffset || 0)/255,
+                                frame.GreenOffset + (layerAdjuster.greenOffset || 0)/255,
+                                frame.BlueOffset + (layerAdjuster.blueOffset || 0)/255
+                            ) + ')' 
+                        }else if(blackPatch){
                             frame.filterId = 'url(#' + AnmPlayer.createSvgFilterElement(
                                 (rootframe?.RedTint || 255) * frame.RedTint     /(255*255),
                                 (rootframe?.GreenTint || 255) * frame.GreenTint     /(255*255),

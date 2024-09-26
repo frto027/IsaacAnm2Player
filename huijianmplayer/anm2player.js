@@ -98,6 +98,7 @@ var AnmPlayer = /** @class */ (function () {
         this.sprites_htmlimg = new Array();
         this.layers = new Array();
         this.events = new Array();
+        this.layerAdjustParameters = new Array();
         this.currentFrame = -1;
         this.frames = new Map();
         this.forceLoop = false;
@@ -380,8 +381,9 @@ var AnmPlayer = /** @class */ (function () {
                 }
             }
             if (layer === null || layer === void 0 ? void 0 : layer.Visible) {
+                var layerAdjuster = this.layerAdjustParameters[layer.LayerId];
                 var frame = layer.frames[this.currentFrame];
-                if (frame && frame.Visible) {
+                if (frame && frame.Visible && !(layerAdjuster && layerAdjuster.hide)) {
                     ctx.save();
                     var sprite_sheet_id = this.layers[layer.LayerId].SpritesheetId;
                     var img = this.loadSpritesheet(sprite_sheet_id);
@@ -389,13 +391,20 @@ var AnmPlayer = /** @class */ (function () {
                     ctx.rotate(frame.Rotation * Math.PI / 180);
                     // ctx.translate(-canvas.width/2,-canvas.height/2)
                     ctx.scale(frame.XScale / 100, frame.YScale / 100);
+                    if (layerAdjuster) {
+                        ctx.scale((layerAdjuster.xscale || 100) / 100, (layerAdjuster.yscale || 100) / 100);
+                    }
                     // ctx.translate(canvas.width/2,canvas.height/2)
                     ctx.translate(-frame.XPivot, -frame.YPivot);
                     //apply root transform
                     //draw frame
                     if (!frame.filterGenerated) {
                         frame.filterGenerated = true;
-                        if (blackPatch) {
+                        if (layerAdjuster) {
+                            frame.filterId = 'url(#' + AnmPlayer.createSvgFilterElement(((rootframe === null || rootframe === void 0 ? void 0 : rootframe.RedTint) || 255) * frame.RedTint * ((layerAdjuster.red || 255) / 255) / (255 * 255), ((rootframe === null || rootframe === void 0 ? void 0 : rootframe.GreenTint) || 255) * frame.GreenTint * ((layerAdjuster.green || 255) / 255) / (255 * 255), ((rootframe === null || rootframe === void 0 ? void 0 : rootframe.BlueTint) || 255) * frame.BlueTint * ((layerAdjuster.blue || 255) / 255) / (255 * 255), ((layerAdjuster.alpha || 255) / 255), //(rootframe?.AlphaTint || 255) * frame.AlphaTint     /(255*255),
+                            frame.RedOffset + (layerAdjuster.redOffset || 0) / 255, frame.GreenOffset + (layerAdjuster.greenOffset || 0) / 255, frame.BlueOffset + (layerAdjuster.blueOffset || 0) / 255) + ')';
+                        }
+                        else if (blackPatch) {
                             frame.filterId = 'url(#' + AnmPlayer.createSvgFilterElement(((rootframe === null || rootframe === void 0 ? void 0 : rootframe.RedTint) || 255) * frame.RedTint / (255 * 255), ((rootframe === null || rootframe === void 0 ? void 0 : rootframe.GreenTint) || 255) * frame.GreenTint / (255 * 255), ((rootframe === null || rootframe === void 0 ? void 0 : rootframe.BlueTint) || 255) * frame.BlueTint / (255 * 255), 1, //(rootframe?.AlphaTint || 255) * frame.AlphaTint     /(255*255),
                             -255 / 255, -255 / 255, -255 / 255) + ')';
                         }
@@ -1102,6 +1111,7 @@ var AnmPlayer = /** @class */ (function () {
             if(!anm.hasAttribute("data-anm2")){
                 continue
             }
+            var layerAdjustParameters = []
             var rule = []
             var replace_sheet_map = new Map()
             //parse rule
@@ -1283,6 +1293,31 @@ var AnmPlayer = /** @class */ (function () {
                 if(replace_sheet_id && replace_sheet_id.length>0 && replace_sheet && replace_sheet.length>0){
                     replace_sheet_map.set(+replace_sheet_id,replace_sheet)
                 }
+                //parse layer adjuster
+                var adjuster_layer_id = anm.children[j].getAttribute("data-layer-adj")
+                if(adjuster_layer_id != undefined && adjuster_layer_id != null && isFinite(adjuster_layer_id)){
+                    var layer_id = +adjuster_layer_id
+                    var adjuster = {}
+                    var f = function(prop, htmlprop){
+                        var p = anm.children[j].getAttribute("data-" + htmlprop)
+                        if(p != undefined && p != null && isFinite(p)){
+                            adjuster[prop] = +p
+                        }
+                    }
+                    f("red", "r")
+                    f("green","g")
+                    f("blue","b")
+                    f("alpha","a")
+                    f("redOffset","ro")
+                    f("greenOffset","go")
+                    f("blueOffset","bo")
+                    f("xscale","xs")
+                    f("yscale","ys")
+                    if(anm.children[j].getAttribute("data-hide") == "1"){
+                        adjuster.hide = true
+                    }
+                    layerAdjustParameters[layer_id] = adjuster
+                }
             }
 
             var skincolor = anm.getAttribute("data-skincolor")
@@ -1304,6 +1339,7 @@ var AnmPlayer = /** @class */ (function () {
                 played_frame:0, /* 当前动画已经播放过多少帧，在因规则切换动画时会重置 */
                 has_skin_alt:anm.getAttribute("data-has-skin-alt") == "true",
                 skincolor:skincolor,
+                layer_adjust_parameters:layerAdjustParameters
             }
             players.push(anmobj)
         }        
@@ -1631,6 +1667,7 @@ var AnmPlayer = /** @class */ (function () {
                     costume_C[i].setFrame("WalkDown_Overlay",0)
                 }else{
                     anms[i] = new AnmPlayer(resources.get(players[i].anm2), huijiUrlBuilder,replace_sprite_func,function(){draw(true)})
+                    anms[i].layerAdjustParameters = players[i].layer_adjust_parameters
                     anms[i].setFrame((players[i].name || '').split('.')[0], 0)
                 }
             }

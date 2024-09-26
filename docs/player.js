@@ -90,6 +90,7 @@ var AnmPlayer = /** @class */ (function () {
         this.sprites_htmlimg = new Array();
         this.layers = new Array();
         this.events = new Array();
+        this.layerAdjustParameters = new Array();
         this.currentFrame = -1;
         this.frames = new Map();
         this.forceLoop = false;
@@ -372,8 +373,9 @@ var AnmPlayer = /** @class */ (function () {
                 }
             }
             if (layer === null || layer === void 0 ? void 0 : layer.Visible) {
+                var layerAdjuster = this.layerAdjustParameters[layer.LayerId];
                 var frame = layer.frames[this.currentFrame];
-                if (frame && frame.Visible) {
+                if (frame && frame.Visible && !(layerAdjuster && layerAdjuster.hide)) {
                     ctx.save();
                     var sprite_sheet_id = this.layers[layer.LayerId].SpritesheetId;
                     var img = this.loadSpritesheet(sprite_sheet_id);
@@ -381,13 +383,20 @@ var AnmPlayer = /** @class */ (function () {
                     ctx.rotate(frame.Rotation * Math.PI / 180);
                     // ctx.translate(-canvas.width/2,-canvas.height/2)
                     ctx.scale(frame.XScale / 100, frame.YScale / 100);
+                    if (layerAdjuster) {
+                        ctx.scale((layerAdjuster.xscale || 100) / 100, (layerAdjuster.yscale || 100) / 100);
+                    }
                     // ctx.translate(canvas.width/2,canvas.height/2)
                     ctx.translate(-frame.XPivot, -frame.YPivot);
                     //apply root transform
                     //draw frame
                     if (!frame.filterGenerated) {
                         frame.filterGenerated = true;
-                        if (blackPatch) {
+                        if (layerAdjuster) {
+                            frame.filterId = 'url(#' + AnmPlayer.createSvgFilterElement(((rootframe === null || rootframe === void 0 ? void 0 : rootframe.RedTint) || 255) * frame.RedTint * ((layerAdjuster.red || 255) / 255) / (255 * 255), ((rootframe === null || rootframe === void 0 ? void 0 : rootframe.GreenTint) || 255) * frame.GreenTint * ((layerAdjuster.green || 255) / 255) / (255 * 255), ((rootframe === null || rootframe === void 0 ? void 0 : rootframe.BlueTint) || 255) * frame.BlueTint * ((layerAdjuster.blue || 255) / 255) / (255 * 255), ((layerAdjuster.alpha || 255) / 255), //(rootframe?.AlphaTint || 255) * frame.AlphaTint     /(255*255),
+                            frame.RedOffset + (layerAdjuster.redOffset || 0) / 255, frame.GreenOffset + (layerAdjuster.greenOffset || 0) / 255, frame.BlueOffset + (layerAdjuster.blueOffset || 0) / 255) + ')';
+                        }
+                        else if (blackPatch) {
                             frame.filterId = 'url(#' + AnmPlayer.createSvgFilterElement(((rootframe === null || rootframe === void 0 ? void 0 : rootframe.RedTint) || 255) * frame.RedTint / (255 * 255), ((rootframe === null || rootframe === void 0 ? void 0 : rootframe.GreenTint) || 255) * frame.GreenTint / (255 * 255), ((rootframe === null || rootframe === void 0 ? void 0 : rootframe.BlueTint) || 255) * frame.BlueTint / (255 * 255), 1, //(rootframe?.AlphaTint || 255) * frame.AlphaTint     /(255*255),
                             -255 / 255, -255 / 255, -255 / 255) + ')';
                         }
