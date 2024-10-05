@@ -1889,6 +1889,8 @@ var AnmPlayer = /** @class */ (function () {
                     }
                     if(key == 'x'){
                         is_pausing = !is_pausing
+                        if(!is_pausing)
+                            startDraw()
                         catched = true
                     }
                     if(handleColorKey(key)){
