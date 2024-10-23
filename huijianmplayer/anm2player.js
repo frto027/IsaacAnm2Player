@@ -1704,11 +1704,15 @@ var AnmPlayer = /** @class */ (function () {
             var touch_data = {}
             if(!render_as_costume){
                 canvas.onclick = function () {
+                    var start_draw_later = false;
                     if(waiting_for_click){
                         waiting_for_click = false
-                        startDraw()
+                        start_draw_later = true;
                     }
-                    is_pausing = false
+                    if(is_pausing){
+                        is_pausing = false;
+                        start_draw_later = true;
+                    }
                     //window.luaPostMessage && window.luaPostMessage("Anm2:event:click:" + my_start_player_lua_id,"","");
 
                     for (var i = 0; i < players.length; i++) {
@@ -1719,6 +1723,9 @@ var AnmPlayer = /** @class */ (function () {
 
                     if(htmlrule && htmlrule.onclick){
                         htmlrule.onclick()
+                    }
+                    if(start_draw_later){
+                        startDraw();
                     }
                 }
                 //设置结束事件
@@ -2315,10 +2322,17 @@ var AnmPlayer = /** @class */ (function () {
 
             canvasdiv.AnmCostumeController = {
                 StartDrawAnm:function(){
-                    is_pausing = false
+                    var start_draw_later = false;
+                    if(is_pausing){
+                        is_pausing = false;
+                        start_draw_later = true;
+                    }
                     if(waiting_for_click){
                         waiting_for_click = false
-                        startDraw()
+                        start_draw_later = true;
+                    }
+                    if(start_draw_later){
+                        startDraw();
                     }
                 },
                 SuggestMoveLeft:function(){
