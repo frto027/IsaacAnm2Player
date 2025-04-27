@@ -1344,6 +1344,8 @@ var AnmPlayer = /** @class */ (function () {
             players.push(anmobj)
         }        
 
+        var sleep_callbacks = []; //callback function array
+        var sleep_remains = []; //int array
         function apply_rule(ename, rule, anmplayer, player, player_id) {
             for (var i = 0; i < rule.length; i++) {
                 var r = rule[i]
@@ -1384,59 +1386,97 @@ var AnmPlayer = /** @class */ (function () {
                     }
                 }
                 if (r.has(ename)) {
-                    var rename = r.get(ename)
-                    player.name = rename
-                    if (anmplayer.getAnmNames().indexOf(rename.split('.')[0]) != -1) {
-                        var frame = 0
-                        if(r.has("frame")){
-                            frame = +r.get("frame")
-                            if(isNaN(frame)){
-                                frame = 0
+                    //注意：我们依赖外侧for循环不再继续，来满足action的闭包合法性
+                    var action = function(){
+                        if(r.has("target")){
+                            anmplayer = anms[+r.get("target")] || anmplayer;
+                            player = players[+r.get("target")] || player;
+                        }
+                        var rename = r.get(ename)
+                        player.name = rename
+                        if (anmplayer.getAnmNames().indexOf(rename.split('.')[0]) != -1) {
+                            var frame = 0
+                            if(r.has("frame")){
+                                frame = +r.get("frame")
+                                if(isNaN(frame)){
+                                    frame = 0
+                                }
                             }
+                            anmplayer.setFrame(rename.split('.')[0], frame)
                         }
-                        anmplayer.setFrame(rename.split('.')[0], frame)
-                    }
-                    player.played_frame = 0
-
-                    if (r.has("whenbtn")){
-                        var block = false
-                        var btn_names = r.get("whenbtn").split("&&&")
-                        for(var j=0;j<btn_names.length;j++){
-                            var btncb = btns.get(btn_names[j])
-                            btncb.clear(player_id)
-                        }
-                    }
+                        player.played_frame = 0
     
-                    if (mw.config.get("debug")) {
-                        console.log("apply rule", rule[i])
-                    }
-
-                    anmplayer.flipX = r.has("flipX") && r.get("flipX") == "true"
-                    anmplayer.revert = r.has("revert") && r.get("revert") == "true"
-                    if(anmplayer.revert){
-                        anmplayer.play(anmplayer.currentAnm.FrameNum - 1)
-                    }
-
-                    if(r.has("setbtn")){
-                        var btnnames = r.get("setbtn").split("&&&")
-                        for(var j=0;j<btnnames.length;j++){
-                            var btnobj = btns.get(btnnames[j])
-                            if(btnobj && btnobj.set_btn_status){
-                                btnobj.set_btn_status(true)
+                        if (r.has("whenbtn")){
+                            var btn_names = r.get("whenbtn").split("&&&")
+                            for(var j=0;j<btn_names.length;j++){
+                                var btncb = btns.get(btn_names[j])
+                                btncb.clear(player_id)
                             }
                         }
-                    }
-                    if(r.has("resetbtn")){
-                        var btnnames = r.get("resetbtn").split("&&&")
-                        for(var j=0;j<btnnames.length;j++){
-                            var btnobj = btns.get(btnnames[j])
-                            if(btnobj && btnobj.set_btn_status){
-                                btnobj.set_btn_status(false)
+        
+                        if (mw.config.get("debug")) {
+                            console.log("apply rule", rule[i])
+                        }
+    
+                        anmplayer.flipX = r.has("flipX") && r.get("flipX") == "true"
+                        anmplayer.revert = r.has("revert") && r.get("revert") == "true"
+                        if(anmplayer.revert){
+                            anmplayer.play(anmplayer.currentAnm.FrameNum - 1)
+                        }
+    
+                        if(r.has("setbtn")){
+                            var btnnames = r.get("setbtn").split("&&&")
+                            for(var j=0;j<btnnames.length;j++){
+                                var btnobj = btns.get(btnnames[j])
+                                if(btnobj && btnobj.set_btn_status){
+                                    btnobj.set_btn_status(true)
+                                }
                             }
                         }
-                    }
-                    if(r.has("pause") && r.get("pause") == "true"){
-                        is_pausing = true
+                        if(r.has("resetbtn")){
+                            var btnnames = r.get("resetbtn").split("&&&")
+                            for(var j=0;j<btnnames.length;j++){
+                                var btnobj = btns.get(btnnames[j])
+                                if(btnobj && btnobj.set_btn_status){
+                                    btnobj.set_btn_status(false)
+                                }
+                            }
+                        }
+                        if(r.has("pause") && r.get("pause") == "true"){
+                            is_pausing = true
+                        }
+
+                        if(r.has("also")){
+                            var arg = r.get("also").split(".")
+                            if(arg.length % 2 != 0){
+                                console.log("invalid also:", r)
+                            }else{
+                                for(var j = 0;j<arg.length;j+=2){
+                                    var _pid = +arg[j]
+                                    var _player = players[_pid]
+                                    var _event_name = arg[j+1]
+                                    if(!_event_name.startsWith("event_")){
+                                        console.log("自定义事件名必须以event_开头:", _event_name)
+                                    }
+                                    else if(player == undefined){
+                                        console.log("player not found for also:", r)
+                                    }else{
+                                        try{
+                                            apply_rule(_event_name, _player.rule, anms[_pid], _player, _pid)
+                                        }catch(e){
+                                            console.error("anm2播放器规则错误，also可能出现死递归",e)
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    };
+
+                    if(r.has("sleep")/* && !r.has("pause") */){
+                        sleep_callbacks[player_id] = action
+                        sleep_remains[player_id] = +r.get("sleep")
+                    }else{
+                        action()
                     }
                     return true
                 }
@@ -2284,6 +2324,12 @@ var AnmPlayer = /** @class */ (function () {
                         if(!noUpdate){
                             for (var i = 0; i < anms.length; i++) {
                                 if (currentFps % (commonFps / anms[i].getFps()) == 0) {
+                                    if(sleep_callbacks[i]){
+                                        if(sleep_remains[i]-- == 0){
+                                            sleep_callbacks[i]()
+                                            sleep_callbacks[i] = undefined
+                                        }
+                                    }
                                     if(htmlrule && htmlrule.update){
                                         htmlrule.update(i)
                                     }else{
