@@ -1346,140 +1346,161 @@ var AnmPlayer = /** @class */ (function () {
 
         var sleep_callbacks = []; //callback function array
         var sleep_remains = []; //int array
-        function apply_rule(ename, rule, anmplayer, player, player_id) {
+
+        function generate_rule_select_function(rule){
+            //这将最大限度利用javascript引擎来优化规则性能，达到原生JS的执行速度
+            var ret_function = "(ename,anmplayer,player,player_id,/*closure*/btns,rule)=>{"
             for (var i = 0; i < rule.length; i++) {
                 var r = rule[i]
-                if (r.has("when") && r.get("when") != player.name)
-                    continue
-                if (r.has("whendelay") && player.played_frame < +r.get("whendelay")){
-                    continue
+                var conditions = []
+                if(r.has("when")){
+                    conditions.push(JSON.stringify(r.get("when")) + "==player.name")
                 }
-                
-                if (r.has("rate") && Math.random() > +r.get("rate"))
-                    continue
-                if (r.has("whenbtn")){
-                    var block = false
+                if(r.has("whendelay")){
+                    conditions.push("player.played_frame< " + (+r.get("whendelay")))
+                }
+                if(r.has("rate")){
+                    conditions.push("Math.random() >" + (+r.get("rate")))
+                }
+                if(r.has("whenbtn")){
                     var btn_names = r.get("whenbtn").split("&&&")
                     for(var j=0;j<btn_names.length;j++){
-                        var btncb = btns.get(btn_names[j])
-                        if((!btncb) || (!btncb.peek(player_id))){
-                            block = true
-                            break
-                        }
-                    }
-                    if(block){
-                        continue
+                        var btn_name_json = JSON.stringify(btn_names[j])
+                        
+                        conditions.push("btns.get(" + btn_name_json + ")")
+                        conditions.push("btns.get(" + btn_name_json + ").peek(player_id)")
                     }
                 }
-                if (r.has("whenbtnN")){
-                    var block = false
+                if(r.has("whenbtnN")){
                     var btn_names = r.get("whenbtnN").split("&&&")
                     for(var j=0;j<btn_names.length;j++){
-                        var btncb = btns.get(btn_names[j])
-                        if(btncb && btncb.peek(player_id)){
-                            block = true
-                            break
-                        }
-                    }
-                    if(block){
-                        continue
+                        var btn_name_json = JSON.stringify(btn_names[j])
+                        
+                        conditions.push(
+                            "!(" + 
+                            "btns.get(" + btn_name_json + ") && btns.get(" + btn_name_json + ").peek(player_id)"
+                            + ")")
                     }
                 }
-                if (r.has(ename)) {
-                    //注意：我们依赖外侧for循环不再继续，来满足action的闭包合法性
-                    var action = function(){
-                        if(r.has("target")){
-                            anmplayer = anms[+r.get("target")] || anmplayer;
-                            player = players[+r.get("target")] || player;
-                        }
-                        var rename = r.get(ename)
-                        player.name = rename
-                        if (anmplayer.getAnmNames().indexOf(rename.split('.')[0]) != -1) {
-                            var frame = 0
-                            if(r.has("frame")){
-                                frame = +r.get("frame")
-                                if(isNaN(frame)){
-                                    frame = 0
-                                }
-                            }
-                            anmplayer.setFrame(rename.split('.')[0], frame)
-                        }
-                        player.played_frame = 0
-    
-                        if (r.has("whenbtn")){
-                            var btn_names = r.get("whenbtn").split("&&&")
-                            for(var j=0;j<btn_names.length;j++){
-                                var btncb = btns.get(btn_names[j])
-                                btncb.clear(player_id)
-                            }
-                        }
-        
-                        if (mw.config.get("debug")) {
-                            console.log("apply rule", rule[i])
-                        }
-    
-                        anmplayer.flipX = r.has("flipX") && r.get("flipX") == "true"
-                        anmplayer.revert = r.has("revert") && r.get("revert") == "true"
-                        if(anmplayer.revert){
-                            anmplayer.play(anmplayer.currentAnm.FrameNum - 1)
-                        }
-    
-                        if(r.has("setbtn")){
-                            var btnnames = r.get("setbtn").split("&&&")
-                            for(var j=0;j<btnnames.length;j++){
-                                var btnobj = btns.get(btnnames[j])
-                                if(btnobj && btnobj.set_btn_status){
-                                    btnobj.set_btn_status(true)
-                                }
-                            }
-                        }
-                        if(r.has("resetbtn")){
-                            var btnnames = r.get("resetbtn").split("&&&")
-                            for(var j=0;j<btnnames.length;j++){
-                                var btnobj = btns.get(btnnames[j])
-                                if(btnobj && btnobj.set_btn_status){
-                                    btnobj.set_btn_status(false)
-                                }
-                            }
-                        }
-                        if(r.has("pause") && r.get("pause") == "true"){
-                            is_pausing = true
-                        }
+                conditions.push("rule[" + i +"].has(ename)")
+                ret_function += "if("
 
-                        if(r.has("also")){
-                            var arg = r.get("also").split(".")
-                            if(arg.length % 2 != 0){
-                                console.log("invalid also:", r)
-                            }else{
-                                for(var j = 0;j<arg.length;j+=2){
-                                    var _pid = +arg[j]
-                                    var _player = players[_pid]
-                                    var _event_name = arg[j+1]
-                                    if(!_event_name.startsWith("event_")){
-                                        console.log("自定义事件名必须以event_开头:", _event_name)
-                                    }
-                                    else if(player == undefined){
-                                        console.log("player not found for also:", r)
-                                    }else{
-                                        try{
-                                            apply_rule(_event_name, _player.rule, anms[_pid], _player, _pid)
-                                        }catch(e){
-                                            console.error("anm2播放器规则错误，also可能出现死递归",e)
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    };
-
-                    if(r.has("sleep")/* && !r.has("pause") */){
-                        sleep_callbacks[player_id] = action
-                        sleep_remains[player_id] = +r.get("sleep")
-                    }else{
-                        action()
+                for(var j=0;j<conditions.length;j++){
+                    if(j > 0){
+                        ret_function += "&&"
                     }
-                    return true
+                    ret_function += "(" + conditions[j] + ")"
                 }
+                ret_function += ") return " + i + ";\n"
+            }
+
+            ret_function += "return undefined;"
+
+            ret_function += "}"
+            let ret = eval(ret_function)
+            console.log(ret)
+            return ret
+        }
+
+        function apply_rule(ename, rule, anmplayer, player, player_id) {
+            if(rule.rule_selector == undefined)
+                rule.rule_selector = generate_rule_select_function(rule)
+            var i = rule.rule_selector(ename,anmplayer, player, player_id, btns, rule)
+            if(i != undefined){
+                var r = rule[i]
+                var action = function(){
+                    if(r.has("target")){
+                        anmplayer = anms[+r.get("target")] || anmplayer;
+                        player = players[+r.get("target")] || player;
+                    }
+                    var rename = r.get(ename)
+                    player.name = rename
+                    if (anmplayer.getAnmNames().indexOf(rename.split('.')[0]) != -1) {
+                        var frame = 0
+                        if(r.has("frame")){
+                            frame = +r.get("frame")
+                            if(isNaN(frame)){
+                                frame = 0
+                            }
+                        }
+                        anmplayer.setFrame(rename.split('.')[0], frame)
+                    }
+                    player.played_frame = 0
+
+                    if (r.has("whenbtn")){
+                        var btn_names = r.get("whenbtn").split("&&&")
+                        for(var j=0;j<btn_names.length;j++){
+                            var btncb = btns.get(btn_names[j])
+                            btncb.clear(player_id)
+                        }
+                    }
+    
+                    if (mw.config.get("debug")) {
+                        console.log("apply rule", rule[i])
+                    }
+
+                    anmplayer.flipX = r.has("flipX") && r.get("flipX") == "true"
+                    anmplayer.revert = r.has("revert") && r.get("revert") == "true"
+                    if(anmplayer.revert){
+                        anmplayer.play(anmplayer.currentAnm.FrameNum - 1)
+                    }
+
+                    if(r.has("setbtn")){
+                        var btnnames = r.get("setbtn").split("&&&")
+                        for(var j=0;j<btnnames.length;j++){
+                            var btnobj = btns.get(btnnames[j])
+                            if(btnobj && btnobj.set_btn_status){
+                                btnobj.set_btn_status(true)
+                            }
+                        }
+                    }
+                    if(r.has("resetbtn")){
+                        var btnnames = r.get("resetbtn").split("&&&")
+                        for(var j=0;j<btnnames.length;j++){
+                            var btnobj = btns.get(btnnames[j])
+                            if(btnobj && btnobj.set_btn_status){
+                                btnobj.set_btn_status(false)
+                            }
+                        }
+                    }
+                    if(r.has("pause") && r.get("pause") == "true"){
+                        is_pausing = true
+                    }
+
+                    if(r.has("also")){
+                        var arg = r.get("also").split(".")
+                        if(arg.length % 2 != 0){
+                            console.log("invalid also:", r)
+                        }else{
+                            for(var j = 0;j<arg.length;j+=2){
+                                var _pid = +arg[j]
+                                var _player = players[_pid]
+                                var _event_name = arg[j+1]
+                                if(!_event_name.startsWith("event_")){
+                                    console.log("自定义事件名必须以event_开头:", _event_name)
+                                }
+                                else if(player == undefined){
+                                    console.log("player not found for also:", r)
+                                }else{
+                                    try{
+                                        apply_rule(_event_name, _player.rule, anms[_pid], _player, _pid)
+                                    }catch(e){
+                                        console.error("anm2播放器规则错误，also可能出现死递归",e)
+                                    }
+                                }
+                            }
+                        }
+                    }
+                };
+
+                if(r.has("sleep")/* && !r.has("pause") */){
+                    sleep_callbacks[player_id] = action
+                    sleep_remains[player_id] = +r.get("sleep")
+                }else{
+                    action()
+                }
+                return true
+
             }
             return false
         }
