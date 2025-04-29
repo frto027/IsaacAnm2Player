@@ -12,6 +12,7 @@
     "@types/node": "^17.0.25"
   },
   "dependencies": {
-    "@types/three": "^0.146.0"
+    "@types/three": "^0.146.0",
+    "typescript": "5.3.3"
   }
 }
