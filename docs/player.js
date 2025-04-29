@@ -318,7 +318,7 @@ var AnmPlayer = /** @class */ (function () {
         return img;
     };
     AnmPlayer.prototype.drawCanvas = function (ctx, canvas, centerX, centerY, rootScale, layer_name, transformFrame, blackPatch /* 用于渲染犹大之影的身体 */, extraScaleX, extraScaleY, extraOffsetY) {
-        var _a, _b, _c;
+        var _a, _b, _c, _d, _e, _f, _g;
         ctx.save();
         ctx.setTransform(1, 0, 0, 1, 0, 0);
         // ctx.clearRect(0,0,canvas.width, canvas.height)
@@ -384,7 +384,8 @@ var AnmPlayer = /** @class */ (function () {
                     // ctx.translate(-canvas.width/2,-canvas.height/2)
                     ctx.scale(frame.XScale / 100, frame.YScale / 100);
                     if (layerAdjuster) {
-                        ctx.scale((layerAdjuster.xscale || 100) / 100, (layerAdjuster.yscale || 100) / 100);
+                        ctx.translate((_d = layerAdjuster.xoffset) !== null && _d !== void 0 ? _d : 0, (_e = layerAdjuster.yoffset) !== null && _e !== void 0 ? _e : 0);
+                        ctx.scale(((_f = layerAdjuster.xscale) !== null && _f !== void 0 ? _f : 100) / 100, ((_g = layerAdjuster.yscale) !== null && _g !== void 0 ? _g : 100) / 100);
                     }
                     // ctx.translate(canvas.width/2,canvas.height/2)
                     ctx.translate(-frame.XPivot, -frame.YPivot);

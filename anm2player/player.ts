@@ -102,6 +102,9 @@ interface LayerAdjustParameter{
     xscale?:number
     yscale?:number
 
+    xoffset?:number
+    yoffset?:number
+
     hide?:boolean
 }
 
@@ -460,7 +463,8 @@ class AnmPlayer{
                     // ctx.translate(-canvas.width/2,-canvas.height/2)
                     ctx.scale(frame.XScale/100, frame.YScale/100)
                     if(layerAdjuster){
-                        ctx.scale((layerAdjuster.xscale || 100)/100, (layerAdjuster.yscale || 100)/100)
+                        ctx.translate(layerAdjuster.xoffset ?? 0, layerAdjuster.yoffset ?? 0)
+                        ctx.scale((layerAdjuster.xscale ?? 100)/100, (layerAdjuster.yscale ?? 100)/100)
                     }
                     // ctx.translate(canvas.width/2,canvas.height/2)
 
