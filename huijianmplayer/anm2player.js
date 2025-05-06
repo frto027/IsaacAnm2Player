@@ -1345,6 +1345,7 @@ var AnmPlayer = /** @class */ (function () {
             players.push(anmobj)
         }        
 
+        var current_sleep_callback_hash = [] //用来防止死循环
         var sleep_callbacks = []; //callback function array
         var sleep_remains = []; //int array
         function apply_rule(ename, rule, anmplayer, player, player_id) {
@@ -1474,8 +1475,14 @@ var AnmPlayer = /** @class */ (function () {
                     };
 
                     if(r.has("sleep")/* && !r.has("pause") */){
-                        sleep_callbacks[player_id] = action
-                        sleep_remains[player_id] = +r.get("sleep")
+                        var sleep_rule_hash = i + ""
+                        if(sleep_callbacks[player_id] && sleep_rule_hash == current_sleep_callback_hash[player_id]){
+                            //don't set rule
+                        }else{
+                            sleep_callbacks[player_id] = action
+                            sleep_remains[player_id] = +r.get("sleep")    
+                            current_sleep_callback_hash[player_id] = sleep_rule_hash
+                        }
                     }else{
                         action()
                     }
