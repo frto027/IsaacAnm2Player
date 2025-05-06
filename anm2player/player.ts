@@ -369,9 +369,12 @@ class AnmPlayer{
             }
             
             this.sprites_htmlimg[i] = img
-            document.body.appendChild(img)
         }
         return img
+    }
+
+    public replaceSpriteSheet(i:number, img:HTMLImageElement){
+        this.sprites_htmlimg[i] = img
     }
 
     debug_anchor:boolean = false

@@ -313,9 +313,11 @@ var AnmPlayer = /** @class */ (function () {
                 }
             };
             this.sprites_htmlimg[i] = img;
-            document.body.appendChild(img);
         }
         return img;
+    };
+    AnmPlayer.prototype.replaceSpriteSheet = function (i, img) {
+        this.sprites_htmlimg[i] = img;
     };
     AnmPlayer.prototype.drawCanvas = function (ctx, canvas, centerX, centerY, rootScale, layer_name, transformFrame, blackPatch /* 用于渲染犹大之影的身体 */, extraScaleX, extraScaleY, extraOffsetY) {
         var _a, _b, _c, _d, _e, _f, _g;
