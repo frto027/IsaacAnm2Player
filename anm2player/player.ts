@@ -940,14 +940,7 @@ class WebGLOverlay {
             1,0
         ])
 
-        ShaderController.bindArray(gl, shaderProgram, "ScreenSize", 4, [
-            this.backend_canvas.width, this.backend_canvas.height, 
-            this.backend_canvas.width, this.backend_canvas.height
-        ])
-        ShaderController.bindArray(gl, shaderProgram, "Color", 4, [
-            0,0,0,1
-        ])
-        this.shaderController.init(gl, shaderProgram)
+        this.shaderController.init(gl, shaderProgram, this)
 
         gl.useProgram(shaderProgram)
 
