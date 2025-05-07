@@ -857,47 +857,6 @@ interface CostumeInfo {
     /* steps[step][layer] == anmarray_index */
 }
 
-class ShaderController {
-    vertex(){
-        return `
-            attribute vec4 Position;
-            attribute vec2 TexCoord;
-
-            varying vec2 TexCoord0;
-
-            void main() {
-            gl_Position = Position;
-            TexCoord0 = TexCoord;
-            }
-        `
-    }
-
-    fragment(){
-        return  `
-        precision mediump float;
-
-        varying vec2 TexCoord0;
-        varying float AmountOut;
-        varying vec4 OutScreenSize;
-        uniform sampler2D Texture0;
-
-        void main() {
-            gl_FragColor = texture2D(Texture0, TexCoord0);
-        }
-    `
-    }
-    update(){
-    }
-}
-
-
-
-let PredefinedShaderControllers:{[name:string]:typeof ShaderController|null} = {
-    __proto__:null
-}
-
-
-
 class WebGLOverlay {
     backend_canvas: HTMLCanvasElement
     webgl_canvas: HTMLCanvasElement
@@ -966,32 +925,29 @@ class WebGLOverlay {
         if (!gl) return;
         const shaderProgram = this.initShaderProgram(gl, this.shaderController.vertex(), this.shaderController.fragment());
         if(!shaderProgram) return;  
-        function bindArray(propertyName:string,dim:number, init:number[]){
-            if(gl == null) return
-            if(shaderProgram == null) return
-            let vertex = gl.createBuffer()
-            if(!vertex)return
-            gl.bindBuffer(gl.ARRAY_BUFFER, vertex)
-            gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(init), gl.STATIC_DRAW)
-            let arg = gl.getAttribLocation(shaderProgram, propertyName)
-            gl.vertexAttribPointer(arg, dim, gl.FLOAT, false, 0, 0)
-            gl.enableVertexAttribArray(arg)
-            return vertex
-        }
 
-        bindArray("Position", 2, [
+        ShaderController.bindArray(gl, shaderProgram, "Position", 2, [
             -1,-1,
             -1,1,
             1,-1,
             1,1
         ])
 
-        bindArray("TexCoord", 2, [
+        ShaderController.bindArray(gl, shaderProgram, "TexCoord", 2, [
             0,1,
             0,0,
             1,1,
             1,0
         ])
+
+        ShaderController.bindArray(gl, shaderProgram, "ScreenSize", 4, [
+            this.backend_canvas.width, this.backend_canvas.height, 
+            this.backend_canvas.width, this.backend_canvas.height
+        ])
+        ShaderController.bindArray(gl, shaderProgram, "Color", 4, [
+            0,0,0,1
+        ])
+        this.shaderController.init(gl, shaderProgram)
 
         gl.useProgram(shaderProgram)
 
@@ -1011,9 +967,9 @@ class WebGLOverlay {
     }
 
     render() {
-        this.shaderController.update()
         var gl = this.webgl_canvas.getContext("webgl")
         if(gl == null)return
+        this.shaderController.update(gl)
         if(this.texture)
             gl.bindTexture(gl.TEXTURE_2D, this.texture)
         gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA,gl.RGBA,gl.UNSIGNED_BYTE, this.backend_canvas)

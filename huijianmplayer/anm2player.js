@@ -7,6 +7,96 @@ function setup_anm2_player() {
 
 /* 以下注释区间内的内容由merge.py自动生成（编译自anm2player/player.ts） */
 /* == BEGIN_OF player.ts == */
+var __extends = (this && this.__extends) || (function () {
+    var extendStatics = function (d, b) {
+        extendStatics = Object.setPrototypeOf ||
+            ({ __proto__: [] } instanceof Array && function (d, b) { d.__proto__ = b; }) ||
+            function (d, b) { for (var p in b) if (Object.prototype.hasOwnProperty.call(b, p)) d[p] = b[p]; };
+        return extendStatics(d, b);
+    };
+    return function (d, b) {
+        if (typeof b !== "function" && b !== null)
+            throw new TypeError("Class extends value " + String(b) + " is not a constructor or null");
+        extendStatics(d, b);
+        function __() { this.constructor = d; }
+        d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
+    };
+})();
+var ShaderController = /** @class */ (function () {
+    function ShaderController() {
+    }
+    ShaderController.bindArray = function (gl, shaderProgram, propertyName, dim, init) {
+        var vertex = gl.createBuffer();
+        if (!vertex)
+            return;
+        gl.bindBuffer(gl.ARRAY_BUFFER, vertex);
+        gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(init), gl.STATIC_DRAW);
+        var arg = gl.getAttribLocation(shaderProgram, propertyName);
+        gl.vertexAttribPointer(arg, dim, gl.FLOAT, false, 0, 0);
+        gl.enableVertexAttribArray(arg);
+        return vertex;
+    };
+    ShaderController.bindDynamicArray = function (gl, shaderProgram, propertyName, dim, init) {
+        var vertex = gl.createBuffer();
+        if (!vertex)
+            return;
+        gl.bindBuffer(gl.ARRAY_BUFFER, vertex);
+        gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(init), gl.DYNAMIC_DRAW);
+        var arg = gl.getAttribLocation(shaderProgram, propertyName);
+        gl.vertexAttribPointer(arg, dim, gl.FLOAT, false, 0, 0);
+        gl.enableVertexAttribArray(arg);
+        return vertex;
+    };
+    ShaderController.bindDynamicFloat = function (gl, shaderProgram, propertyName, init) {
+        var vertex = gl.createBuffer();
+        if (!vertex)
+            return;
+        this.setFloat(gl, vertex, init);
+        var arg = gl.getAttribLocation(shaderProgram, propertyName);
+        gl.vertexAttribPointer(arg, 1, gl.FLOAT, false, 0, 0);
+        gl.enableVertexAttribArray(arg);
+        return vertex;
+    };
+    ShaderController.setFloat = function (gl, loc, value) {
+        gl.bindBuffer(gl.ARRAY_BUFFER, loc);
+        gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([
+            value, value, value, value
+        ]), gl.DYNAMIC_DRAW);
+    };
+    ShaderController.prototype.vertex = function () {
+        return "\n            attribute vec4 Position;\n            attribute vec2 TexCoord;\n\n            varying vec2 TexCoord0;\n\n            void main() {\n            gl_Position = Position;\n            TexCoord0 = TexCoord;\n            }\n        ";
+    };
+    ShaderController.prototype.fragment = function () {
+        return "\n        precision mediump float;\n\n        varying vec2 TexCoord0;\n        varying float AmountOut;\n        varying vec4 OutScreenSize;\n        uniform sampler2D Texture0;\n\n        void main() {\n            gl_FragColor = texture2D(Texture0, TexCoord0);\n        }\n    ";
+    };
+    ShaderController.prototype.init = function (gl, program) {
+    };
+    ShaderController.prototype.update = function (gl) {
+    };
+    return ShaderController;
+}());
+var ShaderPixelation = /** @class */ (function (_super) {
+    __extends(ShaderPixelation, _super);
+    function ShaderPixelation() {
+        var _this = _super !== null && _super.apply(this, arguments) || this;
+        _this.vertex = function () { return "\n        #ifdef GL_ES\nprecision highp float;\n#endif\n\n#if __VERSION__ >= 140\n\nin vec3 Position;\nin vec4 Color;\nin vec2 TexCoord;\nin float PixelationAmount;\nin vec4 ScreenSize;\n\nout vec4 Color0;\nout vec2 TexCoord0;\nout float OutPixelationAmount;\nout vec4 OutScreenSize;\n\n#else\n\nattribute vec3 Position;\nattribute vec4 Color;\nattribute vec2 TexCoord;\nattribute float PixelationAmount;\nattribute vec4 ScreenSize;\n\nvarying vec4 Color0;\nvarying vec2 TexCoord0;\nvarying float OutPixelationAmount;\nvarying vec4 OutScreenSize;\n\n#endif\n\nvoid main(void)\n{\n\tOutPixelationAmount = PixelationAmount;\n\tOutScreenSize = ScreenSize;\n\tColor0 = Color;\n\tgl_Position = vec4(Position.xyz, 1.0);\n\tTexCoord0 = TexCoord;\n}\n"; };
+        _this.fragment = function () { return "#ifdef GL_ES\nprecision highp float;\n#endif\n\n#if __VERSION__ >= 140\n\nin vec4 Color0;\nin vec2 TexCoord0;\nin float OutPixelationAmount;\nin vec4 OutScreenSize;\nout vec4 fragColor;\n\n#else\n\nvarying vec4 Color0;\nvarying vec2 TexCoord0;\nvarying float OutPixelationAmount;\nvarying vec4 OutScreenSize;\n#define fragColor gl_FragColor\n#define texture texture2D\n\n#endif\n\nuniform sampler2D Texture0;\n\n/*\nconst int Samples = 4;\n\nvoid main(void)\n{\n\tvec2 screenRatio = OutScreenSize.zw / OutScreenSize.xy;\n\tfloat pa = OutPixelationAmount * 0.5;\n\tvec2 adjustedUVs = TexCoord0.st * screenRatio;\n\tif (OutScreenSize.y < OutScreenSize.x) {\n\t\tadjustedUVs.y *= OutScreenSize.y / OutScreenSize.x;\n\t} else {\n\t\tadjustedUVs.x *= OutScreenSize.x / OutScreenSize.y;\n\t}\n\t\n\tvec2 snapCoord = vec2(adjustedUVs.s - mod(adjustedUVs.s - pa*0.5 - 0.5, pa), adjustedUVs.t - mod(adjustedUVs.t - pa*0.5 - 0.5, pa));\n\tfloat samplesInv = pa / float(Samples);\n\tfloat maxSamplesInv = 1.0 / float(Samples * Samples);\n\tgl_FragColor = Color0;\n\tgl_FragColor *= 0.001;\n\tfor (int i = 0; i < Samples; i++) {\n\t\tfor (int j = 0; j < Samples; j++) {\n\t\t\tfloat u = clamp(snapCoord.s + float(i) * samplesInv, 0.0, 1.0);\n\t\t\tfloat v = clamp(snapCoord.t + float(j) * samplesInv, 0.0, 1.0);\n\t\t\tif (OutScreenSize.y < OutScreenSize.x) {\n\t\t\t\tv *= OutScreenSize.x / OutScreenSize.y;\n\t\t\t} else {\n\t\t\t\tu *= OutScreenSize.y / OutScreenSize.x;\n\t\t\t}\n\t\t\tu /= screenRatio.x;\n\t\t\tv /= screenRatio.y;\n\t\t\tgl_FragColor += texture2D( Texture0, vec2(u, v)) * maxSamplesInv;\n\t\t}\n\t}\n}\n*/\n\n// SNES style mosaic effect, it's cheap, simple, and more crisp looking\nvoid main(void)\n{\n\tvec2 pa = OutPixelationAmount * 0.5 * min(OutScreenSize.z, OutScreenSize.w) / OutScreenSize.zw;\n\t// vec2 snapCoord = TexCoord0.st - mod(TexCoord0.st, pa);\n\t\n\t// Centered pixelation\n\t// This is less faithful to the SNES mosaic effect but it looks better overall\n\tvec2 center = OutScreenSize.xy * 0.5 / OutScreenSize.zw;\n\tvec2 snapCoord = TexCoord0.st - mod(TexCoord0.st - center, pa) + pa * 0.5;\n\t\n\tfragColor = texture(Texture0, snapCoord);\n}\n"; };
+        _this.time = 0;
+        return _this;
+    }
+    ShaderPixelation.prototype.init = function (gl, program) {
+        this.PixelationAmount = ShaderController.bindDynamicFloat(gl, program, "PixelationAmount", 0.01);
+    };
+    ShaderPixelation.prototype.update = function (gl) {
+        this.time += 1;
+        ShaderController.setFloat(gl, this.PixelationAmount, (Math.sin(this.time * 0.04) + 1) * 0.5 * 0.1);
+    };
+    return ShaderPixelation;
+}(ShaderController));
+var PredefinedShaderControllers = {
+    __proto__: null,
+    "pixel": ShaderPixelation
+};
 var FrameStatus = /** @class */ (function () {
     function FrameStatus() {
         this.XPivot = 0;
@@ -760,22 +850,6 @@ var AnmPlayer = /** @class */ (function () {
     AnmPlayer.COSTUME_STEP = ["glow", "back", "body", "body0", "body1", "head", "head0", "head1", "head2", "head3", "head4", "head5", "top0", "extra", "ghost"];
     return AnmPlayer;
 }());
-var ShaderController = /** @class */ (function () {
-    function ShaderController() {
-    }
-    ShaderController.prototype.vertex = function () {
-        return "\n            attribute vec4 Position;\n            attribute vec2 TexCoord;\n\n            varying vec2 TexCoord0;\n\n            void main() {\n            gl_Position = Position;\n            TexCoord0 = TexCoord;\n            }\n        ";
-    };
-    ShaderController.prototype.fragment = function () {
-        return "\n        precision mediump float;\n\n        varying vec2 TexCoord0;\n        varying float AmountOut;\n        varying vec4 OutScreenSize;\n        uniform sampler2D Texture0;\n\n        void main() {\n            gl_FragColor = texture2D(Texture0, TexCoord0);\n        }\n    ";
-    };
-    ShaderController.prototype.update = function () {
-    };
-    return ShaderController;
-}());
-var PredefinedShaderControllers = {
-    __proto__: null
-};
 var WebGLOverlay = /** @class */ (function () {
     function WebGLOverlay(backend_canvas, webgl_canvas, shaderName) {
         this.backend_canvas = backend_canvas;
@@ -831,33 +905,26 @@ var WebGLOverlay = /** @class */ (function () {
         var shaderProgram = this.initShaderProgram(gl, this.shaderController.vertex(), this.shaderController.fragment());
         if (!shaderProgram)
             return;
-        function bindArray(propertyName, dim, init) {
-            if (gl == null)
-                return;
-            if (shaderProgram == null)
-                return;
-            var vertex = gl.createBuffer();
-            if (!vertex)
-                return;
-            gl.bindBuffer(gl.ARRAY_BUFFER, vertex);
-            gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(init), gl.STATIC_DRAW);
-            var arg = gl.getAttribLocation(shaderProgram, propertyName);
-            gl.vertexAttribPointer(arg, dim, gl.FLOAT, false, 0, 0);
-            gl.enableVertexAttribArray(arg);
-            return vertex;
-        }
-        bindArray("Position", 2, [
+        ShaderController.bindArray(gl, shaderProgram, "Position", 2, [
             -1, -1,
             -1, 1,
             1, -1,
             1, 1
         ]);
-        bindArray("TexCoord", 2, [
+        ShaderController.bindArray(gl, shaderProgram, "TexCoord", 2, [
             0, 1,
             0, 0,
             1, 1,
             1, 0
         ]);
+        ShaderController.bindArray(gl, shaderProgram, "ScreenSize", 4, [
+            this.backend_canvas.width, this.backend_canvas.height,
+            this.backend_canvas.width, this.backend_canvas.height
+        ]);
+        ShaderController.bindArray(gl, shaderProgram, "Color", 4, [
+            0, 0, 0, 1
+        ]);
+        this.shaderController.init(gl, shaderProgram);
         gl.useProgram(shaderProgram);
         gl.activeTexture(gl.TEXTURE0);
         this.texture = (_a = gl.createTexture()) !== null && _a !== void 0 ? _a : undefined;
@@ -870,10 +937,10 @@ var WebGLOverlay = /** @class */ (function () {
         gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
     };
     WebGLOverlay.prototype.render = function () {
-        this.shaderController.update();
         var gl = this.webgl_canvas.getContext("webgl");
         if (gl == null)
             return;
+        this.shaderController.update(gl);
         if (this.texture)
             gl.bindTexture(gl.TEXTURE_2D, this.texture);
         gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, this.backend_canvas);

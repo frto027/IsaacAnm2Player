@@ -1,21 +1,24 @@
 import sys
 
-if len(sys.argv) != 3:
+if len(sys.argv) < 3:
     print(f"""
-    usage: python {sys.argv[0]} <anm2player.js> <player.js>
+    usage: python {sys.argv[0]} <anm2player.js> <player.js> ...
     """)
     exit(1)
 
 anm2player = sys.argv[1]
 player = sys.argv[2]
 
-print(f"{anm2player} <-- {player}")
+print(f"{anm2player} <-- ", end="")
 
-with open(player,"r", encoding="utf8") as f:
-    player_doc = f.read()
 
-if player_doc.startswith('"use strict";\n'):
-    player_doc = player_doc[len('"use strict";\n'):]
+player_doc = ""
+
+for player in sys.argv[2:]:
+    print(player, end=" ")
+    with open(player,"r", encoding="utf8") as f:
+        player_doc += f.read()
+print("")
 
 anm2player_ret = ""
 
