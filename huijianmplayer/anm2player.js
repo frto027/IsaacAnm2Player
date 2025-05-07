@@ -760,6 +760,129 @@ var AnmPlayer = /** @class */ (function () {
     AnmPlayer.COSTUME_STEP = ["glow", "back", "body", "body0", "body1", "head", "head0", "head1", "head2", "head3", "head4", "head5", "top0", "extra", "ghost"];
     return AnmPlayer;
 }());
+var ShaderController = /** @class */ (function () {
+    function ShaderController() {
+    }
+    ShaderController.prototype.vertex = function () {
+        return "\n            attribute vec4 Position;\n            attribute vec2 TexCoord;\n\n            varying vec2 TexCoord0;\n\n            void main() {\n            gl_Position = Position;\n            TexCoord0 = TexCoord;\n            }\n        ";
+    };
+    ShaderController.prototype.fragment = function () {
+        return "\n        precision mediump float;\n\n        varying vec2 TexCoord0;\n        varying float AmountOut;\n        varying vec4 OutScreenSize;\n        uniform sampler2D Texture0;\n\n        void main() {\n            gl_FragColor = texture2D(Texture0, TexCoord0);\n        }\n    ";
+    };
+    ShaderController.prototype.update = function () {
+    };
+    return ShaderController;
+}());
+var PredefinedShaderControllers = {
+    __proto__: null
+};
+var WebGLOverlay = /** @class */ (function () {
+    function WebGLOverlay(backend_canvas, webgl_canvas, shaderName) {
+        this.backend_canvas = backend_canvas;
+        this.webgl_canvas = webgl_canvas;
+        var controller_class = PredefinedShaderControllers[shaderName];
+        if (controller_class) {
+            this.shaderController = new controller_class();
+        }
+        else {
+            this.shaderController = new ShaderController();
+        }
+    }
+    WebGLOverlay.prototype.loadShader = function (gl, type, source) {
+        var shader = gl.createShader(type);
+        if (!shader)
+            return;
+        // Send the source to the shader object
+        gl.shaderSource(shader, source);
+        // Compile the shader program
+        gl.compileShader(shader);
+        // See if it compiled successfully
+        if (!gl.getShaderParameter(shader, gl.COMPILE_STATUS)) {
+            console.error("An error occurred compiling the shaders: ".concat(gl.getShaderInfoLog(shader)));
+            gl.deleteShader(shader);
+            return null;
+        }
+        return shader;
+    };
+    WebGLOverlay.prototype.initShaderProgram = function (gl, vsSource, fsSource) {
+        var vertexShader = this.loadShader(gl, gl.VERTEX_SHADER, vsSource);
+        var fragmentShader = this.loadShader(gl, gl.FRAGMENT_SHADER, fsSource);
+        if (!vertexShader || !fragmentShader)
+            return;
+        // Create the shader program
+        var shaderProgram = gl.createProgram();
+        if (!shaderProgram)
+            return;
+        gl.attachShader(shaderProgram, vertexShader);
+        gl.attachShader(shaderProgram, fragmentShader);
+        gl.linkProgram(shaderProgram);
+        // If creating the shader program failed, alert
+        if (!gl.getProgramParameter(shaderProgram, gl.LINK_STATUS)) {
+            console.error("Unable to initialize the shader program: ".concat(gl.getProgramInfoLog(shaderProgram)));
+            return null;
+        }
+        return shaderProgram;
+    };
+    WebGLOverlay.prototype.init = function () {
+        var _a;
+        var gl = this.webgl_canvas.getContext("webgl");
+        if (!gl)
+            return;
+        var shaderProgram = this.initShaderProgram(gl, this.shaderController.vertex(), this.shaderController.fragment());
+        if (!shaderProgram)
+            return;
+        function bindArray(propertyName, dim, init) {
+            if (gl == null)
+                return;
+            if (shaderProgram == null)
+                return;
+            var vertex = gl.createBuffer();
+            if (!vertex)
+                return;
+            gl.bindBuffer(gl.ARRAY_BUFFER, vertex);
+            gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(init), gl.STATIC_DRAW);
+            var arg = gl.getAttribLocation(shaderProgram, propertyName);
+            gl.vertexAttribPointer(arg, dim, gl.FLOAT, false, 0, 0);
+            gl.enableVertexAttribArray(arg);
+            return vertex;
+        }
+        bindArray("Position", 2, [
+            -1, -1,
+            -1, 1,
+            1, -1,
+            1, 1
+        ]);
+        bindArray("TexCoord", 2, [
+            0, 1,
+            0, 0,
+            1, 1,
+            1, 0
+        ]);
+        gl.useProgram(shaderProgram);
+        gl.activeTexture(gl.TEXTURE0);
+        this.texture = (_a = gl.createTexture()) !== null && _a !== void 0 ? _a : undefined;
+        if (this.texture) {
+            gl.bindTexture(gl.TEXTURE_2D, this.texture);
+        }
+        gl.uniform1i(gl.getUniformLocation(shaderProgram, "Texture0"), 0);
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+    };
+    WebGLOverlay.prototype.render = function () {
+        this.shaderController.update();
+        var gl = this.webgl_canvas.getContext("webgl");
+        if (gl == null)
+            return;
+        if (this.texture)
+            gl.bindTexture(gl.TEXTURE_2D, this.texture);
+        gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, this.backend_canvas);
+        gl.clearColor(0, 0, 0, 0);
+        gl.clear(gl.COLOR_BUFFER_BIT);
+        gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
+    };
+    return WebGLOverlay;
+}());
 /* == END_OF player.ts == */
     function md5(md5str) {
         var createMD5String = function (string) {
@@ -1496,6 +1619,12 @@ var AnmPlayer = /** @class */ (function () {
 
         var color_div;
         var canvas;
+        //for shader render mode
+        var backend_canvas;
+        var webgl_overlay;
+
+        //两种渲染模式： canvas(2d)    backend_canvas(undefined)
+        //或者：        canvas(webgl) backend_canvas(2d)
 
         var BACKGROUND_COLORS
         function setBackgroundColor(color){
@@ -1569,6 +1698,18 @@ var AnmPlayer = /** @class */ (function () {
             if(canvasdiv.getAttribute("data-scale")){
                 var scale = +canvasdiv.getAttribute("data-scale")
                 canvas_style += "transform:scale("+scale+");margin:" + (canvas.height * (scale-1)/2) + "px " + (canvas.width * (scale-1)/2) +"px;"
+            }
+
+            if(canvasdiv.hasAttribute("data-shader")){
+                AnmPlayer.setCrossOrigin("anonymous")
+                var gl = canvas.getContext("webgl")
+                if(gl){
+                    backend_canvas = document.createElement("canvas")
+                    backend_canvas.width = canvas.width
+                    backend_canvas.height = canvas.height
+                    webgl_overlay = new WebGLOverlay(backend_canvas, canvas, canvasdiv.getAttribute("data-shader"))
+                    webgl_overlay.init()
+                }
             }
     
             if(PATCH_blueFilter){
@@ -2351,13 +2492,19 @@ var AnmPlayer = /** @class */ (function () {
                             currentFps = (currentFps + 1) % commonFps
                         }
                         //draw
-                        var ctx = canvas.getContext("2d")
+                        //apply shader
+                        var drawing_canvas = backend_canvas || canvas;
+                        var ctx = drawing_canvas.getContext("2d")
                         ctx.imageSmoothingEnabled = false
     
                         ctx.setTransform(1, 0, 0, 1, 0, 0)
-                        ctx.clearRect(0, 0, canvas.width, canvas.height)
+                        ctx.clearRect(0, 0, drawing_canvas.width, drawing_canvas.height)
                         for (var i = anms.length - 1; i >= 0; i--) {
-                            anms[i].drawCanvas(ctx, canvas, players[i].x, players[i].y, 1)
+                            anms[i].drawCanvas(ctx, drawing_canvas, players[i].x, players[i].y, 1)
+                        }
+
+                        if(webgl_overlay){
+                            webgl_overlay.render()
                         }
                     }
                 }
