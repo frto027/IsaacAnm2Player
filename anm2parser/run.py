@@ -1,4 +1,4 @@
-folder = "E:\\SteamLibrary\\steamapps\\common\\The Binding of Isaac Rebirth\\"
+folder = "D:\\SteamLibrary\\steamapps\\common\\The Binding of Isaac Rebirth\\extracted_resources\\resources\\"
 
 from glob import glob
 import json
@@ -8,8 +8,6 @@ import keymapper
 import pathlib
 
 KEY_MAPPER = True
-
-res_sequence = ['resources-dlc3.zh', 'resources-dlc3', 'resources']
 
 def replace_relative_path(obj, relative):
     if not "content" in obj:
@@ -25,17 +23,16 @@ def replace_relative_path(obj, relative):
         res_folder = newpath.parts[0]
         later_path = newpath.relative_to(res_folder)
 
-        for res in res_sequence:
-            if (pathlib.Path(folder) / res / later_path).exists():
-                newpath = pathlib.Path(res) / later_path
-                break
-        
+        newpath = pathlib.Path(folder) /'gfx' / later_path
+        # if not newpath.exists():
+        #     print(f"warning: not found file {newpath}")
         newpath = (pathlib.Path(folder) / newpath).resolve().relative_to(pathlib.Path(folder))
 
         if not (pathlib.Path(folder) / newpath).exists():
             print("warring: res not exist " + str(newpath))
 
-        content["Spritesheets"][i]["Path"] = str(newpath).replace('\\','/')
+
+        content["Spritesheets"][i]["Path"] = "Anm2_resources-repp_" + str(newpath).replace('\\','/').replace("/","_")
 
 
 def copy_sprite(obj, frompath, topath):
@@ -103,8 +100,9 @@ if len(sys.argv) == 2:
 
     # copy png file
 
-    for k in fulljson:
-        copy_sprite(fulljson[k], folder, output)
+    # do not copy sprite because they have already uploaded
+    # for k in fulljson:
+    #     copy_sprite(fulljson[k], folder, output)
 
     # generate manifest
 
