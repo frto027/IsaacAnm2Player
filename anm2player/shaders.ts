@@ -464,35 +464,52 @@ void main(void)
     `
 }
 
-/*
+
 class ShaderDogma extends ShaderController {
+    Colorize: any
     init(gl: WebGLRenderingContext, program: WebGLProgram, webglOverlay:WebGLOverlay): void {
         ShaderController.bindArray(gl, program, "TextureSize", 2, [
-            webglOverlay.backend_canvas.width, webglOverlay.backend_canvas.height, 
+            webglOverlay.backend_canvas.width * 4, webglOverlay.backend_canvas.height * 4, 
+            webglOverlay.backend_canvas.width * 4, webglOverlay.backend_canvas.height * 4, 
+            webglOverlay.backend_canvas.width * 4, webglOverlay.backend_canvas.height * 4, 
+            webglOverlay.backend_canvas.width * 4, webglOverlay.backend_canvas.height * 4, 
         ])
         ShaderController.bindArray(gl, program, "Color", 4, [
-            1,1,1,1 
+            1,1,1,1 ,
+            1,1,1,1 ,
+            1,1,1,1 ,
+            1,1,1,1 ,
         ])
-        ShaderController.bindArray(gl, program, "ColorizeIn", 4, [
-            1,1,1,1 
+        this.Colorize = ShaderController.bindDynamicArray(gl, program, "ColorizeIn", 4, [
+            1,1,1,1 ,
+            1,1,1,1 ,
+            1,1,1,1 ,
+            1,1,1,1 ,
         ])
         ShaderController.bindArray(gl, program, "ColorOffsetIn", 3, [
-            0,0,0 
+            0,0,0 ,
+            0,0,0 ,
+            0,0,0 ,
+            0,0,0 ,
         ])
-        ShaderController.bindDynamicFloat(gl, program, "PixelationAmount", 1)
+        ShaderController.bindDynamicFloat(gl, program, "PixelationAmount", 0)
         ShaderController.bindArray(gl, program, "ClipPlane", 3, [
-            0,0,1 
+            1,1,0 ,
+            1,1,0 ,
+            1,1,0 ,
+            1,1,0 ,
         ])
 
     }
     time = 0
     update(gl: WebGLRenderingContext): void {
-        // ShaderController.setArray(gl,this.Noise, 2, [
-        //     0.2,Math.random(),
-        //     0.2,Math.random(),
-        //     0.2,Math.random(),
-        //     0.2,Math.random(),
-        // ])
+        let rnd = Math.random()
+        ShaderController.setArray(gl,this.Colorize, 4, [
+            1,1,1, rnd ,
+            1,1,1, rnd ,
+            1,1,1, rnd ,
+            1,1,1, rnd ,
+        ])
     }
 
     vertex = ()=>`
@@ -626,21 +643,19 @@ float snoise(vec2 v)
 void main(void)
 {
 	// Clip
-	if(dot(gl_FragCoord.xy, ClipPlaneOut.xy) < ClipPlaneOut.z)
-		discard;
 	
-	// Pixelate
-	vec2 pa = vec2(1.0+PixelationAmountOut, 1.0+PixelationAmountOut) / TextureSizeOut;
+	// // Pixelate
+	// vec2 pa = vec2(1.0+PixelationAmountOut, 1.0+PixelationAmountOut) / TextureSizeOut;
 	
-	vec2 uv_aligned = TexCoord0 - mod(TexCoord0, pa) + pa * 0.5;
-	vec2 uv = PixelationAmountOut > 0.0 ? uv_aligned : TexCoord0;
+	// vec2 uv_aligned = TexCoord0 - mod(TexCoord0, pa) + pa * 0.5;
+	// vec2 uv = PixelationAmountOut > 0.0 ? uv_aligned : TexCoord0;
 	
-	// Glitch distortion
-	float uOffset = snoise(vec2(ColorizeOut.a*1000.0, TextureSizeOut.x * 0.5 * uv_aligned.y));
-	uOffset = uOffset * ColorizeOut.r * 10.0 / TextureSizeOut.x;
-	uv.x += uOffset;
+	// // Glitch distortion
+	// float uOffset = snoise(vec2(ColorizeOut.a*1000.0, TextureSizeOut.x * 0.5 * uv_aligned.y));
+	// uOffset = uOffset * ColorizeOut.r * 10.0 / TextureSizeOut.x;
+	// uv.x += uOffset;
 	
-	vec4 Color = texture2D(Texture0, uv);
+	vec4 Color = texture2D(Texture0, TexCoord0);
 	
 	if( Color.a == 0.0 )	discard;
 	
@@ -666,15 +681,15 @@ void main(void)
 		Color.r = Color.g = Color.b = a;
 	}
 	
-	Color *= Color0;
+	// Color *= Color0;
 	gl_FragColor = vec4(Color.rgb + ColorOffsetOut * Color.a, Color.a);
-	gl_FragColor.rgb = mix(gl_FragColor.rgb, gl_FragColor.rgb - mod(gl_FragColor.rgb, 1.0/16.0) + 1.0/32.0, clamp(PixelationAmountOut, 0.0, 1.0));
+	// gl_FragColor.rgb = mix(gl_FragColor.rgb, gl_FragColor.rgb - mod(gl_FragColor.rgb, 1.0/16.0) + 1.0/32.0, clamp(PixelationAmountOut, 0.0, 1.0));
 }
 
     `
 }
 
-*/
+
 let PredefinedShaderControllers:{[name:string]:typeof ShaderController|null} = {
     __proto__:null,
     "default":ShaderController,
@@ -682,6 +697,6 @@ let PredefinedShaderControllers:{[name:string]:typeof ShaderController|null} = {
     "dizzy":ShaderDizzy,
     "hallucination":ShaderHallucination,
     "oldtv":ShaderOldTV,
-    // "dogma":ShaderDogma
+    "dogma":ShaderDogma
 }
 
