@@ -468,6 +468,16 @@ void main(void)
 class ShaderDogma extends ShaderController {
     Colorize: any
     init(gl: WebGLRenderingContext, program: WebGLProgram, webglOverlay:WebGLOverlay): void {
+        let scale = 2
+        // if(webglOverlay.webgl_canvas.parentElement.parentElement.hasAttribute("data-scale")){
+        //     scale = +webglOverlay.webgl_canvas.parentElement.parentElement.getAttribute("data-scale")
+        // }
+        // if(scale > 0 && scale < 1000){
+        //     //ok
+        // }else{
+        //     scale = 1
+        // }
+
         ShaderController.bindArray(gl, program, "TextureSize", 2, [
             webglOverlay.backend_canvas.width * 4, webglOverlay.backend_canvas.height * 4, 
             webglOverlay.backend_canvas.width * 4, webglOverlay.backend_canvas.height * 4, 
@@ -500,6 +510,8 @@ class ShaderDogma extends ShaderController {
             1,1,0 ,
         ])
 
+        ShaderController.bindDynamicFloat(gl, program, "WikiScale", 1/scale)
+
     }
     time = 0
     update(gl: WebGLRenderingContext): void {
@@ -513,7 +525,7 @@ class ShaderDogma extends ShaderController {
     }
 
     vertex = ()=>`
-precision mediump float;
+precision highp float;
 
 attribute vec3 Position;
 attribute vec4 Color;
@@ -523,6 +535,7 @@ attribute vec3 ColorOffsetIn;
 attribute vec2 TextureSize;
 attribute float PixelationAmount;
 attribute vec3 ClipPlane;
+attribute float WikiScale;
 
 varying vec4 Color0;
 varying vec2 TexCoord0;
@@ -531,6 +544,7 @@ varying vec3 ColorOffsetOut;
 varying vec2 TextureSizeOut;
 varying float PixelationAmountOut;
 varying vec3 ClipPlaneOut;
+varying float WikiScaleOut;
 
 
 void main(void)
@@ -545,15 +559,13 @@ void main(void)
 	
 	gl_Position = vec4(Position.xyz, 1.0);
 	TexCoord0 = TexCoord;
+
+    WikiScaleOut = WikiScale;
 }
 
     `
     fragment = ()=>`
-#ifndef GL_ES
-#  define lowp
-#  define mediump
-#endif
-precision mediump float;
+precision highp float;
 
 varying lowp vec4 Color0;
 varying mediump vec2 TexCoord0;
@@ -562,6 +574,8 @@ varying lowp vec3 ColorOffsetOut;
 varying lowp vec2 TextureSizeOut;
 varying lowp float PixelationAmountOut;
 varying lowp vec3 ClipPlaneOut;
+
+varying float WikiScaleOut;
 
 uniform sampler2D Texture0;
 //const vec3 _lum = vec3(0.212671, 0.715160, 0.072169);
@@ -669,7 +683,7 @@ void main(void)
 		//float a = mix((snoise(TextureSizeOut * 0.5 * uv_aligned + vec2(ColorizeOut.a*1000.0, 0.0))+0.5)*Color.b, Color.b, Color.r/Color.b);
 		
 		vec2 NoiseUV = gl_FragCoord.xy + vec2(ColorizeOut.a*10000.0, ColorizeOut.a*10000.0);
-		NoiseUV -= mod(NoiseUV, vec2(2.0+2.0*PixelationAmountOut,2.0+2.0*PixelationAmountOut));
+		NoiseUV -= mod(NoiseUV, vec2(WikiScaleOut,WikiScaleOut)*vec2(2.0+2.0*PixelationAmountOut,2.0+2.0*PixelationAmountOut));
 		float a = mix((snoise(NoiseUV)+0.5)*Color.b, Color.b, Color.r/Color.b);
 		Color.r = Color.g = Color.b = a;
 	}
