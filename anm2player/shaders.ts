@@ -100,6 +100,9 @@ class ShaderController {
     update(gl:WebGLRenderingContext){
     }
 
+    setParam(name:string, value:any){
+        //注意，name和value可能是不可信任内容，请注意过滤（如果有必要）
+    }
 }
 
 class ShaderPixelation extends ShaderController{
@@ -467,8 +470,8 @@ void main(void)
 
 class ShaderDogma extends ShaderController {
     Colorize: any
+    WikiScale:any
     init(gl: WebGLRenderingContext, program: WebGLProgram, webglOverlay:WebGLOverlay): void {
-        let scale = 2
         // if(webglOverlay.webgl_canvas.parentElement.parentElement.hasAttribute("data-scale")){
         //     scale = +webglOverlay.webgl_canvas.parentElement.parentElement.getAttribute("data-scale")
         // }
@@ -479,10 +482,10 @@ class ShaderDogma extends ShaderController {
         // }
 
         ShaderController.bindArray(gl, program, "TextureSize", 2, [
-            webglOverlay.backend_canvas.width * 4, webglOverlay.backend_canvas.height * 4, 
-            webglOverlay.backend_canvas.width * 4, webglOverlay.backend_canvas.height * 4, 
-            webglOverlay.backend_canvas.width * 4, webglOverlay.backend_canvas.height * 4, 
-            webglOverlay.backend_canvas.width * 4, webglOverlay.backend_canvas.height * 4, 
+            webglOverlay.backend_canvas.width, webglOverlay.backend_canvas.height, 
+            webglOverlay.backend_canvas.width, webglOverlay.backend_canvas.height, 
+            webglOverlay.backend_canvas.width, webglOverlay.backend_canvas.height, 
+            webglOverlay.backend_canvas.width, webglOverlay.backend_canvas.height, 
         ])
         ShaderController.bindArray(gl, program, "Color", 4, [
             1,1,1,1 ,
@@ -510,18 +513,44 @@ class ShaderDogma extends ShaderController {
             1,1,0 ,
         ])
 
-        ShaderController.bindDynamicFloat(gl, program, "WikiScale", 1/scale)
+        this.WikiScale = ShaderController.bindDynamicFloat(gl, program, "WikiScale", this.scale)
 
     }
     time = 0
+    offset = 0
+    scale = 1/2
+
+    restore = 0
+    setParam(name: string, value: any): void {
+        if(name == "offset"){
+            this.offset = +value
+        }
+        if(name == "scale"){
+            let scale = +value
+            if(scale > 0 && scale < 1000){
+                this.scale = scale
+            }
+        }
+        if(name == "restore"){
+            this.restore = +value
+        }
+    }
     update(gl: WebGLRenderingContext): void {
+        if(this.restore > 0){
+            this.restore = this.restore - 1
+            if(this.restore == 0){
+                this.offset = 0
+            }
+        }
+        let offset = this.offset
         let rnd = Math.random()
         ShaderController.setArray(gl,this.Colorize, 4, [
-            1,1,1, rnd ,
-            1,1,1, rnd ,
-            1,1,1, rnd ,
-            1,1,1, rnd ,
+            offset,1,1, rnd ,
+            offset,1,1, rnd ,
+            offset,1,1, rnd ,
+            offset,1,1, rnd ,
         ])
+        ShaderController.setFloat(gl, this.WikiScale, this.scale)
     }
 
     vertex = ()=>`
@@ -661,15 +690,15 @@ void main(void)
 	// // Pixelate
 	// vec2 pa = vec2(1.0+PixelationAmountOut, 1.0+PixelationAmountOut) / TextureSizeOut;
 	
-	// vec2 uv_aligned = TexCoord0 - mod(TexCoord0, pa) + pa * 0.5;
-	// vec2 uv = PixelationAmountOut > 0.0 ? uv_aligned : TexCoord0;
+	vec2 uv_aligned = TexCoord0;
+	vec2 uv = TexCoord0;
 	
 	// // Glitch distortion
-	// float uOffset = snoise(vec2(ColorizeOut.a*1000.0, TextureSizeOut.x * 0.5 * uv_aligned.y));
-	// uOffset = uOffset * ColorizeOut.r * 10.0 / TextureSizeOut.x;
-	// uv.x += uOffset;
+	float uOffset = snoise(vec2(ColorizeOut.a*1000.0, TextureSizeOut.x * 0.5 * uv_aligned.y * WikiScaleOut));
+	uOffset = uOffset * ColorizeOut.r * 10.0 / TextureSizeOut.x;
+	uv.x += uOffset;
 	
-	vec4 Color = texture2D(Texture0, TexCoord0);
+	vec4 Color = texture2D(Texture0, uv);
 	
 	if( Color.a == 0.0 )	discard;
 	

@@ -104,6 +104,9 @@ var ShaderController = /** @class */ (function () {
     };
     ShaderController.prototype.update = function (gl) {
     };
+    ShaderController.prototype.setParam = function (name, value) {
+        //注意，name和value可能是不可信任内容，请注意过滤（如果有必要）
+    };
     return ShaderController;
 }());
 var ShaderPixelation = /** @class */ (function (_super) {
@@ -219,12 +222,14 @@ var ShaderDogma = /** @class */ (function (_super) {
     function ShaderDogma() {
         var _this = _super !== null && _super.apply(this, arguments) || this;
         _this.time = 0;
+        _this.offset = 0;
+        _this.scale = 1 / 2;
+        _this.restore = 0;
         _this.vertex = function () { return "\nprecision highp float;\n\nattribute vec3 Position;\nattribute vec4 Color;\nattribute vec2 TexCoord;\nattribute vec4 ColorizeIn;\nattribute vec3 ColorOffsetIn;\nattribute vec2 TextureSize;\nattribute float PixelationAmount;\nattribute vec3 ClipPlane;\nattribute float WikiScale;\n\nvarying vec4 Color0;\nvarying vec2 TexCoord0;\nvarying vec4 ColorizeOut;\nvarying vec3 ColorOffsetOut;\nvarying vec2 TextureSizeOut;\nvarying float PixelationAmountOut;\nvarying vec3 ClipPlaneOut;\nvarying float WikiScaleOut;\n\n\nvoid main(void)\n{\n\tColorizeOut = ColorizeIn;\n\tColorOffsetOut = ColorOffsetIn;\n\t\n\tColor0 = Color;\n\tTextureSizeOut = TextureSize;\n\tPixelationAmountOut = PixelationAmount;\n\tClipPlaneOut = ClipPlane;\n\t\n\tgl_Position = vec4(Position.xyz, 1.0);\n\tTexCoord0 = TexCoord;\n\n    WikiScaleOut = WikiScale;\n}\n\n    "; };
-        _this.fragment = function () { return "\nprecision highp float;\n\nvarying lowp vec4 Color0;\nvarying mediump vec2 TexCoord0;\nvarying lowp vec4 ColorizeOut;\nvarying lowp vec3 ColorOffsetOut;\nvarying lowp vec2 TextureSizeOut;\nvarying lowp float PixelationAmountOut;\nvarying lowp vec3 ClipPlaneOut;\n\nvarying float WikiScaleOut;\n\nuniform sampler2D Texture0;\n//const vec3 _lum = vec3(0.212671, 0.715160, 0.072169);\n\n//\n// Description : Array and textureless GLSL 2D simplex noise function.\n//      Author : Ian McEwan, Ashima Arts.\n//  Maintainer : ijm\n//     Lastmod : 20110822 (ijm)\n//     License : Copyright (C) 2011 Ashima Arts. All rights reserved.\n//               Distributed under the MIT License. See LICENSE file.\n//               https://github.com/ashima/webgl-noise\n// \n\nvec3 mod289(vec3 x)\n{\n\treturn x - floor(x * (1.0 / 289.0)) * 289.0;\n}\n\nvec2 mod289(vec2 x)\n{\n\treturn x - floor(x * (1.0 / 289.0)) * 289.0;\n}\n\nvec3 permute(vec3 x)\n{\n\treturn mod289(((x*34.0)+1.0)*x);\n}\n\nfloat snoise(vec2 v)\n{\n\tconst vec4 C = vec4(0.211324865405187,  // (3.0-sqrt(3.0))/6.0\n\t\t\t\t\t  0.366025403784439,  // 0.5*(sqrt(3.0)-1.0)\n\t\t\t\t\t -0.577350269189626,  // -1.0 + 2.0 * C.x\n\t\t\t\t\t  0.024390243902439); // 1.0 / 41.0\n\t// First corner\n\tvec2 i  = floor(v + dot(v, C.yy) );\n\tvec2 x0 = v -   i + dot(i, C.xx);\n\n\t// Other corners\n\tvec2 i1;\n\t//i1.x = step( x0.y, x0.x ); // x0.x > x0.y ? 1.0 : 0.0\n\t//i1.y = 1.0 - i1.x;\n\ti1 = (x0.x > x0.y) ? vec2(1.0, 0.0) : vec2(0.0, 1.0);\n\t// x0 = x0 - 0.0 + 0.0 * C.xx ;\n\t// x1 = x0 - i1 + 1.0 * C.xx ;\n\t// x2 = x0 - 1.0 + 2.0 * C.xx ;\n\tvec4 x12 = x0.xyxy + C.xxzz;\n\tx12.xy -= i1;\n\n\t// Permutations\n\ti = mod289(i); // Avoid truncation effects in permutation\n\tvec3 p = permute( permute( i.y + vec3(0.0, i1.y, 1.0 ))\n\t\t+ i.x + vec3(0.0, i1.x, 1.0 ));\n\n\tvec3 m = max(0.5 - vec3(dot(x0,x0), dot(x12.xy,x12.xy), dot(x12.zw,x12.zw)), 0.0);\n\tm = m*m ;\n\tm = m*m ;\n\n\t// Gradients: 41 points uniformly over a line, mapped onto a diamond.\n\t// The ring size 17*17 = 289 is close to a multiple of 41 (41*7 = 287)\n\n\tvec3 x = 2.0 * fract(p * C.www) - 1.0;\n\tvec3 h = abs(x) - 0.5;\n\tvec3 ox = floor(x + 0.5);\n\tvec3 a0 = x - ox;\n\n\t// Normalise gradients implicitly by scaling m\n\t// Approximation of: m *= inversesqrt( a0*a0 + h*h );\n\tm *= 1.79284291400159 - 0.85373472095314 * ( a0*a0 + h*h );\n\n\t// Compute final noise value at P\n\tvec3 g;\n\tg.x  = a0.x  * x0.x  + h.x  * x0.y;\n\tg.yz = a0.yz * x12.xz + h.yz * x12.yw;\n\treturn 130.0 * dot(m, g);\n}\n\nvoid main(void)\n{\n\t// Clip\n\t\n\t// // Pixelate\n\t// vec2 pa = vec2(1.0+PixelationAmountOut, 1.0+PixelationAmountOut) / TextureSizeOut;\n\t\n\t// vec2 uv_aligned = TexCoord0 - mod(TexCoord0, pa) + pa * 0.5;\n\t// vec2 uv = PixelationAmountOut > 0.0 ? uv_aligned : TexCoord0;\n\t\n\t// // Glitch distortion\n\t// float uOffset = snoise(vec2(ColorizeOut.a*1000.0, TextureSizeOut.x * 0.5 * uv_aligned.y));\n\t// uOffset = uOffset * ColorizeOut.r * 10.0 / TextureSizeOut.x;\n\t// uv.x += uOffset;\n\t\n\tvec4 Color = texture2D(Texture0, TexCoord0);\n\t\n\tif( Color.a == 0.0 )\tdiscard;\n\t\n\t//vec3 Colorized = mix(Color.rgb, dot(Color.rgb, _lum) * ColorizeOut.rgb, ColorizeOut.a);\n\t//gl_FragColor = vec4(Colorized + ColorOffsetOut * Color.a, Color.a);\n\t\n\t// No colorization support, instead use colorize parameter for noise control\n\tif(Color.r == Color.g && Color.b > Color.r)\n\t{\n\t\t// Blue: Replace with simplex noise\n\t\t//float a = mix((snoise(TextureSizeOut * 0.5 * uv_aligned + vec2(ColorizeOut.a*1000.0, 0.0))+0.5)*Color.b, Color.b, Color.r/Color.b);\n\t\t\n\t\tvec2 NoiseUV = gl_FragCoord.xy + vec2(ColorizeOut.a*10000.0, ColorizeOut.a*10000.0);\n\t\tNoiseUV -= mod(NoiseUV, vec2(WikiScaleOut,WikiScaleOut)*vec2(2.0+2.0*PixelationAmountOut,2.0+2.0*PixelationAmountOut));\n\t\tfloat a = mix((snoise(NoiseUV)+0.5)*Color.b, Color.b, Color.r/Color.b);\n\t\tColor.r = Color.g = Color.b = a;\n\t}\n\telse if(Color.r == Color.b && Color.g > Color.r)\n\t{\n\t\t// Green: Flicker a solid color\n\t\t//float a = mix((snoise(vec2(ColorizeOut.a*1000.0, 0.0))+1.0)*0.5*Color.g, Color.g, Color.r/Color.g);\n\t\tfloat a = mix(step(0.0,snoise(vec2(ColorizeOut.a*1000.0, 0.0)))*Color.g, Color.g, Color.r/Color.g);\n\t\tColor.r = Color.g = Color.b = a;\n\t}\n\t\n\t// Color *= Color0;\n\tgl_FragColor = vec4(Color.rgb + ColorOffsetOut * Color.a, Color.a);\n\t// gl_FragColor.rgb = mix(gl_FragColor.rgb, gl_FragColor.rgb - mod(gl_FragColor.rgb, 1.0/16.0) + 1.0/32.0, clamp(PixelationAmountOut, 0.0, 1.0));\n}\n\n    "; };
+        _this.fragment = function () { return "\nprecision highp float;\n\nvarying lowp vec4 Color0;\nvarying mediump vec2 TexCoord0;\nvarying lowp vec4 ColorizeOut;\nvarying lowp vec3 ColorOffsetOut;\nvarying lowp vec2 TextureSizeOut;\nvarying lowp float PixelationAmountOut;\nvarying lowp vec3 ClipPlaneOut;\n\nvarying float WikiScaleOut;\n\nuniform sampler2D Texture0;\n//const vec3 _lum = vec3(0.212671, 0.715160, 0.072169);\n\n//\n// Description : Array and textureless GLSL 2D simplex noise function.\n//      Author : Ian McEwan, Ashima Arts.\n//  Maintainer : ijm\n//     Lastmod : 20110822 (ijm)\n//     License : Copyright (C) 2011 Ashima Arts. All rights reserved.\n//               Distributed under the MIT License. See LICENSE file.\n//               https://github.com/ashima/webgl-noise\n// \n\nvec3 mod289(vec3 x)\n{\n\treturn x - floor(x * (1.0 / 289.0)) * 289.0;\n}\n\nvec2 mod289(vec2 x)\n{\n\treturn x - floor(x * (1.0 / 289.0)) * 289.0;\n}\n\nvec3 permute(vec3 x)\n{\n\treturn mod289(((x*34.0)+1.0)*x);\n}\n\nfloat snoise(vec2 v)\n{\n\tconst vec4 C = vec4(0.211324865405187,  // (3.0-sqrt(3.0))/6.0\n\t\t\t\t\t  0.366025403784439,  // 0.5*(sqrt(3.0)-1.0)\n\t\t\t\t\t -0.577350269189626,  // -1.0 + 2.0 * C.x\n\t\t\t\t\t  0.024390243902439); // 1.0 / 41.0\n\t// First corner\n\tvec2 i  = floor(v + dot(v, C.yy) );\n\tvec2 x0 = v -   i + dot(i, C.xx);\n\n\t// Other corners\n\tvec2 i1;\n\t//i1.x = step( x0.y, x0.x ); // x0.x > x0.y ? 1.0 : 0.0\n\t//i1.y = 1.0 - i1.x;\n\ti1 = (x0.x > x0.y) ? vec2(1.0, 0.0) : vec2(0.0, 1.0);\n\t// x0 = x0 - 0.0 + 0.0 * C.xx ;\n\t// x1 = x0 - i1 + 1.0 * C.xx ;\n\t// x2 = x0 - 1.0 + 2.0 * C.xx ;\n\tvec4 x12 = x0.xyxy + C.xxzz;\n\tx12.xy -= i1;\n\n\t// Permutations\n\ti = mod289(i); // Avoid truncation effects in permutation\n\tvec3 p = permute( permute( i.y + vec3(0.0, i1.y, 1.0 ))\n\t\t+ i.x + vec3(0.0, i1.x, 1.0 ));\n\n\tvec3 m = max(0.5 - vec3(dot(x0,x0), dot(x12.xy,x12.xy), dot(x12.zw,x12.zw)), 0.0);\n\tm = m*m ;\n\tm = m*m ;\n\n\t// Gradients: 41 points uniformly over a line, mapped onto a diamond.\n\t// The ring size 17*17 = 289 is close to a multiple of 41 (41*7 = 287)\n\n\tvec3 x = 2.0 * fract(p * C.www) - 1.0;\n\tvec3 h = abs(x) - 0.5;\n\tvec3 ox = floor(x + 0.5);\n\tvec3 a0 = x - ox;\n\n\t// Normalise gradients implicitly by scaling m\n\t// Approximation of: m *= inversesqrt( a0*a0 + h*h );\n\tm *= 1.79284291400159 - 0.85373472095314 * ( a0*a0 + h*h );\n\n\t// Compute final noise value at P\n\tvec3 g;\n\tg.x  = a0.x  * x0.x  + h.x  * x0.y;\n\tg.yz = a0.yz * x12.xz + h.yz * x12.yw;\n\treturn 130.0 * dot(m, g);\n}\n\nvoid main(void)\n{\n\t// Clip\n\t\n\t// // Pixelate\n\t// vec2 pa = vec2(1.0+PixelationAmountOut, 1.0+PixelationAmountOut) / TextureSizeOut;\n\t\n\tvec2 uv_aligned = TexCoord0;\n\tvec2 uv = TexCoord0;\n\t\n\t// // Glitch distortion\n\tfloat uOffset = snoise(vec2(ColorizeOut.a*1000.0, TextureSizeOut.x * 0.5 * uv_aligned.y * WikiScaleOut));\n\tuOffset = uOffset * ColorizeOut.r * 10.0 / TextureSizeOut.x;\n\tuv.x += uOffset;\n\t\n\tvec4 Color = texture2D(Texture0, uv);\n\t\n\tif( Color.a == 0.0 )\tdiscard;\n\t\n\t//vec3 Colorized = mix(Color.rgb, dot(Color.rgb, _lum) * ColorizeOut.rgb, ColorizeOut.a);\n\t//gl_FragColor = vec4(Colorized + ColorOffsetOut * Color.a, Color.a);\n\t\n\t// No colorization support, instead use colorize parameter for noise control\n\tif(Color.r == Color.g && Color.b > Color.r)\n\t{\n\t\t// Blue: Replace with simplex noise\n\t\t//float a = mix((snoise(TextureSizeOut * 0.5 * uv_aligned + vec2(ColorizeOut.a*1000.0, 0.0))+0.5)*Color.b, Color.b, Color.r/Color.b);\n\t\t\n\t\tvec2 NoiseUV = gl_FragCoord.xy + vec2(ColorizeOut.a*10000.0, ColorizeOut.a*10000.0);\n\t\tNoiseUV -= mod(NoiseUV, vec2(WikiScaleOut,WikiScaleOut)*vec2(2.0+2.0*PixelationAmountOut,2.0+2.0*PixelationAmountOut));\n\t\tfloat a = mix((snoise(NoiseUV)+0.5)*Color.b, Color.b, Color.r/Color.b);\n\t\tColor.r = Color.g = Color.b = a;\n\t}\n\telse if(Color.r == Color.b && Color.g > Color.r)\n\t{\n\t\t// Green: Flicker a solid color\n\t\t//float a = mix((snoise(vec2(ColorizeOut.a*1000.0, 0.0))+1.0)*0.5*Color.g, Color.g, Color.r/Color.g);\n\t\tfloat a = mix(step(0.0,snoise(vec2(ColorizeOut.a*1000.0, 0.0)))*Color.g, Color.g, Color.r/Color.g);\n\t\tColor.r = Color.g = Color.b = a;\n\t}\n\t\n\t// Color *= Color0;\n\tgl_FragColor = vec4(Color.rgb + ColorOffsetOut * Color.a, Color.a);\n\t// gl_FragColor.rgb = mix(gl_FragColor.rgb, gl_FragColor.rgb - mod(gl_FragColor.rgb, 1.0/16.0) + 1.0/32.0, clamp(PixelationAmountOut, 0.0, 1.0));\n}\n\n    "; };
         return _this;
     }
     ShaderDogma.prototype.init = function (gl, program, webglOverlay) {
-        var scale = 2;
         // if(webglOverlay.webgl_canvas.parentElement.parentElement.hasAttribute("data-scale")){
         //     scale = +webglOverlay.webgl_canvas.parentElement.parentElement.getAttribute("data-scale")
         // }
@@ -234,10 +239,10 @@ var ShaderDogma = /** @class */ (function (_super) {
         //     scale = 1
         // }
         ShaderController.bindArray(gl, program, "TextureSize", 2, [
-            webglOverlay.backend_canvas.width * 4, webglOverlay.backend_canvas.height * 4,
-            webglOverlay.backend_canvas.width * 4, webglOverlay.backend_canvas.height * 4,
-            webglOverlay.backend_canvas.width * 4, webglOverlay.backend_canvas.height * 4,
-            webglOverlay.backend_canvas.width * 4, webglOverlay.backend_canvas.height * 4,
+            webglOverlay.backend_canvas.width, webglOverlay.backend_canvas.height,
+            webglOverlay.backend_canvas.width, webglOverlay.backend_canvas.height,
+            webglOverlay.backend_canvas.width, webglOverlay.backend_canvas.height,
+            webglOverlay.backend_canvas.width, webglOverlay.backend_canvas.height,
         ]);
         ShaderController.bindArray(gl, program, "Color", 4, [
             1, 1, 1, 1,
@@ -264,16 +269,38 @@ var ShaderDogma = /** @class */ (function (_super) {
             1, 1, 0,
             1, 1, 0,
         ]);
-        ShaderController.bindDynamicFloat(gl, program, "WikiScale", 1 / scale);
+        this.WikiScale = ShaderController.bindDynamicFloat(gl, program, "WikiScale", this.scale);
+    };
+    ShaderDogma.prototype.setParam = function (name, value) {
+        if (name == "offset") {
+            this.offset = +value;
+        }
+        if (name == "scale") {
+            var scale = +value;
+            if (scale > 0 && scale < 1000) {
+                this.scale = scale;
+            }
+        }
+        if (name == "restore") {
+            this.restore = +value;
+        }
     };
     ShaderDogma.prototype.update = function (gl) {
+        if (this.restore > 0) {
+            this.restore = this.restore - 1;
+            if (this.restore == 0) {
+                this.offset = 0;
+            }
+        }
+        var offset = this.offset;
         var rnd = Math.random();
         ShaderController.setArray(gl, this.Colorize, 4, [
-            1, 1, 1, rnd,
-            1, 1, 1, rnd,
-            1, 1, 1, rnd,
-            1, 1, 1, rnd,
+            offset, 1, 1, rnd,
+            offset, 1, 1, rnd,
+            offset, 1, 1, rnd,
+            offset, 1, 1, rnd,
         ]);
+        ShaderController.setFloat(gl, this.WikiScale, this.scale);
     };
     return ShaderDogma;
 }(ShaderController));
@@ -1116,7 +1143,9 @@ var WebGLOverlay = /** @class */ (function () {
         gl.uniform1i(gl.getUniformLocation(shaderProgram, "Texture0"), 0);
         gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
         gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
-        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
+        gl.enable(gl.BLEND);
+        gl.blendFunc(gl.SRC_ALPHA, gl.ZERO);
     };
     WebGLOverlay.prototype.render = function () {
         var gl = this.webgl_canvas.getContext("webgl");
@@ -1822,6 +1851,16 @@ var WebGLOverlay = /** @class */ (function () {
                             is_pausing = true
                         }
 
+                        if(r.has("shaderparam") && webgl_overlay){
+                            var params = r.get("shaderparam").split("\\")
+                            for(var i=0;i<params.length;i+=2){
+                                var name = params[i]
+                                var value = params[i+1]
+                                if(value != undefined){
+                                    webgl_overlay.shaderController.setParam(name, value)
+                                }
+                            }
+                        }
                         if(r.has("also")){
                             var arg = r.get("also").split(".")
                             if(arg.length % 2 != 0){
@@ -2211,7 +2250,7 @@ var WebGLOverlay = /** @class */ (function () {
                 }
 
                 if(htmlrule_constructor){
-                    htmlrule = htmlrule_constructor(anms, canvas)
+                    htmlrule = htmlrule_constructor(anms, canvas, webgl_overlay)
                 }
             }else{
                 if(waiting_for_click){
