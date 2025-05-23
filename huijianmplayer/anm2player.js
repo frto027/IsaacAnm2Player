@@ -2227,6 +2227,8 @@ var WebGLOverlay = /** @class */ (function () {
                         })
 
                         anms[i].eventListener = function(event_name){
+                            apply_rule("e_" + event_name, trule, tanm, tplayer,i)
+
                             if(htmlrule && htmlrule.onevent){
                                 htmlrule.onevent(i, event_name)
                             }
