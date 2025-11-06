@@ -1982,7 +1982,7 @@ var WebGLOverlay = /** @class */ (function () {
                 canvas.height*=2
             }
             color_div.appendChild(canvas)
-            var canvas_style = "vertical-align:middle;"
+            var canvas_style = "max-width:100%;vertical-align:middle;"
             if(canvasdiv.getAttribute("data-scale")){
                 var scale = +canvasdiv.getAttribute("data-scale")
                 canvas_style += "transform:scale("+scale+");margin:" + (canvas.height * (scale-1)/2) + "px " + (canvas.width * (scale-1)/2) +"px;"
