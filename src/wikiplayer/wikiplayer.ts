@@ -106,7 +106,7 @@ export class WikiPlayer {
     random_idle_anm?: AnmPlayer
     random_idle_is_playing: boolean
     tapollyon_ring_frame: number
-    
+
     patch: Set<PlayerPatch>
 
     constructor(canvasdiv: HTMLElement) {
@@ -272,13 +272,13 @@ export class WikiPlayer {
 
         let canvas_style = "max-width:100%;vertical-align:middle;"
         if (this.canvasContainer.getAttribute("data-scale")) {
-            var scale = +(this.canvasContainer.getAttribute("data-scale") ?? 1)
+            let scale = +(this.canvasContainer.getAttribute("data-scale") ?? 1)
             canvas_style += "transform:scale(" + scale + ");margin:" + (this.canvasElement.height * (scale - 1) / 2) + "px " + (this.canvasElement.width * (scale - 1) / 2) + "px;"
         }
 
         if (this.canvasContainer.hasAttribute("data-shader")) {
             AnmPlayer.setCrossOrigin("anonymous")
-            var gl = this.canvasElement.getContext("webgl")
+            let gl = this.canvasElement.getContext("webgl")
             if (gl) {
                 this.backendCanvas = document.createElement("canvas")
                 this.backendCanvas.width = this.canvasElement.width
@@ -345,7 +345,7 @@ export class WikiPlayer {
             }
 
             for (; ;) {
-                var passed = true
+                let passed = true
                 for (let player of this.players) {
                     if (commonFps % player.anm!.getFps() != 0) {
                         passed = false
@@ -547,15 +547,15 @@ export class WikiPlayer {
     }
     drawNormal() {
         //apply shader
-        var drawing_canvas = this.backendCanvas || this.canvasElement!;
-        var ctx = drawing_canvas.getContext("2d")
+        let drawing_canvas = this.backendCanvas || this.canvasElement!;
+        let ctx = drawing_canvas.getContext("2d")
         if(!ctx)
             return
         ctx.imageSmoothingEnabled = false
 
         ctx.setTransform(1, 0, 0, 1, 0, 0)
         ctx.clearRect(0, 0, drawing_canvas.width, drawing_canvas.height)
-        for (var i = this.players.length - 1; i >= 0; i--) {
+        for (let i = this.players.length - 1; i >= 0; i--) {
             this.players[i]!.anm!.drawCanvas(ctx, drawing_canvas, this.players[i]!.x, this.players[i]!.y, 1)
         }
 
@@ -564,7 +564,7 @@ export class WikiPlayer {
 
     render_random_idle = false
     updateCostume() {
-            var is_head_idle = false
+            let is_head_idle = false
             if (this.random_idle_is_playing) {
                 this.random_idle_anm!.update()
             }
@@ -619,7 +619,7 @@ export class WikiPlayer {
             }
             for(let player of this.players){
                 if (this.costume_status == 'Walk') {
-                    var target_anm_name_A = 'Head' + this.costume_head_dir
+                    let target_anm_name_A = 'Head' + this.costume_head_dir
                     if (is_head_idle && player.costumeInfoA!.head_has_idle) {
                         target_anm_name_A += '_Idle'
                     }
@@ -635,7 +635,7 @@ export class WikiPlayer {
                             player.costumeA!.setFrame(target_anm_name_A + "Shoot", this.costume_shooting_frame)
                         }
                     } else if (!is_head_idle && player.costumeInfoA!.head_has_charge) {
-                        var head_charge_frame = player.costumeInfoA!.head_charge_frame!
+                        let head_charge_frame = player.costumeInfoA!.head_charge_frame!
                         if (this.costume_shooting_frame >= head_charge_frame) {
                             player.costumeA!.setFrame(target_anm_name_A + "ChargeFull", Math.floor(this.costume_shooting_frame - head_charge_frame))
                         } else {
@@ -677,7 +677,7 @@ export class WikiPlayer {
             
 
             if (this.hasPatch(PlayerPatch.randomIdle)) {
-                var now = new Date().getTime()
+                let now = new Date().getTime()
                 if (now > this.random_idle_last_update) {
                     this.random_idle_last_update = now + 1000 * 5
                     this.random_idle_anm?.setFrame("Idle", 0)
@@ -687,7 +687,7 @@ export class WikiPlayer {
 
             if (this.hasPatch(PlayerPatch.moveChara) && this.costume_status == 'Walk') {
                 if (this.costume_walking.u || this.costume_walking.d || this.costume_walking.l || this.costume_walking.r) {
-                    var speed = 4
+                    let speed = 4
                     if (this.costume_walking.u) {
                         this.moveChara_y -= speed
                     }
@@ -701,11 +701,11 @@ export class WikiPlayer {
                         this.moveChara_x -= speed
                     }
 
-                    var rectA = this.canvasContainer.getBoundingClientRect()
-                    var rectB = document.body.getBoundingClientRect()
+                    let rectA = this.canvasContainer.getBoundingClientRect()
+                    let rectB = document.body.getBoundingClientRect()
 
                     this.UpdateCharaTransform()
-                    var reUpdate = false
+                    let reUpdate = false
                     if (rectA.x < rectB.x) {
                         this.moveChara_x += rectB.x - rectA.x
                         reUpdate = true
@@ -731,15 +731,13 @@ export class WikiPlayer {
     }
 
     drawCostume() {
-        var ctx = this.canvasElement!.getContext("2d")!
+        let ctx = this.canvasElement!.getContext("2d")!
         ctx.imageSmoothingEnabled = false
         ctx.setTransform(1, 0, 0, 1, 0, 0)
         ctx.clearRect(0, 0, this.canvasElement!.width, this.canvasElement!.height)
         if (this.spritesheet_canvas_map) {
-            var it = this.spritesheet_canvas_map.values()
-            var next
-            while (!(next = it.next()).done) {
-                next.value.clearRect(0, 0, 100000, 100000)
+            for(let elem of this.spritesheet_canvas_map){
+                elem[1].clearRect(0,0,100000, 100000)
             }
         }
         if (this.costume_status == 'Walk') {
@@ -893,7 +891,7 @@ export class WikiPlayer {
             catched = true
         }
         if (this.COSTUMEANM_KEYS.has(key)) {
-            var target_anm = this.COSTUMEANM_KEYS.get(key)!
+            let target_anm = this.COSTUMEANM_KEYS.get(key)!
             this.costume_status = target_anm
             this.costume_status_reset = true
             catched = true
@@ -960,14 +958,14 @@ export class WikiPlayer {
             this.waiting_for_click = false
             this.startDraw()
         }
-        var touch = ev.touches[0]
+        let touch = ev.touches[0]
         if (touch) {
             ev.preventDefault()
             let id = touch.identifier
             if (id == undefined) {
                 id = -1
             }
-            var x = touch.pageX, y = touch.pageY
+            let x = touch.pageX, y = touch.pageY
             this.touchData[id] = { x: x, y: y }
             if (!this.hasPatch(PlayerPatch.noAttack)) {
                 this.costume_shooting.u = (this.costume_head_dir == "Up")
@@ -978,20 +976,20 @@ export class WikiPlayer {
         }
     }
     onCostomeTouchMove(ev: TouchEvent) {
-        var touch = ev.touches[0]
+        let touch = ev.touches[0]
         if (touch) {
             ev.preventDefault()
-            var id = touch.identifier
+            let id = touch.identifier
             if (id == undefined) {
                 id = -1
             }
-            var x = touch.pageX, y = touch.pageY
-            var axis = this.touchData[id]
+            let x = touch.pageX, y = touch.pageY
+            let axis = this.touchData[id]
             if (axis == undefined)
                 return
-            var dx = x - axis.x
-            var dy = y - axis.y
-            var len = dx * dx + dy * dy
+            let dx = x - axis.x
+            let dy = y - axis.y
+            let len = dx * dx + dy * dy
             if (len > 4) {
                 this.costume_shooting.d = false
                 this.costume_shooting.r = false
@@ -1105,7 +1103,7 @@ class WikiPlayerSingleAnm2 {
             if (rules_str && rules_str.length > 0) {
                 for (let rule_str of rules_str.split('|')) {
                     // rule_str->   xxx:xxx,xxx:xxx
-                    var newrule = new Map<string, string>()
+                    let newrule = new Map<string, string>()
                     if (rule_str.length > 0) {
                         for (let rule_kv of rule_str.split(",")) {
                             if (rule_kv.length > 0) {
@@ -1121,10 +1119,6 @@ class WikiPlayerSingleAnm2 {
                         }
                     }
                     this.rule.push(newrule)
-
-                }
-                for (var k = 0; k < rules_str.length; k++) {
-                    var rule_str = rules_str[k]
                 }
             }
             //parse br
@@ -1134,7 +1128,7 @@ class WikiPlayerSingleAnm2 {
                 }
             }
             //parse button
-            var btnname_str = anm.children[j]!.getAttribute("data-btnname")
+            let btnname_str = anm.children[j]!.getAttribute("data-btnname")
             if (btnname_str && btnname_str.length > 0) {
                 if (this.parent.buttonDiv == undefined) {
                     this.parent.buttonDiv = document.createElement("div")
@@ -1210,7 +1204,7 @@ class WikiPlayerSingleAnm2 {
                             last_line_width += width
                         }
 
-                        var cvs = document.createElement("canvas")
+                        let cvs = document.createElement("canvas")
                         cvs.style.backgroundImage = "url(" + url + ")"
                         cvs.width = width
                         cvs.height = height
@@ -1237,9 +1231,9 @@ class WikiPlayerSingleAnm2 {
             this.costumeB.forceLoop = true
             this.costumeC.forceLoop = true
 
-            var head_has_idle = false
-            var head_has_charge = false
-            var head_charge_frame = 0
+            let head_has_idle = false
+            let head_has_charge = false
+            let head_charge_frame = 0
 
             for (let anm_name of this.costumeA.getAnmNames()) {
                 if (anm_name.startsWith("Head") && anm_name.endsWith("_Idle")) {
@@ -1331,7 +1325,7 @@ class WikiPlayerSingleAnm2 {
         if (rename) {
             target.anmName = rename
             if (target.anm?.getAnmNames().indexOf(rename.split('.')[0]!) != -1) {
-                var frame = 0
+                let frame = 0
                 if (r.has("frame")) {
                     frame = +r.get("frame")!
                     if (isNaN(frame)) {
@@ -1344,7 +1338,7 @@ class WikiPlayerSingleAnm2 {
         target.playedFrame = 0
 
         if (r.has("whenbtn")) {
-            var btn_names = r.get("whenbtn")!.split("&&&")
+            let btn_names = r.get("whenbtn")!.split("&&&")
             for (let btn_name of btn_names) {
                 let btn = this.parent.buttons.get(btn_name)
                 if (!btn)
@@ -1364,7 +1358,7 @@ class WikiPlayerSingleAnm2 {
         }
 
         if (r.has("setbtn")) {
-            var btnnames = r.get("setbtn")!.split("&&&")
+            let btnnames = r.get("setbtn")!.split("&&&")
             for (let btn_name of btnnames) {
                 let btn = this.parent.buttons.get(btn_name)
                 if (!btn)
@@ -1373,7 +1367,7 @@ class WikiPlayerSingleAnm2 {
             }
         }
         if (r.has("resetbtn")) {
-            var btnnames = r.get("resetbtn")!.split("&&&")
+            let btnnames = r.get("resetbtn")!.split("&&&")
             for (let btn_name of btnnames) {
                 let btn = this.parent.buttons.get(btn_name)
                 if (!btn)
@@ -1387,24 +1381,24 @@ class WikiPlayerSingleAnm2 {
         }
 
         if (r.has("shaderparam") && this.parent.webglOverlay) {
-            var params = r.get("shaderparam")!.split("\\")
-            for (var i = 0; i < params.length; i += 2) {
-                var name = params[i]!
-                var value = params[i + 1]
+            let params = r.get("shaderparam")!.split("\\")
+            for (let i = 0; i < params.length; i += 2) {
+                let name = params[i]!
+                let value = params[i + 1]
                 if (value != undefined) {
                     this.parent.webglOverlay.shaderController.setParam(name, value)
                 }
             }
         }
         if (r.has("also")) {
-            var arg = r.get("also")!.split(".")
+            let arg = r.get("also")!.split(".")
             if (arg.length % 2 != 0) {
                 console.log("invalid also:", r)
             } else {
-                for (var j = 0; j < arg.length; j += 2) {
-                    var _pid = +arg[j]!
-                    var _player = this.parent.players[_pid]
-                    var _event_name = arg[j + 1]
+                for (let j = 0; j < arg.length; j += 2) {
+                    let _pid = +arg[j]!
+                    let _player = this.parent.players[_pid]
+                    let _event_name = arg[j + 1]
                     if (_pid == undefined || _event_name == undefined)
                         continue
                     if (!_event_name.startsWith("event_")) {
@@ -1646,7 +1640,7 @@ class LayerAdjuster {
 }
 
 function isLayerStackExploded(): boolean {
-    var layer_stack_exploded = new RegExp("[&?]anm2Exploded=([^&]+)").exec(window.location.href)
+    let layer_stack_exploded = new RegExp("[&?]anm2Exploded=([^&]+)").exec(window.location.href)
     return !!(layer_stack_exploded && layer_stack_exploded[1] == "1")
 
 }
