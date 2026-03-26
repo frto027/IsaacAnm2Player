@@ -14,6 +14,10 @@ const config: webpack.Configuration = {
         use: "ts-loader",
         exclude: /node_modules/,
       },
+      {
+        test: /\.[vf]s$/i,
+        type: "asset/source"
+      }
     ],
   },
   resolve: {
@@ -23,7 +27,7 @@ const config: webpack.Configuration = {
     filename: "bundle.js",
     path: path.resolve(__dirname, "dist"),
   },
-  "mode":"production"
+  "mode":"development"
 };
 
 export default config;
