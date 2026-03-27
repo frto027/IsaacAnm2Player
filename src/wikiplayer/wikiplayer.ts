@@ -1722,10 +1722,10 @@ class LayerAdjuster {
     }
 }
 
+let layer_stack_exploded_matched = new RegExp("[&?]anm2Exploded=([^&]+)").exec(window.location.href)
+let layer_stack_exploded = !!(layer_stack_exploded_matched && layer_stack_exploded_matched[1] == "1")
 function isLayerStackExploded(): boolean {
-    let layer_stack_exploded = new RegExp("[&?]anm2Exploded=([^&]+)").exec(window.location.href)
-    return !!(layer_stack_exploded && layer_stack_exploded[1] == "1")
-
+    return layer_stack_exploded
 }
 
 interface AnmCostumeController {
