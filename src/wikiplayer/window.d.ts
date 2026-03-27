@@ -26,7 +26,22 @@ export declare global {
       }
 
       $?: any /* jquery */
-      $notification: any /* huiji tools */
+      /* huiji tools */
+      $notification: {
+         info:(option:CockpitNotificationOption)=>void
+         warning:(option:CockpitNotificationOption)=>void
+         success:(option:CockpitNotificationOption)=>void
+         error:(option:CockpitNotificationOption)=>void
+         create:(option:CockpitNotificationOption)=>void
+         destroyAll:()=>void
+      },
+      $dialog:{
+         info:(option:CockpitDialogArgument)=>void
+         warning:(option:CockpitDialogArgument)=>void
+         success:(option:CockpitDialogArgument)=>void
+         error:(option:CockpitDialogArgument)=>void
+         create:(option:CockpitDialogArgument)=>void
+      }
       mw: any /* mediawiki */
       showDirectoryPicker?:(options:any)=>Promise<FileSystemDirectoryHandle> /* 实验性的api */
    }
@@ -35,4 +50,36 @@ export declare global {
       /* patched controller for anmplayers */
       AnmCostumeController?: AnmCostumeController
    }
+}
+
+// https://www.huijiwiki.com/wiki/%E5%B8%AE%E5%8A%A9:%E4%BD%BF%E7%94%A8cockpit%E7%BB%84%E4%BB%B6
+interface CockpitNotificationOption{
+   // 以下内容手抄的更新日志
+   closable?:boolean,
+   title?:string,
+   content?:string,
+   description?:string,
+   meta?:string,
+   keepAliveOnHover?:boolean,
+   duration?:number|undefined,
+   onClose?:()=>boolean | Promise<boolean>
+   onLeave?:()=>void
+   onAfterLeave?:()=>void
+   onAfterEnter?:()=>void
+}
+
+interface CockpitDialogArgument{
+   title:string,
+   content:string|Element|(()=>Element),
+   closable?:boolean,
+   blockScrool?:boolean,
+   closeOnEsc?:boolean,
+   maskClosable?:boolean,
+   positiveText?:string,
+   onPositiveClick?:(e:MouseEvent)=>boolean|undefined|Promise<boolean|undefined>
+   negativeText?:string
+   onNegativeClick?:(e:MouseEvent)=>boolean|undefined|Promise<boolean|undefined>
+   onMaskClick?:()=>void
+   onClose?:(e:MouseEvent)=>boolean|undefined|Promise<boolean|undefined>,
+   style?:string
 }

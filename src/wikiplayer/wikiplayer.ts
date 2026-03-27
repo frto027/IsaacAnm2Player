@@ -212,35 +212,56 @@ export class WikiPlayer {
         );
     }
 
-    tryCreateRecorder() {
-        if (window.confirm(
-            `您正在启用播放器的录制功能，请仔细阅读：
-请创建并选择一个新文件夹，将在此处直接生成录制图像序列。
-录制结果实时保存，现有内容【会被覆盖】。
-您可以使用screentogif等软件对图像序列进行后期合成。
-警告：我们将在您选择的文件夹中生成大量无损帧序列（取决于动画FPS）。请避免长时间录制。
-是否继续？
-`) == false)
-            return;
+    hasConfirm = false
+    async tryCreateRecorder() {
+        if(this.hasConfirm)
+            return
 
-        (async () => {
-            try {
-                if (window.showDirectoryPicker == undefined) {
-                    window.alert("您的浏览器不支持目录相关api（showDirectoryPicker），本功能为浏览器限定功能，请使用其它浏览器。");
-                    return
+        window.$dialog.warning({
+            title: "你正在启用播放器的录制功能，请仔细阅读以下内容",
+            content: `你需要创建一个新的文件夹，并选择它。接下来就可以使用shift+R开关播放器的录制功能。
+请注意，当录制开启时，结果会实时保存刚刚的文件夹。文件夹内同名内容【会被覆盖】。
+可以使用screentogif(https://www.screentogif.com/)等软件对图像序列进行后期合成。
+警告：在录制期间，我们会在你接下来选择的文件夹中生成大量无损帧序列（取决于动画FPS），请避免长时间录制。
+是否继续？
+`,
+            positiveText: "是，选择一个新文件夹",
+            closable:false,
+            closeOnEsc:false,
+            maskClosable:false,
+            style:"white-space:pre-line",
+            onPositiveClick:async (e)=>{
+                this.hasConfirm = false
+
+                try {
+                    if (window.showDirectoryPicker == undefined) {
+                        window.$notification.error({
+                            content: "您的浏览器不支持目录相关api（showDirectoryPicker），本功能为浏览器限定功能，请使用其它浏览器。"
+                        })
+                        return
+                    }
+
+                    let dir = await window.showDirectoryPicker({
+                        mode: "readwrite",
+                        startIn: "pictures"
+                    });
+                    this.recorder = new Anm2Recorder(this, dir)
+                } catch (e) {
+                    console.error(e);
+                    window.$notification.error({
+                        content: "失败或操作已经被取消，请查看控制台。如果是权限问题，可以尝试重试。"
+                    })
                 }
 
-                let dir = await window.showDirectoryPicker({
-                    mode: "readwrite",
-                    startIn: "pictures"
-                });
-                this.recorder = new Anm2Recorder(this, dir)
-            } catch (e) {
-                console.error(e);
-                window.alert("失败或操作已经被取消，请查看控制台")
-            }
+                return true
+            },
 
-        })()
+            negativeText: "取消",
+            onNegativeClick:(e)=>{
+                this.hasConfirm = false
+                return true
+            }
+        })
     }
 
     hasPatch(patch: PlayerPatch) {
@@ -274,6 +295,7 @@ export class WikiPlayer {
                     content: notification,
                     onClose: () => {
                         this.adrenaline_leven_change_notification = undefined
+                        return true
                     }
                 }
             )
