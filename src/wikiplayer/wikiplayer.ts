@@ -525,11 +525,11 @@ export class WikiPlayer {
                     }
                 }
             })).observe(this.canvasElement!)
-        }
-
-        if (!this.waiting_for_click) {
+        }else{
+            // 我们不知道是否能渲染，所以直接渲染
             this.startDraw()
         }
+
 
         this.canvasContainer.AnmCostumeController = {
             StartDrawAnm: () => {
@@ -841,6 +841,7 @@ export class WikiPlayer {
         }
     }
 
+    requestedAnimationFrame:number|undefined = undefined
     updateAndDraw(noUpdate: boolean) {
         if (this.waiting_for_click)
             noUpdate = true
@@ -862,8 +863,9 @@ export class WikiPlayer {
             }
         }
 
-        if(this.isDirty){
-            window.requestAnimationFrame(()=>{
+        if(this.isDirty && this.requestedAnimationFrame == undefined){
+            this.requestedAnimationFrame = window.requestAnimationFrame(()=>{
+                this.requestedAnimationFrame = undefined
                 this.realDraw()
             })
         }

@@ -116,7 +116,8 @@ import { huijiUrlBuilder } from "../wikiplayer/huiji"
 export type ReplaceSheetMap = Map<number, string>
 
 export class AnmPlayer {
-    
+    static lazyLoadSpritesheet = true
+
     static svgfilter_incrid: number = 0
     static crossOrigin: string | undefined = undefined
 
@@ -172,8 +173,11 @@ export class AnmPlayer {
         if(replaceSheetMap)
             this.replaceSheetMap = replaceSheetMap
 
-        for (let i = 0; i < (this.anm2.content?.Spritesheets?.length || 0); i++) {
-            this.loadSpritesheet(i)
+        if(!AnmPlayer.lazyLoadSpritesheet){
+            for (let i = 0; i < (this.anm2.content?.Spritesheets?.length || 0); i++) {
+                this.loadSpritesheet(i)
+            }
+
         }
         if(onloadimg)
             this.imgLoadListener = onloadimg
