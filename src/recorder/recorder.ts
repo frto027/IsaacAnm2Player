@@ -47,6 +47,10 @@ export class Anm2Recorder {
     nextFileId = 0
 
     thisFrameIsCaptured = false
+
+    recorder_hint_container:HTMLElement
+    recorder_hint:HTMLElement
+
     constructor(player: WikiPlayer, dir: FileSystemDirectoryHandle) {
         this.player = player
         this.dir = dir
@@ -54,6 +58,17 @@ export class Anm2Recorder {
         console.log("anm2 recorder has been created")
 
         RecorderIndicator.getInstatnce();
+
+        this.recorder_hint_container = document.createElement("div")
+        this.recorder_hint_container.classList.add("anm2-recorder-hint-container")
+        this.recorder_hint = document.createElement("div")
+        this.recorder_hint.classList.add("anm2-recorder-hint")
+
+        this.recorder_hint_container.appendChild(this.recorder_hint)
+        player.canvasContainer.appendChild(this.recorder_hint_container)
+
+        this.recorder_hint.innerText = "录制中"
+        this.recorder_hint_container.style.display = "none"
     }
 
     update() {
@@ -80,11 +95,14 @@ export class Anm2Recorder {
         if(!this.isRecording)
             RecorderIndicator.getInstatnce().inc()
         this.isRecording = true
+        this.recorder_hint_container.style.display = "block"
     }
     stopRecord() {
         if(this.isRecording)
             RecorderIndicator.getInstatnce().dec()
         this.isRecording = false
+        this.recorder_hint_container.style.display = "none"
+
     }
 
     captureCanvas(): Promise<Blob> {
