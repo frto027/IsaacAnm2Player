@@ -7,7 +7,8 @@
   "type": "module",
   "main": "index.js",
   "scripts": {
-    "build": "npx webpack"
+    "build": "npx webpack",
+    "release": "npx webpack && node dev/gen.cjs"
   },
   "devDependencies": {
     "@types/node": "^25.5.0",
@@ -17,6 +18,10 @@
     "ts-node": "^10.9.2",
     "typescript": "5.3.3",
     "webpack": "^5.105.4",
-    "webpack-cli": "^7.0.2"
+    "webpack-cli": "^7.0.2",
+    "@babel/preset-env": "^7.16.4",
+    "@babel/traverse": "^7.16.3",
+    "babel": "^6.23.0",
+    "@babel/core": "^7.16.0"
   }
 }

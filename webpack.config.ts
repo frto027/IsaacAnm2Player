@@ -5,7 +5,7 @@ import * as webpack from "webpack"
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-const IS_DEV = true
+const IS_DEV = false
 
 const config: webpack.Configuration = {
   entry: "./src/index.ts",
