@@ -363,12 +363,8 @@ export class WikiPlayer {
 
         if (this.renderMode == RenderMode.Normal) {
             this.canvasElement!.onclick = () => {
-                if (this.waiting_for_click) {
+                if(this.waiting_for_click){
                     this.waiting_for_click = false
-                    this.startDraw()
-                }
-                if (this.is_pausing) {
-                    this.is_pausing = false;
                     this.startDraw()
                 }
                 //window.luaPostMessage && window.luaPostMessage("Anm2:event:click:" + my_start_player_lua_id,"","");
@@ -461,18 +457,10 @@ export class WikiPlayer {
 
         this.canvasContainer.AnmCostumeController = {
             StartDrawAnm: () => {
-                let start_draw_later = false;
-                if (this.is_pausing) {
-                    this.is_pausing = false;
-                    start_draw_later = true;
-                }
-                if (this.waiting_for_click) {
-                    this.waiting_for_click = false
-                    start_draw_later = true;
-                }
-                if (start_draw_later) {
-                    this.startDraw();
-                }
+                this.startDraw();
+            },
+            StopDrawAnm:()=>{
+                this.stopDraw()
             },
             SuggestMoveLeft: () => {
                 this.suggest_moving = true
@@ -486,9 +474,6 @@ export class WikiPlayer {
                 this.suggest_moving = false
                 this.costume_leg_dir = 'Down'
             },
-            SuggestPause: () => {
-                this.is_pausing = true
-            }
         }
     }
 
@@ -767,8 +752,6 @@ export class WikiPlayer {
     draw(noUpdate: boolean) {
         if (this.waiting_for_click)
             noUpdate = true
-        if (this.is_pausing)
-            noUpdate = true
         if (this.renderMode == RenderMode.Costume) {
             if (noUpdate) {
 
@@ -784,6 +767,9 @@ export class WikiPlayer {
             }
             this.drawNormal()
         }
+
+        if(this.waiting_for_click && this.drawInterval)
+            this.stopDraw()
     }
 
     ////////////////// costume //////////////
@@ -897,9 +883,10 @@ export class WikiPlayer {
             catched = true
         }
         if (key == 'x') {
-            this.is_pausing = !this.is_pausing
-            if (!this.is_pausing)
+            if (this.drawInterval == undefined)
                 this.startDraw()
+            else
+                this.stopDraw()
             catched = true
         }
         if (this.handleColorKey(key)) {
@@ -954,10 +941,8 @@ export class WikiPlayer {
         y: number
     }[] = []
     onCostumeTouchStart(ev: TouchEvent) {
-        if (this.waiting_for_click) {
-            this.waiting_for_click = false
-            this.startDraw()
-        }
+        this.startDraw()
+        
         let touch = ev.touches[0]
         if (touch) {
             ev.preventDefault()
@@ -1645,3 +1630,7 @@ function isLayerStackExploded(): boolean {
 
 }
 
+interface AnmCostumeController {
+    StartDrawAnm:()=>void,
+    StopDrawAnm:()=>void
+}

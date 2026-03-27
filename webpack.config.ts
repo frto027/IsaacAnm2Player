@@ -10,6 +10,10 @@ const config: webpack.Configuration = {
   module: {
     rules: [
       {
+        test: /\.css$/i,
+        use: ["style-loader", "css-loader"],
+      },
+      {
         test: /\.tsx?$/,
         use: "ts-loader",
         exclude: /node_modules/,
@@ -27,7 +31,10 @@ const config: webpack.Configuration = {
     filename: "bundle.js",
     path: path.resolve(__dirname, "dist"),
   },
-  "mode":"development"
+  mode:"production",
+  optimization:{
+    minimize: true
+  }
 };
 
 export default config;
