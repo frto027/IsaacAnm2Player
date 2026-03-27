@@ -15,7 +15,7 @@ enum PlayerStatus {
     HideToL,
     HideToR,
     ShowFromL,
-    ShowFromR
+    ShowFromR,
 }
 
 enum ButtonStatus {
@@ -83,6 +83,11 @@ export class Anm2TabGroups {
                     index: index,
                     playerStatus: PlayerStatus.Hided
                 })
+                if(index > 0){
+                    sub_player.classList.add('chara-player-hide')
+                }
+
+                sub_player.style.display = ''
             } else {
                 sub_player.classList.add("anm2-sub-player-unk-chara")
             }
@@ -102,7 +107,7 @@ export class Anm2TabGroups {
                 this.is_animating = false
             }else{
                 this.setButtonStatus(group, ButtonStatus.NotSelected)
-                this.setAnmPlayerStatus(group, PlayerStatus.Showed)
+                this.setAnmPlayerStatus(group, PlayerStatus.Hided)
             }
         }
     }
@@ -119,7 +124,6 @@ export class Anm2TabGroups {
         
     }
     setAnmPlayerStatus(group:Anm2TabGroup, status: PlayerStatus){
-
         if(group.playerStatus == status)
             return
 
@@ -159,7 +163,6 @@ export class Anm2TabGroups {
     next_select = -1 // only read this when is_animating == false
 
     onAnmEnd(i: number) {
-
         let oldState = this.groups[i]!.playerStatus
 
         if(oldState == PlayerStatus.HideToL || oldState == PlayerStatus.HideToR){
