@@ -1,0 +1,13 @@
+.anm2-recorder-indicator{
+    position: fixed;
+    left: 20px;
+    top: 100px;
+    background: #0050b58f;
+    color: #f7f200;
+    padding: 4px 12px;
+    border: dashed 2px #f7f200;
+}
+
+.anm2-recorder-indicator-recording{
+    color: #f71d00 !important;
+}

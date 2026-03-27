@@ -28,7 +28,7 @@ export declare global {
       $?: any /* jquery */
       $notification: any /* huiji tools */
       mw: any /* mediawiki */
-
+      showDirectoryPicker?:(options:any)=>Promise<FileSystemDirectoryHandle> /* 实验性的api */
    }
 
    interface HTMLElement {

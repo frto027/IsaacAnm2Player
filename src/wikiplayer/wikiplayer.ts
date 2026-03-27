@@ -1,4 +1,5 @@
 import { AnmPlayer, WebGLOverlay, type CostumeInfo } from "../player/player"
+import { Anm2Recorder } from "../recorder/recorder"
 import { C_SECTION_FRAME_MAP } from "./datas/datas"
 import type { HtmlRule, HtmlRuleConstructor } from "./htmlRule"
 import { HuijiDatabaseRequester, huijiUrlBuilder } from "./huiji"
@@ -109,6 +110,9 @@ export class WikiPlayer {
 
     patch: Set<PlayerPatch>
 
+
+    recorder?: Anm2Recorder
+
     constructor(canvasdiv: HTMLElement) {
 
         this.canvasContainer = canvasdiv;
@@ -151,7 +155,7 @@ export class WikiPlayer {
         this.patch = new Set<PlayerPatch>()
         this.tapollyon_ring_frame = 0
 
-        for(let patch of (canvasdiv.getAttribute("data-patch") || '').split(',')){
+        for (let patch of (canvasdiv.getAttribute("data-patch") || '').split(',')) {
             this.patch.add(patch as PlayerPatch)
         }
 
@@ -208,6 +212,37 @@ export class WikiPlayer {
         );
     }
 
+    tryCreateRecorder() {
+        if (window.confirm(
+            `您正在启用播放器的录制功能，请仔细阅读：
+请创建并选择一个新文件夹，将在此处直接生成录制图像序列。
+录制结果实时保存，现有内容【会被覆盖】。
+您可以使用screentogif等软件对图像序列进行后期合成。
+警告：我们将在您选择的文件夹中生成大量无损帧序列（取决于动画FPS）。请避免长时间录制。
+是否继续？
+`) == false)
+            return;
+
+        (async () => {
+            try {
+                if (window.showDirectoryPicker == undefined) {
+                    window.alert("您的浏览器不支持目录相关api（showDirectoryPicker），本功能为浏览器限定功能，请使用其它浏览器。");
+                    return
+                }
+
+                let dir = await window.showDirectoryPicker({
+                    mode: "readwrite",
+                    startIn: "pictures"
+                });
+                this.recorder = new Anm2Recorder(this, dir)
+            } catch (e) {
+                console.error(e);
+                window.alert("失败或操作已经被取消，请查看控制台")
+            }
+
+        })()
+    }
+
     hasPatch(patch: PlayerPatch) {
         return this.patch.has(patch)
     }
@@ -262,6 +297,7 @@ export class WikiPlayer {
         this.UpdateCharaTransform()
 
         this.canvasElement = document.createElement("canvas")
+        this.canvasElement.tabIndex = 1 // make the canvas focusable
         this.canvasElement.width = +(this.canvasContainer.getAttribute("data-width") ?? 64)
         this.canvasElement.height = +(this.canvasContainer.getAttribute("data-height") ?? 64)
         if (isLayerStackExploded()) {
@@ -300,6 +336,8 @@ export class WikiPlayer {
             this.colorDiv.appendChild(btnContainer)
         }
     }
+
+
     setBackgroundColor(color?: string) {
         if (color) {
             this.colorDiv!.style.cssText = 'margin:0;padding:0;' + color
@@ -363,7 +401,7 @@ export class WikiPlayer {
 
         if (this.renderMode == RenderMode.Normal) {
             this.canvasElement!.onclick = () => {
-                if(this.waiting_for_click){
+                if (this.waiting_for_click) {
                     this.waiting_for_click = false
                     this.startDraw()
                 }
@@ -381,6 +419,14 @@ export class WikiPlayer {
             }
 
             this.canvasElement!.onkeydown = (e) => {
+                if (this.recorder == undefined && e.key == "R") {
+                    this.tryCreateRecorder()
+                }
+                if (this.recorder && this.recorder.handleKey(e.key)) {
+                    e.preventDefault()
+                    return
+                }
+
                 if (this.htmlRule?.onkeydown && this.htmlRule?.onkeydown(e.key)) {
                     e.preventDefault()
                     return
@@ -398,7 +444,7 @@ export class WikiPlayer {
             }
 
             if (this.htmlrule_constructor) {
-                this.htmlrule = this.htmlrule_constructor(this.players.map(p=>p.anm!), this.canvasElement!, this.webglOverlay)
+                this.htmlrule = this.htmlrule_constructor(this.players.map(p => p.anm!), this.canvasElement!, this.webglOverlay)
             }
         } else {
             if (this.waiting_for_click) {
@@ -410,19 +456,32 @@ export class WikiPlayer {
                 this.canvasElement!.addEventListener("click", activeWaitForClick)
             }
 
-            this.canvasElement!.onkeydown = (e) => {
+            this.canvasElement!.onkeydown = (e)=>{
                 // if(e.type == 'click'){
                 //     return
                 // }
+                if (this.recorder == undefined && e.key == "R") {
+                    this.tryCreateRecorder()
+                }
+                if (this.recorder && this.recorder.handleKey(e.key)) {
+                    e.preventDefault()
+                    return
+                }
                 if (this.onCostumKeyDown(e.key))
                     e.preventDefault()
-            }
-            this.canvasElement!.onkeyup = (e) => {
+
+                if (this.handleColorKey(e.key))
+                    e.preventDefault()
+            };
+
+            this.canvasElement!.onkeyup = (e)=>{
                 // e.preventDefault()
+
                 if (this.onCostumKeyUp(e.key)) {
                     e.preventDefault()
                 }
-            }
+            };
+            
             this.canvasElement!.addEventListener('touchstart', (ev) => {
                 this.onCostumeTouchStart(ev)
             })
@@ -459,7 +518,7 @@ export class WikiPlayer {
             StartDrawAnm: () => {
                 this.startDraw();
             },
-            StopDrawAnm:()=>{
+            StopDrawAnm: () => {
                 this.stopDraw()
             },
             SuggestMoveLeft: () => {
@@ -508,21 +567,21 @@ export class WikiPlayer {
             }
         }
 
-        for(let player of this.players){
-            if(this.currentFps % (this.commonFps / player.anm!.getFps()) != 0)
+        for (let player of this.players) {
+            if (this.currentFps % (this.commonFps / player.anm!.getFps()) != 0)
                 continue;
-            
-            if(player.sleeping_rule){
+
+            if (player.sleeping_rule) {
                 player.sleep_remains--
-                if(player.sleep_remains <= 0){
+                if (player.sleep_remains <= 0) {
                     player.execute_rule(player.sleeping_event_name!, player.sleeping_rule)
                     player.sleeping_rule = undefined
                 }
             }
 
-            if(this.htmlRule?.update){
+            if (this.htmlRule?.update) {
                 this.htmlRule?.update(player.index)
-            }else{
+            } else {
                 player.anm!.update()
             }
             player.playedFrame++
@@ -534,7 +593,7 @@ export class WikiPlayer {
         //apply shader
         let drawing_canvas = this.backendCanvas || this.canvasElement!;
         let ctx = drawing_canvas.getContext("2d")
-        if(!ctx)
+        if (!ctx)
             return
         ctx.imageSmoothingEnabled = false
 
@@ -549,170 +608,170 @@ export class WikiPlayer {
 
     render_random_idle = false
     updateCostume() {
-            let is_head_idle = false
-            if (this.random_idle_is_playing) {
-                this.random_idle_anm!.update()
-            }
-            this.render_random_idle = this.random_idle_is_playing
+        let is_head_idle = false
+        if (this.random_idle_is_playing) {
+            this.random_idle_anm!.update()
+        }
+        this.render_random_idle = this.random_idle_is_playing
 
-            if (this.hasPatch(PlayerPatch.csection)) {
-                this.costume_leg_dir = this.costume_head_dir
-            }
-            if (this.hasPatch(PlayerPatch.tApollyon)) {
-                this.tapollyon_ring_frame += 0.5
-            }
-            if (this.layer_stack_exploding) {
-                if (this.layer_stack_exploded_x < this.canvasElement!.width / 8) this.layer_stack_exploded_x += 2;
-                if (this.layer_stack_exploded_x > this.canvasElement!.width / 8) this.layer_stack_exploded_x = this.canvasElement!.width / 8;
-                if (this.layer_stack_exploded_y < this.canvasElement!.height / 2) this.layer_stack_exploded_y += 2;
-                if (this.layer_stack_exploded_y > this.canvasElement!.height / 2) this.layer_stack_exploded_y = this.canvasElement!.height / 2;
+        if (this.hasPatch(PlayerPatch.csection)) {
+            this.costume_leg_dir = this.costume_head_dir
+        }
+        if (this.hasPatch(PlayerPatch.tApollyon)) {
+            this.tapollyon_ring_frame += 0.5
+        }
+        if (this.layer_stack_exploding) {
+            if (this.layer_stack_exploded_x < this.canvasElement!.width / 8) this.layer_stack_exploded_x += 2;
+            if (this.layer_stack_exploded_x > this.canvasElement!.width / 8) this.layer_stack_exploded_x = this.canvasElement!.width / 8;
+            if (this.layer_stack_exploded_y < this.canvasElement!.height / 2) this.layer_stack_exploded_y += 2;
+            if (this.layer_stack_exploded_y > this.canvasElement!.height / 2) this.layer_stack_exploded_y = this.canvasElement!.height / 2;
+        } else {
+            if (this.layer_stack_exploded_x > 0) this.layer_stack_exploded_x -= 2;
+            if (this.layer_stack_exploded_x < 0) this.layer_stack_exploded_x = 0;
+            if (this.layer_stack_exploded_y > 0) this.layer_stack_exploded_y -= 2;
+            if (this.layer_stack_exploded_y < 0) this.layer_stack_exploded_y = 0;
+        }
+
+
+        if (this.costume_status == "Walk") {
+            if (this.costume_shooting.u || this.costume_shooting.d || this.costume_shooting.l || this.costume_shooting.r) {
+                if (this.hasPatch(PlayerPatch.Neptunus)) {
+                    this.costume_shooting_frame -= 0.5
+                } else {
+                    this.costume_shooting_frame += 0.5
+                }
             } else {
-                if (this.layer_stack_exploded_x > 0) this.layer_stack_exploded_x -= 2;
-                if (this.layer_stack_exploded_x < 0) this.layer_stack_exploded_x = 0;
-                if (this.layer_stack_exploded_y > 0) this.layer_stack_exploded_y -= 2;
-                if (this.layer_stack_exploded_y < 0) this.layer_stack_exploded_y = 0;
-            }
-
-
-            if (this.costume_status == "Walk") {
-                if (this.costume_shooting.u || this.costume_shooting.d || this.costume_shooting.l || this.costume_shooting.r) {
-                    if (this.hasPatch(PlayerPatch.Neptunus)) {
-                        this.costume_shooting_frame -= 0.5
-                    } else {
+                if (this.hasPatch(PlayerPatch.Neptunus)) {
+                    if (this.costume_shooting_frame < 17) {
                         this.costume_shooting_frame += 0.5
-                    }
-                } else {
-                    if (this.hasPatch(PlayerPatch.Neptunus)) {
-                        if (this.costume_shooting_frame < 17) {
-                            this.costume_shooting_frame += 0.5
-                        } else {
-                            //do nothing
-                        }
-                        is_head_idle = true
                     } else {
-                        this.costume_shooting_frame = is_head_idle ? (this.costume_shooting_frame + 1) % 2 : 0
-                        is_head_idle = true
+                        //do nothing
                     }
-                }
-                if (this.suggest_moving || this.is_flying || this.costume_walking.u || this.costume_walking.d || this.costume_walking.l || this.costume_walking.r ||
-                    (this.hasPatch(PlayerPatch.csection) && (this.costume_shooting.u || this.costume_shooting.d || this.costume_shooting.l || this.costume_shooting.r))
-                ) {
-                    this.costume_walking_frame++
+                    is_head_idle = true
                 } else {
-                    this.costume_walking_frame = 0
+                    this.costume_shooting_frame = is_head_idle ? (this.costume_shooting_frame + 1) % 2 : 0
+                    is_head_idle = true
                 }
             }
-            for(let player of this.players){
-                if (this.costume_status == 'Walk') {
-                    let target_anm_name_A = 'Head' + this.costume_head_dir
-                    if (is_head_idle && player.costumeInfoA!.head_has_idle) {
-                        target_anm_name_A += '_Idle'
-                    }
+            if (this.suggest_moving || this.is_flying || this.costume_walking.u || this.costume_walking.d || this.costume_walking.l || this.costume_walking.r ||
+                (this.hasPatch(PlayerPatch.csection) && (this.costume_shooting.u || this.costume_shooting.d || this.costume_shooting.l || this.costume_shooting.r))
+            ) {
+                this.costume_walking_frame++
+            } else {
+                this.costume_walking_frame = 0
+            }
+        }
+        for (let player of this.players) {
+            if (this.costume_status == 'Walk') {
+                let target_anm_name_A = 'Head' + this.costume_head_dir
+                if (is_head_idle && player.costumeInfoA!.head_has_idle) {
+                    target_anm_name_A += '_Idle'
+                }
 
-                    if (player.costumeInfoA!.is_tapollyon) {
-                        player.costumeA!.sheet_offsets[2]!.y = (Math.floor(this.tapollyon_ring_frame) % 8) * 32
-                    }
+                if (player.costumeInfoA!.is_tapollyon) {
+                    player.costumeA!.sheet_offsets[2]!.y = (Math.floor(this.tapollyon_ring_frame) % 8) * 32
+                }
 
-                    if (this.hasPatch(PlayerPatch.Neptunus)) {
-                        if (is_head_idle) {
-                            player.costumeA!.setFrame(target_anm_name_A + "Charge", this.costume_shooting_frame)
-                        } else {
-                            player.costumeA!.setFrame(target_anm_name_A + "Shoot", this.costume_shooting_frame)
-                        }
-                    } else if (!is_head_idle && player.costumeInfoA!.head_has_charge) {
-                        let head_charge_frame = player.costumeInfoA!.head_charge_frame!
-                        if (this.costume_shooting_frame >= head_charge_frame) {
-                            player.costumeA!.setFrame(target_anm_name_A + "ChargeFull", Math.floor(this.costume_shooting_frame - head_charge_frame))
-                        } else {
-                            player.costumeA!.setFrame(target_anm_name_A + "Charge", this.costume_shooting_frame)
-                        }
-                    } else /* original logic */ if (player.costumeA!.getCurrentAnmName() != (target_anm_name_A)) {
-                        player.costumeA!.setFrame(target_anm_name_A, 0)
+                if (this.hasPatch(PlayerPatch.Neptunus)) {
+                    if (is_head_idle) {
+                        player.costumeA!.setFrame(target_anm_name_A + "Charge", this.costume_shooting_frame)
                     } else {
-                        player.costumeA!.update()
+                        player.costumeA!.setFrame(target_anm_name_A + "Shoot", this.costume_shooting_frame)
                     }
-
-
-
-                    if (player.costumeInfoB!.is_csection) {
-                        player.costumeB!.sheet_offsets[0]!.y = C_SECTION_FRAME_MAP[Math.floor(this.costume_shooting_frame * 1.5) % C_SECTION_FRAME_MAP.length]! * 96
-                    }
-                    if (player.costumeB!.getCurrentAnmName() != ('Walk' + this.costume_leg_dir)) {
-                        player.costumeB!.setFrame('Walk' + this.costume_leg_dir, 0)
+                } else if (!is_head_idle && player.costumeInfoA!.head_has_charge) {
+                    let head_charge_frame = player.costumeInfoA!.head_charge_frame!
+                    if (this.costume_shooting_frame >= head_charge_frame) {
+                        player.costumeA!.setFrame(target_anm_name_A + "ChargeFull", Math.floor(this.costume_shooting_frame - head_charge_frame))
                     } else {
-                        player.costumeB!.update()
+                        player.costumeA!.setFrame(target_anm_name_A + "Charge", this.costume_shooting_frame)
                     }
-                    if (player.costumeC!.getCurrentAnmName() != ('Head' + this.costume_head_dir + '_Overlay')) {
-                        player.costumeC!.setFrame('Head' + this.costume_head_dir + '_Overlay', 0)
-                    } else {
-                        player.costumeC!.update()
-                    }
+                } else /* original logic */ if (player.costumeA!.getCurrentAnmName() != (target_anm_name_A)) {
+                    player.costumeA!.setFrame(target_anm_name_A, 0)
                 } else {
-                    if (player.costumeA!.getCurrentAnmName() != this.costume_status) {
-                        player.costumeA!.setFrame(this.costume_status, 0)
-                    }
-                    if (this.costume_status_reset) {
-                        this.costume_status_reset = false
-                        player.costumeA!.play(0)
-                    }
                     player.costumeA!.update()
                 }
-            }
 
-            
 
-            if (this.hasPatch(PlayerPatch.randomIdle)) {
-                let now = new Date().getTime()
-                if (now > this.random_idle_last_update) {
-                    this.random_idle_last_update = now + 1000 * 5
-                    this.random_idle_anm?.setFrame("Idle", 0)
-                    this.random_idle_is_playing = true
+
+                if (player.costumeInfoB!.is_csection) {
+                    player.costumeB!.sheet_offsets[0]!.y = C_SECTION_FRAME_MAP[Math.floor(this.costume_shooting_frame * 1.5) % C_SECTION_FRAME_MAP.length]! * 96
                 }
+                if (player.costumeB!.getCurrentAnmName() != ('Walk' + this.costume_leg_dir)) {
+                    player.costumeB!.setFrame('Walk' + this.costume_leg_dir, 0)
+                } else {
+                    player.costumeB!.update()
+                }
+                if (player.costumeC!.getCurrentAnmName() != ('Head' + this.costume_head_dir + '_Overlay')) {
+                    player.costumeC!.setFrame('Head' + this.costume_head_dir + '_Overlay', 0)
+                } else {
+                    player.costumeC!.update()
+                }
+            } else {
+                if (player.costumeA!.getCurrentAnmName() != this.costume_status) {
+                    player.costumeA!.setFrame(this.costume_status, 0)
+                }
+                if (this.costume_status_reset) {
+                    this.costume_status_reset = false
+                    player.costumeA!.play(0)
+                }
+                player.costumeA!.update()
             }
+        }
 
-            if (this.hasPatch(PlayerPatch.moveChara) && this.costume_status == 'Walk') {
-                if (this.costume_walking.u || this.costume_walking.d || this.costume_walking.l || this.costume_walking.r) {
-                    let speed = 4
-                    if (this.costume_walking.u) {
-                        this.moveChara_y -= speed
-                    }
-                    if (this.costume_walking.d) {
-                        this.moveChara_y += speed
-                    }
-                    if (this.costume_walking.r) {
-                        this.moveChara_x += speed
-                    }
-                    if (this.costume_walking.l) {
-                        this.moveChara_x -= speed
-                    }
 
-                    let rectA = this.canvasContainer.getBoundingClientRect()
-                    let rectB = document.body.getBoundingClientRect()
 
+        if (this.hasPatch(PlayerPatch.randomIdle)) {
+            let now = new Date().getTime()
+            if (now > this.random_idle_last_update) {
+                this.random_idle_last_update = now + 1000 * 5
+                this.random_idle_anm?.setFrame("Idle", 0)
+                this.random_idle_is_playing = true
+            }
+        }
+
+        if (this.hasPatch(PlayerPatch.moveChara) && this.costume_status == 'Walk') {
+            if (this.costume_walking.u || this.costume_walking.d || this.costume_walking.l || this.costume_walking.r) {
+                let speed = 4
+                if (this.costume_walking.u) {
+                    this.moveChara_y -= speed
+                }
+                if (this.costume_walking.d) {
+                    this.moveChara_y += speed
+                }
+                if (this.costume_walking.r) {
+                    this.moveChara_x += speed
+                }
+                if (this.costume_walking.l) {
+                    this.moveChara_x -= speed
+                }
+
+                let rectA = this.canvasContainer.getBoundingClientRect()
+                let rectB = document.body.getBoundingClientRect()
+
+                this.UpdateCharaTransform()
+                let reUpdate = false
+                if (rectA.x < rectB.x) {
+                    this.moveChara_x += rectB.x - rectA.x
+                    reUpdate = true
+                }
+                if (rectA.right > rectB.right) {
+                    this.moveChara_x -= rectA.right - rectB.right
+                    reUpdate = true
+                }
+                if (rectA.y < rectB.y) {
+                    this.moveChara_y += rectB.y - rectA.y
+                    reUpdate = true
+                }
+                if (rectA.bottom > rectB.bottom) {
+                    this.moveChara_y -= rectA.bottom - rectB.bottom
+                    reUpdate = true
+                }
+                if (reUpdate) {
                     this.UpdateCharaTransform()
-                    let reUpdate = false
-                    if (rectA.x < rectB.x) {
-                        this.moveChara_x += rectB.x - rectA.x
-                        reUpdate = true
-                    }
-                    if (rectA.right > rectB.right) {
-                        this.moveChara_x -= rectA.right - rectB.right
-                        reUpdate = true
-                    }
-                    if (rectA.y < rectB.y) {
-                        this.moveChara_y += rectB.y - rectA.y
-                        reUpdate = true
-                    }
-                    if (rectA.bottom > rectB.bottom) {
-                        this.moveChara_y -= rectA.bottom - rectB.bottom
-                        reUpdate = true
-                    }
-                    if (reUpdate) {
-                        this.UpdateCharaTransform()
-                    }
                 }
             }
-        
+        }
+
     }
 
     drawCostume() {
@@ -721,8 +780,8 @@ export class WikiPlayer {
         ctx.setTransform(1, 0, 0, 1, 0, 0)
         ctx.clearRect(0, 0, this.canvasElement!.width, this.canvasElement!.height)
         if (this.spritesheet_canvas_map) {
-            for(let elem of this.spritesheet_canvas_map){
-                elem[1].clearRect(0,0,100000, 100000)
+            for (let elem of this.spritesheet_canvas_map) {
+                elem[1].clearRect(0, 0, 100000, 100000)
             }
         }
         if (this.costume_status == 'Walk') {
@@ -757,6 +816,7 @@ export class WikiPlayer {
 
             } else {
                 this.updateCostume()
+                this.recorder?.update()
             }
             this.drawCostume()
         } else {
@@ -764,11 +824,12 @@ export class WikiPlayer {
 
             } else {
                 this.updateNormal()
+                this.recorder?.update()
             }
             this.drawNormal()
         }
 
-        if(this.waiting_for_click && this.drawInterval)
+        if (this.waiting_for_click && this.drawInterval)
             this.stopDraw()
     }
 
@@ -942,7 +1003,7 @@ export class WikiPlayer {
     }[] = []
     onCostumeTouchStart(ev: TouchEvent) {
         this.startDraw()
-        
+
         let touch = ev.touches[0]
         if (touch) {
             ev.preventDefault()
@@ -1135,7 +1196,7 @@ class WikiPlayerSingleAnm2 {
             //parse layer adjuster
             if (isFinite(+(anm.children[j]!.getAttribute("data-layer-adj") ?? NaN))) {
                 let adjuster = new LayerAdjuster(anm.children[j]!)
-                this.layerAdjustParameters[adjuster.layerId]=adjuster
+                this.layerAdjustParameters[adjuster.layerId] = adjuster
             }
         }
 
@@ -1148,10 +1209,6 @@ class WikiPlayerSingleAnm2 {
     }
 
     init(resources: Map<string, Actor>) {
-        let replace_sheet_func = (id: number) => {
-            return this.replaceSheetMap.get(id) ?? ""
-        }
-
         if (this.parent.renderMode == RenderMode.Costume) {
             let target: Actor | undefined = resources.get(this.anm2WikiPath)
             if (!target)
@@ -1170,9 +1227,9 @@ class WikiPlayerSingleAnm2 {
 
 
             /* 此处ABC共用同一份json，注意确保它们没问题 */
-            this.costumeA = new AnmPlayer(target, huijiUrlBuilder, replace_sheet_func, () => { this.parent.draw(true) })
-            this.costumeB = new AnmPlayer(target, huijiUrlBuilder, replace_sheet_func, () => { })
-            this.costumeC = new AnmPlayer(target, huijiUrlBuilder, replace_sheet_func, () => { })
+            this.costumeA = new AnmPlayer(target, this.replaceSheetMap, () => { this.parent.draw(true) })
+            this.costumeB = new AnmPlayer(target, this.replaceSheetMap)
+            this.costumeC = new AnmPlayer(target, this.replaceSheetMap)
 
             if (isLayerStackExploded()) {
                 this.costumeA.layer_frame_color = "red"
@@ -1208,7 +1265,7 @@ class WikiPlayerSingleAnm2 {
 
 
             if (this.parent.hasPatch(PlayerPatch.randomIdle)) {
-                this.parent.random_idle_anm = new AnmPlayer(target, huijiUrlBuilder, replace_sheet_func, function () { })
+                this.parent.random_idle_anm = new AnmPlayer(target, this.replaceSheetMap)
                 this.parent.random_idle_anm.setEndEventListener(() => { this.parent.random_idle_is_playing = false })
             }
 
@@ -1266,7 +1323,7 @@ class WikiPlayerSingleAnm2 {
             this.costumeC.setFrame("WalkDown_Overlay", 0)
 
         } else {
-            this.anm = new AnmPlayer(resources.get(this.anm2WikiPath)!, huijiUrlBuilder, replace_sheet_func, () => {
+            this.anm = new AnmPlayer(resources.get(this.anm2WikiPath)!, this.replaceSheetMap, () => {
                 this.parent.draw(true)
             })
             this.anm.layerAdjustParameters = this.layerAdjustParameters
@@ -1631,6 +1688,6 @@ function isLayerStackExploded(): boolean {
 }
 
 interface AnmCostumeController {
-    StartDrawAnm:()=>void,
-    StopDrawAnm:()=>void
+    StartDrawAnm: () => void,
+    StopDrawAnm: () => void
 }

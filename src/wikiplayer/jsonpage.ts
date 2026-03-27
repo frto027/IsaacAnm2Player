@@ -58,7 +58,7 @@ export class JsonPage{
             }).done((msg: any) => {
                 if (msg._embedded.length == 1) {
                     AnmPlayer.expandActor(msg._embedded[0], keymap)
-                    let anm = new AnmPlayer(msg._embedded[0], huijiUrlBuilder)
+                    let anm = new AnmPlayer(msg._embedded[0])
                     this.anmplayer = anm
                     var anmnames = anm.getAnmNames()
                     for (var i = 0; i < anmnames.length; i++) {

@@ -1,3 +1,4 @@
+import { AnmPlayer } from "./player/player"
 import { JsonPage } from "./wikiplayer/jsonpage"
 import { Anm2TabGroups } from "./wikiplayer/tabs"
 import { WikiPlayer } from "./wikiplayer/wikiplayer"
@@ -21,6 +22,7 @@ function initJsonPage(path: string) {
 }
 
 export function setupAnm2Players() {
+    AnmPlayer.setCrossOrigin("anonymous");
     window.init_anm2player_canvas = initPlayer
 
     //初始化播放器

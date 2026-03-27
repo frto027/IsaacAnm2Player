@@ -5,6 +5,8 @@ import * as webpack from "webpack"
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
+const IS_DEV = true
+
 const config: webpack.Configuration = {
   entry: "./src/index.ts",
   module: {
@@ -31,9 +33,9 @@ const config: webpack.Configuration = {
     filename: "bundle.js",
     path: path.resolve(__dirname, "dist"),
   },
-  mode:"production",
+  mode:IS_DEV ? "development" : "production",
   optimization:{
-    minimize: true
+    minimize: IS_DEV ? false : true
   }
 };
 

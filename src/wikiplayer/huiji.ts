@@ -2,12 +2,9 @@ import { AnmPlayer } from "../player/player"
 import { md5 } from "../tools/md5"
 import { keymap } from "./datas/datas"
 
-export function huijiUrlBuilder(url:string, replaced:boolean) {
+export function huijiUrlBuilder(url:string) {
     /* 注意过滤url */
-    var prefix = 'Anm2/'
-    if (replaced)
-        prefix = ''
-    url = (prefix + url).replace(new RegExp("[/ \\?&]", "g"), "_")
+    url = url.replace(new RegExp("[/ \\?&]", "g"), "_")
     url = url[0]!.toUpperCase() + url.substring(1)
     var hash = md5(url)
     url = "https://huiji-public.huijistatic.com/isaac/uploads/" + hash[0] + "/" + hash[0] + hash[1] + "/" + url
