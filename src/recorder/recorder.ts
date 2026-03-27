@@ -55,8 +55,6 @@ export class Anm2Recorder {
         this.player = player
         this.dir = dir
 
-        console.log("anm2 recorder has been created")
-
         RecorderIndicator.getInstatnce();
 
         this.recorder_hint_container = document.createElement("div")
@@ -128,8 +126,8 @@ export class Anm2Recorder {
 
         try {
             // 1 我们希望无延迟地启动toBolb函数，所以这一步不能套在promise里面
-            this.thisFrameIsCaptured = true
-            this.player.canvasElement!.toBlob(_blob => {
+            this.thisFrameIsCaptured = true;
+            (this.player.backendCanvas || this.player.canvasElement)!.toBlob(_blob => {
                 // 2 这里和下面哪一个先执行，是未定义行为
                 has_result = true
                 blob = _blob

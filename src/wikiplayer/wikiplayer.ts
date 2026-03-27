@@ -72,8 +72,6 @@ export class WikiPlayer {
 
 
     gameFrameCount: number
-    htmlrule: HtmlRule | undefined
-    htmlrule_constructor: HtmlRuleConstructor | undefined
 
     // costumeA: AnmPlayer[] = []  /* head */
     // costume_B: AnmPlayer[] = [] /* body */
@@ -121,9 +119,6 @@ export class WikiPlayer {
         this.players = []
 
         this.gameFrameCount = 0 // 用于某些效果渲染（肾上腺素）
-        //接口
-        this.htmlrule = undefined
-        this.htmlrule_constructor = undefined
 
         this.waiting_for_click = canvasdiv.getAttribute("data-waitkey") == "true"
         this.renderMode = canvasdiv.getAttribute("data-costume") == "true" ? RenderMode.Costume : RenderMode.Normal
@@ -183,7 +178,7 @@ export class WikiPlayer {
         {
             let html_rule_attr = canvasdiv.getAttribute('data-html-rule')
             if (html_rule_attr && html_rule_attr.length > 0 && window.anm2Rule && window.anm2Rule.has(html_rule_attr)) {
-                this.htmlrule_constructor = window.anm2Rule.get(html_rule_attr)
+                this.htmlRuleConstructor = window.anm2Rule.get(html_rule_attr)!
             }
         }
 
@@ -435,8 +430,8 @@ export class WikiPlayer {
                     }
                 }
 
-                if (this.htmlrule && this.htmlrule.onclick) {
-                    this.htmlrule.onclick()
+                if (this.htmlRule && this.htmlRule.onclick) {
+                    this.htmlRule.onclick()
                 }
             }
 
@@ -465,8 +460,8 @@ export class WikiPlayer {
                 }
             }
 
-            if (this.htmlrule_constructor) {
-                this.htmlrule = this.htmlrule_constructor(this.players.map(p => p.anm!), this.canvasElement!, this.webglOverlay)
+            if (this.htmlRuleConstructor) {
+                this.htmlRule = this.htmlRuleConstructor(this.players.map(p => p.anm!), this.canvasElement!, this.webglOverlay)
             }
         } else {
             if (this.waiting_for_click) {
@@ -1440,7 +1435,7 @@ class WikiPlayerSingleAnm2 {
             }
         }
         if (r.has("pause") && r.get("pause") == "true") {
-            this.parent.is_pausing = true
+            this.parent.waiting_for_click = true
             this.parent.stopDraw()
         }
 
