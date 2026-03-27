@@ -71,6 +71,8 @@ export class Anm2Recorder {
 
     update() {
         if (this.isRecording) {
+            if(this.player.isDirty)
+                this.player.realDraw()
             this.thisFrameIsCaptured = false
             this.record() // 虽然record是异步的，但是它在异步操作之前应当启动捕获
             console.assert(this.thisFrameIsCaptured)

@@ -556,22 +556,23 @@ export class WikiPlayer {
     getFps() {
         return this.commonFps;
     }
-    drawInterval: NodeJS.Timeout | undefined
+    
+    updateInterval: NodeJS.Timeout | undefined
     startDraw(forceRestart = false) {
-        if (this.drawInterval != undefined) {
+        if (this.updateInterval != undefined) {
             if (!forceRestart)
                 return
             this.stopDraw()
         }
-        this.drawInterval = setInterval(() => {
-            this.draw(false)
+        this.updateInterval = setInterval(() => {
+            this.updateAndDraw(false)
         }, 1000 / this.getFps())
 
     }
     stopDraw() {
-        if (this.drawInterval != undefined) {
-            clearInterval(this.drawInterval)
-            this.drawInterval = undefined
+        if (this.updateInterval != undefined) {
+            clearInterval(this.updateInterval)
+            this.updateInterval = undefined
         }
     }
 
@@ -762,6 +763,12 @@ export class WikiPlayer {
                     this.moveChara_x -= speed
                 }
 
+            }
+        }
+    }
+
+    drawCostume() {
+        if (this.hasPatch(PlayerPatch.moveChara) && this.costume_status == 'Walk') {
                 let rectA = this.canvasContainer.getBoundingClientRect()
                 let rectB = document.body.getBoundingClientRect()
 
@@ -786,12 +793,9 @@ export class WikiPlayer {
                 if (reUpdate) {
                     this.UpdateCharaTransform()
                 }
-            }
         }
 
-    }
 
-    drawCostume() {
         let ctx = this.canvasElement!.getContext("2d")!
         ctx.imageSmoothingEnabled = false
         ctx.setTransform(1, 0, 0, 1, 0, 0)
@@ -825,28 +829,46 @@ export class WikiPlayer {
         this.gameFrameCount++
 
     }
-    draw(noUpdate: boolean) {
+
+
+    isDirty = false
+    realDraw(){
+        this.isDirty = false
+        if(this.renderMode == RenderMode.Costume){
+            this.drawCostume()
+        }else{
+            this.drawNormal()
+        }
+    }
+
+    updateAndDraw(noUpdate: boolean) {
         if (this.waiting_for_click)
             noUpdate = true
         if (this.renderMode == RenderMode.Costume) {
             if (noUpdate) {
-
+                this.isDirty = true
             } else {
                 this.updateCostume()
+                this.isDirty = true
                 this.recorder?.update()
             }
-            this.drawCostume()
         } else {
             if (noUpdate) {
-
+                this.isDirty = true
             } else {
                 this.updateNormal()
+                this.isDirty = true
                 this.recorder?.update()
             }
-            this.drawNormal()
         }
 
-        if (this.waiting_for_click && this.drawInterval)
+        if(this.isDirty){
+            window.requestAnimationFrame(()=>{
+                this.realDraw()
+            })
+        }
+
+        if (this.waiting_for_click && this.updateInterval)
             this.stopDraw()
     }
 
@@ -961,7 +983,7 @@ export class WikiPlayer {
             catched = true
         }
         if (key == 'x') {
-            if (this.drawInterval == undefined)
+            if (this.updateInterval == undefined)
                 this.startDraw()
             else
                 this.stopDraw()
@@ -1244,7 +1266,7 @@ class WikiPlayerSingleAnm2 {
 
 
             /* 此处ABC共用同一份json，注意确保它们没问题 */
-            this.costumeA = new AnmPlayer(target, this.replaceSheetMap, () => { this.parent.draw(true) })
+            this.costumeA = new AnmPlayer(target, this.replaceSheetMap, () => { this.parent.updateAndDraw(true) })
             this.costumeB = new AnmPlayer(target, this.replaceSheetMap)
             this.costumeC = new AnmPlayer(target, this.replaceSheetMap)
 
@@ -1341,7 +1363,7 @@ class WikiPlayerSingleAnm2 {
 
         } else {
             this.anm = new AnmPlayer(resources.get(this.anm2WikiPath)!, this.replaceSheetMap, () => {
-                this.parent.draw(true)
+                this.parent.updateAndDraw(true)
             })
             this.anm.layerAdjustParameters = this.layerAdjustParameters
             this.anm.setFrame((this.anmName || '').split('.')[0] || "", 0)
