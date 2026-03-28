@@ -18,12 +18,12 @@
 }
 
 .anm2-sub-player-button{
-    border-radius: 3px;
+    /* border-radius: 3px; */
     margin: 0 -4px;
 }
 
 .anm2-tab-btn-selected{
-    border-bottom: dashed 1px gray;
+    box-shadow: inset #777777 0px -2px 0px 0px;
 }
 .anm2-tab-btn-not-selected{
     border-bottom: none;
