@@ -662,7 +662,7 @@ export class WikiPlayer {
             renderCount++
         }else{
             this.accumulatedDirtyDuration += deltaTime;
-            while(this.accumulatedDirtyDuration > frameDuration + frameDuration*0.5 /* 
+            while(this.accumulatedDirtyDuration > frameDuration - frameDuration*0.5 /* 
                 0.5倍容错：
                 我们会提前绘制未来半帧内出现的动画帧，以避免抖动问题。
                 这个容错用于避免在浏览器帧率=动画FPS时出现的跳帧问题
