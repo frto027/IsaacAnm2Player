@@ -215,7 +215,7 @@ export class WikiPlayer {
         let next = () => {
             window.$dialog.warning({
                 title: "你正在启用播放器的录制功能，请仔细阅读以下内容",
-                content: `你需要创建一个新的文件夹，并选择它。接下来就可以使用shift+R开关播放器的录制功能。
+                content: `你需要创建并选择一个文件夹，用于储存帧序列。接下来就可以使用shift+R开关播放器的录制功能。
 请注意，当录制开启时，结果会实时保存刚刚的文件夹。文件夹内同名内容【会被覆盖】。
 可以使用screentogif(https://www.screentogif.com/)等软件对图像序列进行后期合成。
 警告：在录制期间，我们会在你接下来选择的文件夹中生成大量无损帧序列（取决于动画FPS），请避免长时间录制。
