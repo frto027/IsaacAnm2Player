@@ -612,24 +612,75 @@ export class WikiPlayer {
         return this.commonFps;
     }
 
-    updateInterval: NodeJS.Timeout | undefined
+    pendingAnimationFrame:number|undefined = undefined
     startDraw(forceRestart = false) {
-        if (this.updateInterval != undefined) {
+        if (this.pendingAnimationFrame != undefined) {
             if (!forceRestart)
                 return
             this.stopDraw()
         }
-        this.updateInterval = setInterval(() => {
-            this.updateAndDraw(false)
-        }, 1000 / this.getFps())
 
-    }
-    stopDraw() {
-        if (this.updateInterval != undefined) {
-            clearInterval(this.updateInterval)
-            this.updateInterval = undefined
+        if(this.pendingAnimationFrame == undefined){
+            this.pendingAnimationFrame = requestAnimationFrame((time)=>{
+                this.onAnimationFrame(time)
+            })
         }
     }
+    stopDraw() {
+        if(this.pendingAnimationFrame != undefined){
+            cancelAnimationFrame(this.pendingAnimationFrame)
+            this.pendingAnimationFrame = undefined
+        }
+    }
+    accumulatedDirtyDuration = 0
+
+    timeLastAnim?:number = undefined
+    onAnimationFrame(time: DOMHighResTimeStamp){
+        // 立即启动下一次绘制循环，如果要停止动画，则稍后取消此循环
+        this.pendingAnimationFrame = requestAnimationFrame((time)=>{
+            this.onAnimationFrame(time)
+        });
+
+        let deltaTime
+        if(this.timeLastAnim == undefined){
+            deltaTime = time
+        }else{
+            deltaTime = time - this.timeLastAnim
+        }
+        this.timeLastAnim = time
+
+        let frameDuration = 1000 / this.getFps();
+
+        let renderCount = 0
+        if(deltaTime > 5 * frameDuration)
+        {
+            // 如果间隔太大，就放弃追帧了
+            this.accumulatedDirtyDuration = 0
+            this.doUpdate(false)
+            renderCount++
+        }else{
+            this.accumulatedDirtyDuration += deltaTime;
+            while(this.accumulatedDirtyDuration > frameDuration + frameDuration*0.5 /* 
+                0.5倍容错：
+                我们会提前绘制未来半帧内出现的动画帧，以避免抖动问题。
+                这个容错用于避免在浏览器帧率=动画FPS时出现的跳帧问题
+                */){
+                this.doUpdate(false);
+                this.accumulatedDirtyDuration -= frameDuration;
+                renderCount++
+            }
+        }
+
+
+        this.handleMoveCharaPatch(deltaTime)
+
+        if(this.isDirty){
+            this.realDraw()
+        }
+
+    }
+
+
 
     init_event_emitted = false
     updateNormal() {
@@ -801,10 +852,12 @@ export class WikiPlayer {
                 this.random_idle_is_playing = true
             }
         }
+    }
 
+    handleMoveCharaPatch(deltaTime:DOMHighResTimeStamp){
         if (this.hasPatch(PlayerPatch.moveChara) && this.costume_status == 'Walk') {
             if (this.costume_walking.u || this.costume_walking.d || this.costume_walking.l || this.costume_walking.r) {
-                let speed = 4
+                let speed = 4 * deltaTime / 33.33
                 if (this.costume_walking.u) {
                     this.moveChara_y -= speed
                 }
@@ -817,13 +870,8 @@ export class WikiPlayer {
                 if (this.costume_walking.l) {
                     this.moveChara_x -= speed
                 }
-
             }
-        }
-    }
 
-    drawCostume() {
-        if (this.hasPatch(PlayerPatch.moveChara) && this.costume_status == 'Walk') {
             let rectA = this.canvasContainer.getBoundingClientRect()
             let rectB = document.body.getBoundingClientRect()
 
@@ -848,8 +896,11 @@ export class WikiPlayer {
             if (reUpdate) {
                 this.UpdateCharaTransform()
             }
-        }
 
+        }
+    }
+
+    drawCostume() {
 
         let ctx = this.canvasElement!.getContext("2d")!
         ctx.imageSmoothingEnabled = false
@@ -896,8 +947,7 @@ export class WikiPlayer {
         }
     }
 
-    requestedAnimationFrame: number | undefined = undefined
-    updateAndDraw(noUpdate: boolean) {
+    doUpdate(noUpdate: boolean) {
         if (this.waiting_for_click)
             noUpdate = true
         if (this.renderMode == RenderMode.Costume) {
@@ -918,14 +968,7 @@ export class WikiPlayer {
             }
         }
 
-        if (this.isDirty && this.requestedAnimationFrame == undefined) {
-            this.requestedAnimationFrame = window.requestAnimationFrame(() => {
-                this.requestedAnimationFrame = undefined
-                this.realDraw()
-            })
-        }
-
-        if (this.waiting_for_click && this.updateInterval)
+        if (this.waiting_for_click && this.pendingAnimationFrame)
             this.stopDraw()
     }
 
@@ -1040,7 +1083,7 @@ export class WikiPlayer {
             catched = true
         }
         if (key == 'x') {
-            if (this.updateInterval == undefined)
+            if (this.pendingAnimationFrame == undefined)
                 this.startDraw()
             else
                 this.stopDraw()
@@ -1323,7 +1366,7 @@ class WikiPlayerSingleAnm2 {
 
 
             /* 此处ABC共用同一份json，注意确保它们没问题 */
-            this.costumeA = new AnmPlayer(target, this.replaceSheetMap, () => { this.parent.updateAndDraw(true) })
+            this.costumeA = new AnmPlayer(target, this.replaceSheetMap, () => { this.parent.realDraw() })
             this.costumeB = new AnmPlayer(target, this.replaceSheetMap)
             this.costumeC = new AnmPlayer(target, this.replaceSheetMap)
 
@@ -1420,7 +1463,7 @@ class WikiPlayerSingleAnm2 {
 
         } else {
             this.anm = new AnmPlayer(resources.get(this.anm2WikiPath)!, this.replaceSheetMap, () => {
-                this.parent.updateAndDraw(true)
+                this.parent.realDraw()
             })
             this.anm.layerAdjustParameters = this.layerAdjustParameters
             this.anm.setFrame((this.anmName || '').split('.')[0] || "", 0)
