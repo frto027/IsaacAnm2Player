@@ -435,10 +435,10 @@ export class WikiPlayer {
             }
 
             this.canvasElement!.onkeydown = (e) => {
-                if (this.recorder == undefined && e.key == "R") {
+                if (this.recorder == undefined && e.shiftKey && e.key.toLowerCase() == "r") {
                     this.tryCreateRecorder()
                 }
-                if (this.recorder && this.recorder.handleKey(e.key)) {
+                if (this.recorder && e.shiftKey && this.recorder.handleKey(e.key)) {
                     e.preventDefault()
                     return
                 }
@@ -487,10 +487,10 @@ export class WikiPlayer {
                 // if(e.type == 'click'){
                 //     return
                 // }
-                if (this.recorder == undefined && e.key == "R") {
+                if (this.recorder == undefined && e.shiftKey && e.key.toLowerCase() == "r") {
                     this.tryCreateRecorder()
                 }
-                if (this.recorder && this.recorder.handleKey(e.key)) {
+                if (this.recorder && e.shiftKey && this.recorder.handleKey(e.key)) {
                     e.preventDefault()
                     return
                 }

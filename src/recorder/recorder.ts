@@ -80,7 +80,7 @@ export class Anm2Recorder {
     }
 
     handleKey(key: string): boolean {
-        if (key == "R") {
+        if (key.toLowerCase() == "r") {
             if (this.isRecording)
                 this.stopRecord()
             else
