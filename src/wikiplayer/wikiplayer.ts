@@ -614,6 +614,7 @@ export class WikiPlayer {
 
     pendingAnimationFrame:number|undefined = undefined
     startDraw(forceRestart = false) {
+        this.isDirty = true
         if (this.pendingAnimationFrame != undefined) {
             if (!forceRestart)
                 return
@@ -630,11 +631,12 @@ export class WikiPlayer {
         if(this.pendingAnimationFrame != undefined){
             cancelAnimationFrame(this.pendingAnimationFrame)
             this.pendingAnimationFrame = undefined
+            this.timeLastAnim = undefined
         }
     }
     accumulatedDirtyDuration = 0
 
-    timeLastAnim?:number = undefined
+    timeLastAnim:number|undefined = undefined
     onAnimationFrame(time: DOMHighResTimeStamp){
         // 立即启动下一次绘制循环，如果要停止动画，则稍后取消此循环
         this.pendingAnimationFrame = requestAnimationFrame((time)=>{
