@@ -5,9 +5,11 @@ import * as webpack from "webpack"
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-const IS_DEV = false
 
-const config: webpack.Configuration = {
+export default function(env:any, argv:any): webpack.Configuration{
+  const IS_DEV = !env.production
+
+  return {
   entry: "./src/index.ts",
   module: {
     rules: [
@@ -38,5 +40,4 @@ const config: webpack.Configuration = {
     minimize: IS_DEV ? false : true
   }
 };
-
-export default config;
+}
