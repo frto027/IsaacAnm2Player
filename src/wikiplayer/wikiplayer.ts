@@ -24,7 +24,6 @@ enum RenderMode {
 
 export class WikiPlayer {
     players: WikiPlayerSingleAnm2[]
-    isFlying: boolean = false
 
     buttonDiv: HTMLDivElement | undefined = undefined
     buttons = new Map<string, WikiPlayerButton>()
@@ -1182,7 +1181,7 @@ class WikiPlayerSingleAnm2 {
             this.skincolor = undefined
         }
 
-        this.parent.isFlying ||= anm.getAttribute("data-isflying") == "true";
+        this.parent.is_flying ||= anm.getAttribute("data-isflying") == "true";
 
         //parse rule
         for (let j = 0; j < anm.children.length; j++) {
