@@ -463,12 +463,23 @@ export class WikiPlayer {
                 this.htmlRule = this.htmlRuleConstructor(this.players.map(p => p.anm!), this.canvasElement!, this.webglOverlay)
             }
         } else {
-            if (this.waiting_for_click) {
-                let activeWaitForClick = () => {
+
+            let click_callback_removed = true
+            let activeWaitForClick = () => {
+                if(this.waiting_for_click){
                     this.waiting_for_click = false
-                    this.startDraw();
+                    this.startDraw()
+                }
+                if(!click_callback_removed){
+                    click_callback_removed = true
                     this.canvasElement!.removeEventListener("click", activeWaitForClick)
                 }
+            }
+            this.canvasElement!.addEventListener("click", activeWaitForClick)
+
+
+            if (this.waiting_for_click) {
+                click_callback_removed = false
                 this.canvasElement!.addEventListener("click", activeWaitForClick)
             }
 
@@ -499,12 +510,21 @@ export class WikiPlayer {
             };
             
             this.canvasElement!.addEventListener('touchstart', (ev) => {
+                if(!ev.cancelable)
+                    return;
+                if(this.waiting_for_click){
+                    activeWaitForClick()
+                }
                 this.onCostumeTouchStart(ev)
             })
             this.canvasElement!.addEventListener('touchmove', ev => {
+                if(!ev.cancelable)
+                    return;
                 this.onCostomeTouchMove(ev)
             })
             this.canvasElement!.addEventListener('touchend', ev => {
+                if(!ev.cancelable)
+                    return;
                 this.onCostumeTouchEnd(ev)
             })
         }
