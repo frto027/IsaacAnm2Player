@@ -278,7 +278,7 @@ export class WikiPlayer {
                     return true
                 },
                 negativeText: "否，直接录制原始素材",
-                onNegativeClick: async (e) =>{
+                onNegativeClick: async (e) => {
                     WikiPlayer.recordModeQuestionAnswered = true
                     next()
                     return true

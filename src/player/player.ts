@@ -150,7 +150,7 @@ export class AnmPlayer {
 
     layer_frame_color?: string
 
-    constructor(json: Actor, replaceSheetMap?:ReplaceSheetMap, onloadimg?: () => void) {
+    constructor(json: Actor, replaceSheetMap?: ReplaceSheetMap, onloadimg?: () => void) {
         this.anm2 = json
 
         for (let sheet of this.anm2.content?.Spritesheets || []) {
@@ -170,16 +170,16 @@ export class AnmPlayer {
             this.loadAnmObject(anm)
         }
         this.setFrame(this.anm2.animations?.DefaultAnimation || '', 0)
-        if(replaceSheetMap)
+        if (replaceSheetMap)
             this.replaceSheetMap = replaceSheetMap
 
-        if(!AnmPlayer.lazyLoadSpritesheet){
+        if (!AnmPlayer.lazyLoadSpritesheet) {
             for (let i = 0; i < (this.anm2.content?.Spritesheets?.length || 0); i++) {
                 this.loadSpritesheet(i)
             }
 
         }
-        if(onloadimg)
+        if (onloadimg)
             this.imgLoadListener = onloadimg
 
     }
@@ -353,27 +353,27 @@ export class AnmPlayer {
         }
     }
 
-    replaceSheetMap?:ReplaceSheetMap
+    replaceSheetMap?: ReplaceSheetMap
 
     private loadSpritesheet(i: number) {
         let img = this.sprites_htmlimg[i]
         if (img == undefined) {
             let imgpath = "Anm2/" + this.sprites[i]!
-            
+
             img = document.createElement("img")
             img.setAttribute('style', "image-rendering: pixelated; display:none;")
             if (AnmPlayer.crossOrigin != undefined) {
                 img.setAttribute('crossorigin', AnmPlayer.crossOrigin)
             }
 
-            if(this.replaceSheetMap?.has(i)){
+            if (this.replaceSheetMap?.has(i)) {
                 img.src = huijiUrlBuilder(this.replaceSheetMap.get(i)!)
-            }else{
+            } else {
                 img.src = huijiUrlBuilder(imgpath)
             }
 
             img.onload = () => {
-                if(!img) 
+                if (!img)
                     throw new Error("impossible");
                 img.setAttribute("img_loaded", "true")
                 if (this.imgLoadListener) {
@@ -872,8 +872,8 @@ export interface CostumeInfo {
     head_has_charge?: boolean
     head_charge_frame?: number
 
-    is_csection?:boolean
-    is_tapollyon?:boolean
+    is_csection?: boolean
+    is_tapollyon?: boolean
     /* steps[step][layer] == anmarray_index */
 }
 
@@ -882,14 +882,14 @@ export class WebGLOverlay {
     webgl_canvas: HTMLCanvasElement
 
     texture?: WebGLTexture | null
-    shaderController:ShaderController
+    shaderController: ShaderController
     constructor(backend_canvas: HTMLCanvasElement, webgl_canvas: HTMLCanvasElement, shaderName: string) {
         this.backend_canvas = backend_canvas
         this.webgl_canvas = webgl_canvas
         let controller_class = PredefinedShaderControllers[shaderName]
-        if(controller_class){
+        if (controller_class) {
             this.shaderController = new controller_class()
-        }else{
+        } else {
             this.shaderController = new ShaderController()
         }
     }
@@ -921,7 +921,7 @@ export class WebGLOverlay {
         // Create the shader program
 
         const shaderProgram = gl.createProgram();
-        if(!shaderProgram)return;
+        if (!shaderProgram) return;
         gl.attachShader(shaderProgram, vertexShader);
         gl.attachShader(shaderProgram, fragmentShader);
         gl.linkProgram(shaderProgram);
@@ -946,20 +946,20 @@ export class WebGLOverlay {
         })
         if (!gl) return;
         const shaderProgram = this.initShaderProgram(gl, this.shaderController.vertex(), this.shaderController.fragment());
-        if(!shaderProgram) return;  
+        if (!shaderProgram) return;
 
         ShaderController.bindArray(gl, shaderProgram, "Position", 2, [
-            -1,-1,
-            -1,1,
-            1,-1,
-            1,1
+            -1, -1,
+            -1, 1,
+            1, -1,
+            1, 1
         ])
 
         ShaderController.bindArray(gl, shaderProgram, "TexCoord", 2, [
-            0,1,
-            0,0,
-            1,1,
-            1,0
+            0, 1,
+            0, 0,
+            1, 1,
+            1, 0
         ])
 
         this.shaderController.init(gl, shaderProgram, this)
@@ -968,29 +968,29 @@ export class WebGLOverlay {
 
         gl.activeTexture(gl.TEXTURE0)
         this.texture = gl.createTexture()
-        if(this.texture){
+        if (this.texture) {
             gl.bindTexture(gl.TEXTURE_2D, this.texture)
         }
 
         gl.uniform1i(
-            gl.getUniformLocation(shaderProgram, "Texture0"),0
+            gl.getUniformLocation(shaderProgram, "Texture0"), 0
         )
         gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
         gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
         gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
         gl.enable(gl.BLEND)
-        gl.blendFunc(gl.SRC_ALPHA,gl.ZERO)
+        gl.blendFunc(gl.SRC_ALPHA, gl.ZERO)
 
     }
 
     render() {
         var gl = this.webgl_canvas.getContext("webgl")
-        if(gl == null)return
+        if (gl == null) return
         this.shaderController.update(gl)
-        if(this.texture)
+        if (this.texture)
             gl.bindTexture(gl.TEXTURE_2D, this.texture)
-        gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA,gl.RGBA,gl.UNSIGNED_BYTE, this.backend_canvas)
-        gl.clearColor(0,0,0,0)
+        gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, this.backend_canvas)
+        gl.clearColor(0, 0, 0, 0)
         gl.clear(gl.COLOR_BUFFER_BIT)
         gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4)
     }

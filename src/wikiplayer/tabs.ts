@@ -34,12 +34,12 @@ let CharaElementTemplate = new Map([
     [CharaTabOption.shadow, "https://huiji-public.huijistatic.com/isaac/uploads/3/3a/Dark_Judas_Icon.png"],
 ])
 
-interface Anm2TabGroup{
+interface Anm2TabGroup {
     playerElement: HTMLElement,
     button: HTMLElement,
     thisOption: CharaTabOption,
     index: number,
-    playerStatus:PlayerStatus
+    playerStatus: PlayerStatus
 }
 
 import "./tabs.css"
@@ -83,7 +83,7 @@ export class Anm2TabGroups {
                     index: index,
                     playerStatus: PlayerStatus.Hided
                 })
-                if(index > 0){
+                if (index > 0) {
                     sub_player.classList.add('chara-player-hide')
                 }
 
@@ -98,44 +98,44 @@ export class Anm2TabGroups {
         target.appendChild(this.select_pannel)
 
         // set the initial status
-        for(let group of this.groups){
-            if(group.index == 0){
+        for (let group of this.groups) {
+            if (group.index == 0) {
                 this.setButtonStatus(group, ButtonStatus.Selected)
                 this.setAnmPlayerStatus(group, PlayerStatus.Showed)
                 this.selected = 0
                 this.next_select = 0
                 this.is_animating = false
-            }else{
+            } else {
                 this.setButtonStatus(group, ButtonStatus.NotSelected)
                 this.setAnmPlayerStatus(group, PlayerStatus.Hided)
             }
         }
     }
 
-    setButtonStatus(group:Anm2TabGroup, buttonStatus: ButtonStatus) {
-        let handle = (n:string, status:boolean)=>{
-            if(status)
+    setButtonStatus(group: Anm2TabGroup, buttonStatus: ButtonStatus) {
+        let handle = (n: string, status: boolean) => {
+            if (status)
                 group.button.classList.add(n)
             else
                 group.button.classList.remove(n)
         }
         handle("anm2-tab-btn-selected", buttonStatus == ButtonStatus.Selected)
         handle("anm2-tab-btn-not-selected", buttonStatus == ButtonStatus.NotSelected)
-        
+
     }
-    setAnmPlayerStatus(group:Anm2TabGroup, status: PlayerStatus){
-        if(group.playerStatus == status)
+    setAnmPlayerStatus(group: Anm2TabGroup, status: PlayerStatus) {
+        if (group.playerStatus == status)
             return
 
-        if(group.playerStatus == PlayerStatus.Hided){
-            let controller =  (group.playerElement.querySelector(".anm2player") as HTMLElement)
+        if (group.playerStatus == PlayerStatus.Hided) {
+            let controller = (group.playerElement.querySelector(".anm2player") as HTMLElement)
                 ?.AnmCostumeController;
-            if(controller){
+            if (controller) {
                 controller.CancelWaitingForClick()
                 controller.StartDrawAnm()
             }
         }
-        if(status == PlayerStatus.Hided){
+        if (status == PlayerStatus.Hided) {
             (group.playerElement.querySelector(".anm2player") as HTMLElement)
                 ?.AnmCostumeController
                 ?.StopDrawAnm()
@@ -143,8 +143,8 @@ export class Anm2TabGroups {
 
         group.playerStatus = status
         let elem = group.playerElement
-        let handle = (n:string, status:boolean)=>{
-            if(status)
+        let handle = (n: string, status: boolean) => {
+            if (status)
                 elem.classList.add(n)
             else
                 elem.classList.remove(n)
@@ -168,23 +168,23 @@ export class Anm2TabGroups {
     onAnmEnd(i: number) {
         let oldState = this.groups[i]!.playerStatus
 
-        if(oldState == PlayerStatus.HideToL || oldState == PlayerStatus.HideToR){
+        if (oldState == PlayerStatus.HideToL || oldState == PlayerStatus.HideToR) {
             this.setAnmPlayerStatus(this.groups[i]!, PlayerStatus.Hided)
-        }else if(oldState == PlayerStatus.ShowFromL || oldState == PlayerStatus.ShowFromR){
+        } else if (oldState == PlayerStatus.ShowFromL || oldState == PlayerStatus.ShowFromR) {
             this.setAnmPlayerStatus(this.groups[i]!, PlayerStatus.Showed)
             this.selected = this.groups[i]!.index
         }
 
         this.is_animating = false
-        for(let group of this.groups){
-            if(group.playerStatus != PlayerStatus.Hided && group.playerStatus != PlayerStatus.Showed)
+        for (let group of this.groups) {
+            if (group.playerStatus != PlayerStatus.Hided && group.playerStatus != PlayerStatus.Showed)
                 this.is_animating = true
         }
         this.tryStartAnimation()
     }
 
     onBtnClick(i: number) {
-        if(this.next_select == i)
+        if (this.next_select == i)
             return
 
         this.setButtonStatus(this.groups[this.next_select]!, ButtonStatus.NotSelected)
@@ -194,20 +194,20 @@ export class Anm2TabGroups {
         this.tryStartAnimation()
     }
 
-    tryStartAnimation(){
-        if(this.is_animating)
+    tryStartAnimation() {
+        if (this.is_animating)
             return
 
-        if(this.next_select == this.selected){
+        if (this.next_select == this.selected) {
             return
         }
 
-        for(let group of this.groups){
-            if(group.index == this.selected){
+        for (let group of this.groups) {
+            if (group.index == this.selected) {
                 this.setAnmPlayerStatus(group, this.selected < this.next_select ? PlayerStatus.HideToL : PlayerStatus.HideToR)
                 this.is_animating = true
             }
-            if(group.index == this.next_select){
+            if (group.index == this.next_select) {
                 this.setAnmPlayerStatus(group, this.selected < this.next_select ? PlayerStatus.ShowFromR : PlayerStatus.ShowFromL)
                 this.is_animating = true
             }

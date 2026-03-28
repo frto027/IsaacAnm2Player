@@ -9,4 +9,4 @@ export interface HtmlRule {
   update?: (index: number) => void,
 }
 
-export type HtmlRuleConstructor = (anms:AnmPlayer[], canvas:HTMLCanvasElement, webgl_overlay:WebGLOverlay|undefined)=>HtmlRule
+export type HtmlRuleConstructor = (anms: AnmPlayer[], canvas: HTMLCanvasElement, webgl_overlay: WebGLOverlay | undefined) => HtmlRule

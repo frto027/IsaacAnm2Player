@@ -2,10 +2,10 @@ import { AnmPlayer } from "../player/player";
 import { keymap } from "./datas/datas";
 import { huijiUrlBuilder } from "./huiji";
 
-export class JsonPage{
+export class JsonPage {
     infocard: HTMLDivElement;
     anmplayer?: AnmPlayer;
-    constructor(path:string){
+    constructor(path: string) {
         let infocard = document.createElement("div")
         this.infocard = infocard
         infocard.style.cssText = "border:1px solid white;border-radius:8px;padding:10px"

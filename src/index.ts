@@ -4,8 +4,8 @@ import { Anm2TabGroups } from "./wikiplayer/tabs"
 import { WikiPlayer } from "./wikiplayer/wikiplayer"
 
 window.anm2players = {
-    wikplayers:[],
-    anm2Tabs:[]
+    wikplayers: [],
+    anm2Tabs: []
 }
 
 function initPlayer(canvasdiv: HTMLElement) {
@@ -17,7 +17,7 @@ function initAnm2PlayerTabs(target: HTMLElement) {
 }
 function initJsonPage(path: string) {
     let jsonPage = new JsonPage(path)
-    if(window.anm2players)
+    if (window.anm2players)
         window.anm2players.jsoonPage = jsonPage
 }
 
