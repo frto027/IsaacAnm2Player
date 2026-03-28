@@ -8,6 +8,14 @@
 
 这是Anm2Player的TypeScript重构分支。
 
+# how to build
+
+```cmd
+npm install
+npm run build -- for debug version, use dist/bundle.js
+npm run release -- for release version, use dist/bundle.release.js
+```
+
 # 功能描述
 
 - 完整的anm2解析流程
