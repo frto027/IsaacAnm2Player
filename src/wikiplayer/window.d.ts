@@ -52,6 +52,12 @@ export declare global {
    }
 }
 
+interface AnmCostumeController {
+    StartDrawAnm: () => void,
+    StopDrawAnm: () => void,
+    CancelWaitingForClick: ()=>void
+}
+
 // https://www.huijiwiki.com/wiki/%E5%B8%AE%E5%8A%A9:%E4%BD%BF%E7%94%A8cockpit%E7%BB%84%E4%BB%B6
 interface CockpitNotificationOption{
    // 以下内容手抄的更新日志

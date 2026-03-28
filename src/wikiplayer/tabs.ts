@@ -128,9 +128,12 @@ export class Anm2TabGroups {
             return
 
         if(group.playerStatus == PlayerStatus.Hided){
-            (group.playerElement.querySelector(".anm2player") as HTMLElement)
-                ?.AnmCostumeController
-                ?.StartDrawAnm()
+            let controller =  (group.playerElement.querySelector(".anm2player") as HTMLElement)
+                ?.AnmCostumeController;
+            if(controller){
+                controller.CancelWaitingForClick()
+                controller.StartDrawAnm()
+            }
         }
         if(status == PlayerStatus.Hided){
             (group.playerElement.querySelector(".anm2player") as HTMLElement)

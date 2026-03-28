@@ -537,18 +537,21 @@ export class WikiPlayer {
             StopDrawAnm: () => {
                 this.stopDraw()
             },
-            SuggestMoveLeft: () => {
-                this.suggest_moving = true
-                this.costume_leg_dir = 'Left'
+            CancelWaitingForClick: ()=> {
+                this.waiting_for_click = false
             },
-            SuggestMoveRight: () => {
-                this.suggest_moving = true
-                this.costume_leg_dir = 'Right'
-            },
-            SuggestNoMove: () => {
-                this.suggest_moving = false
-                this.costume_leg_dir = 'Down'
-            },
+            // SuggestMoveLeft: () => {
+            //     this.suggest_moving = true
+            //     this.costume_leg_dir = 'Left'
+            // },
+            // SuggestMoveRight: () => {
+            //     this.suggest_moving = true
+            //     this.costume_leg_dir = 'Right'
+            // },
+            // SuggestNoMove: () => {
+            //     this.suggest_moving = false
+            //     this.costume_leg_dir = 'Down'
+            // },
         }
     }
 
@@ -1727,7 +1730,3 @@ function isLayerStackExploded(): boolean {
     return layer_stack_exploded
 }
 
-interface AnmCostumeController {
-    StartDrawAnm: () => void,
-    StopDrawAnm: () => void
-}
