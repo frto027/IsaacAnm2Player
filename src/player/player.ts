@@ -111,7 +111,7 @@ interface LayerAdjustParameter {
 }
 
 import { COSTUME_ALT_DICT } from "./costum_dict"
-import { huijiUrlBuilder } from "../wikiplayer/huiji"
+import { huijiUrlBuilder, isRecordingMode } from "../wikiplayer/huiji"
 
 export type ReplaceSheetMap = Map<number, string>
 
@@ -941,7 +941,9 @@ export class WebGLOverlay {
     }
 
     init() {
-        let gl = this.webgl_canvas.getContext("webgl")
+        let gl = this.webgl_canvas.getContext("webgl", {
+            preserveDrawingBuffer: isRecordingMode()
+        })
         if (!gl) return;
         const shaderProgram = this.initShaderProgram(gl, this.shaderController.vertex(), this.shaderController.fragment());
         if(!shaderProgram) return;  

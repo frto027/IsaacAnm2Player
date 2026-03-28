@@ -11,6 +11,12 @@ export function huijiUrlBuilder(url:string) {
     return url
 }
 
+let is_recording_mode = (new URLSearchParams(window.location.search)).get("anm2record") == '1'
+
+export function isRecordingMode():boolean{
+    return is_recording_mode
+}
+
 export class HuijiDatabaseRequester{
     filter:any = { "$or": [] }
     constructor(){

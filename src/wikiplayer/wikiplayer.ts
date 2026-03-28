@@ -2,7 +2,7 @@ import { AnmPlayer, WebGLOverlay, type CostumeInfo } from "../player/player"
 import { Anm2Recorder } from "../recorder/recorder"
 import { C_SECTION_FRAME_MAP } from "./datas/datas"
 import type { HtmlRule, HtmlRuleConstructor } from "./htmlRule"
-import { HuijiDatabaseRequester, huijiUrlBuilder } from "./huiji"
+import { HuijiDatabaseRequester, isRecordingMode } from "./huiji"
 
 enum PlayerPatch {
     Neptunus = "neptunus",
@@ -207,55 +207,88 @@ export class WikiPlayer {
     }
 
     hasConfirm = false
-    async tryCreateRecorder() {
-        if(this.hasConfirm)
+    static recordModeQuestionAnswered = false
+    tryCreateRecorder() {
+        if (this.hasConfirm)
             return
 
-        window.$dialog.warning({
-            title: "你正在启用播放器的录制功能，请仔细阅读以下内容",
-            content: `你需要创建一个新的文件夹，并选择它。接下来就可以使用shift+R开关播放器的录制功能。
+        let next = () => {
+            window.$dialog.warning({
+                title: "你正在启用播放器的录制功能，请仔细阅读以下内容",
+                content: `你需要创建一个新的文件夹，并选择它。接下来就可以使用shift+R开关播放器的录制功能。
 请注意，当录制开启时，结果会实时保存刚刚的文件夹。文件夹内同名内容【会被覆盖】。
 可以使用screentogif(https://www.screentogif.com/)等软件对图像序列进行后期合成。
 警告：在录制期间，我们会在你接下来选择的文件夹中生成大量无损帧序列（取决于动画FPS），请避免长时间录制。
 是否继续？
 `,
-            positiveText: "是，选择一个新文件夹",
-            closable:false,
-            closeOnEsc:false,
-            maskClosable:false,
-            style:"white-space:pre-line",
-            onPositiveClick:async (e)=>{
-                this.hasConfirm = false
+                positiveText: "是，选择一个新文件夹",
+                closable: false,
+                closeOnEsc: false,
+                maskClosable: false,
+                style: "white-space:pre-line",
+                onPositiveClick: async (e) => {
+                    this.hasConfirm = false
 
-                try {
-                    if (window.showDirectoryPicker == undefined) {
+                    try {
+                        if (window.showDirectoryPicker == undefined) {
+                            window.$notification.error({
+                                content: "您的浏览器不支持目录相关api（showDirectoryPicker），本功能为浏览器限定功能，请使用其它浏览器。"
+                            })
+                            return
+                        }
+
+                        let dir = await window.showDirectoryPicker({
+                            mode: "readwrite",
+                            startIn: "pictures"
+                        });
+                        this.recorder = new Anm2Recorder(this, dir)
+                    } catch (e) {
+                        console.error(e);
                         window.$notification.error({
-                            content: "您的浏览器不支持目录相关api（showDirectoryPicker），本功能为浏览器限定功能，请使用其它浏览器。"
+                            content: "失败或操作已经被取消，请查看控制台。如果是权限问题，可以尝试重试。"
                         })
-                        return
                     }
 
-                    let dir = await window.showDirectoryPicker({
-                        mode: "readwrite",
-                        startIn: "pictures"
-                    });
-                    this.recorder = new Anm2Recorder(this, dir)
-                } catch (e) {
-                    console.error(e);
-                    window.$notification.error({
-                        content: "失败或操作已经被取消，请查看控制台。如果是权限问题，可以尝试重试。"
-                    })
+                    return true
+                },
+
+                negativeText: "取消",
+                onNegativeClick: (e) => {
+                    this.hasConfirm = false
+                    return true
                 }
+            });
+        }
 
-                return true
-            },
 
-            negativeText: "取消",
-            onNegativeClick:(e)=>{
-                this.hasConfirm = false
-                return true
-            }
-        })
+        if (this.backendCanvas && !WikiPlayer.recordModeQuestionAnswered && !isRecordingMode()) {
+            window.$dialog.warning({
+                title: "shader录制模式",
+                content: "当前动画包含shader（着色器）且动画播放器未处于录制模式。\n如果继续，将录制不含shader的原始素材。\n是否要切换至shader录制模式？",
+                style: "white-space:pre-line",
+                closable: false,
+                closeOnEsc: false,
+                maskClosable: false,
+                positiveText: "是，以shader录制模式重新加载当前页面",
+                onPositiveClick: async (e) => {
+                    WikiPlayer.recordModeQuestionAnswered = true
+                    let url = new URL(window.location.href)
+                    url.searchParams.set("anm2record", "1")
+                    window.location.href = url.href
+                    return true
+                },
+                negativeText: "否，直接录制原始素材",
+                onNegativeClick: async (e) =>{
+                    WikiPlayer.recordModeQuestionAnswered = true
+                    next()
+                    return true
+                }
+            })
+        } else {
+            next()
+        }
+
+
     }
 
     hasPatch(patch: PlayerPatch) {
@@ -466,11 +499,11 @@ export class WikiPlayer {
 
             let click_callback_removed = true
             let activeWaitForClick = () => {
-                if(this.waiting_for_click){
+                if (this.waiting_for_click) {
                     this.waiting_for_click = false
                     this.startDraw()
                 }
-                if(!click_callback_removed){
+                if (!click_callback_removed) {
                     click_callback_removed = true
                     this.canvasElement!.removeEventListener("click", activeWaitForClick)
                 }
@@ -483,7 +516,7 @@ export class WikiPlayer {
                 this.canvasElement!.addEventListener("click", activeWaitForClick)
             }
 
-            this.canvasElement!.onkeydown = (e)=>{
+            this.canvasElement!.onkeydown = (e) => {
                 // if(e.type == 'click'){
                 //     return
                 // }
@@ -501,29 +534,29 @@ export class WikiPlayer {
                     e.preventDefault()
             };
 
-            this.canvasElement!.onkeyup = (e)=>{
+            this.canvasElement!.onkeyup = (e) => {
                 // e.preventDefault()
 
                 if (this.onCostumKeyUp(e.key)) {
                     e.preventDefault()
                 }
             };
-            
+
             this.canvasElement!.addEventListener('touchstart', (ev) => {
-                if(!ev.cancelable)
+                if (!ev.cancelable)
                     return;
-                if(this.waiting_for_click){
+                if (this.waiting_for_click) {
                     activeWaitForClick()
                 }
                 this.onCostumeTouchStart(ev)
             })
             this.canvasElement!.addEventListener('touchmove', ev => {
-                if(!ev.cancelable)
+                if (!ev.cancelable)
                     return;
                 this.onCostomeTouchMove(ev)
             })
             this.canvasElement!.addEventListener('touchend', ev => {
-                if(!ev.cancelable)
+                if (!ev.cancelable)
                     return;
                 this.onCostumeTouchEnd(ev)
             })
@@ -544,7 +577,7 @@ export class WikiPlayer {
                     }
                 }
             })).observe(this.canvasElement!)
-        }else{
+        } else {
             // 我们不知道是否能渲染，所以直接渲染
             this.startDraw()
         }
@@ -557,7 +590,7 @@ export class WikiPlayer {
             StopDrawAnm: () => {
                 this.stopDraw()
             },
-            CancelWaitingForClick: ()=> {
+            CancelWaitingForClick: () => {
                 this.waiting_for_click = false
             },
             // SuggestMoveLeft: () => {
@@ -578,7 +611,7 @@ export class WikiPlayer {
     getFps() {
         return this.commonFps;
     }
-    
+
     updateInterval: NodeJS.Timeout | undefined
     startDraw(forceRestart = false) {
         if (this.updateInterval != undefined) {
@@ -791,30 +824,30 @@ export class WikiPlayer {
 
     drawCostume() {
         if (this.hasPatch(PlayerPatch.moveChara) && this.costume_status == 'Walk') {
-                let rectA = this.canvasContainer.getBoundingClientRect()
-                let rectB = document.body.getBoundingClientRect()
+            let rectA = this.canvasContainer.getBoundingClientRect()
+            let rectB = document.body.getBoundingClientRect()
 
+            this.UpdateCharaTransform()
+            let reUpdate = false
+            if (rectA.x < rectB.x) {
+                this.moveChara_x += rectB.x - rectA.x
+                reUpdate = true
+            }
+            if (rectA.right > rectB.right) {
+                this.moveChara_x -= rectA.right - rectB.right
+                reUpdate = true
+            }
+            if (rectA.y < rectB.y) {
+                this.moveChara_y += rectB.y - rectA.y
+                reUpdate = true
+            }
+            if (rectA.bottom > rectB.bottom) {
+                this.moveChara_y -= rectA.bottom - rectB.bottom
+                reUpdate = true
+            }
+            if (reUpdate) {
                 this.UpdateCharaTransform()
-                let reUpdate = false
-                if (rectA.x < rectB.x) {
-                    this.moveChara_x += rectB.x - rectA.x
-                    reUpdate = true
-                }
-                if (rectA.right > rectB.right) {
-                    this.moveChara_x -= rectA.right - rectB.right
-                    reUpdate = true
-                }
-                if (rectA.y < rectB.y) {
-                    this.moveChara_y += rectB.y - rectA.y
-                    reUpdate = true
-                }
-                if (rectA.bottom > rectB.bottom) {
-                    this.moveChara_y -= rectA.bottom - rectB.bottom
-                    reUpdate = true
-                }
-                if (reUpdate) {
-                    this.UpdateCharaTransform()
-                }
+            }
         }
 
 
@@ -854,16 +887,16 @@ export class WikiPlayer {
 
 
     isDirty = false
-    realDraw(){
+    realDraw() {
         this.isDirty = false
-        if(this.renderMode == RenderMode.Costume){
+        if (this.renderMode == RenderMode.Costume) {
             this.drawCostume()
-        }else{
+        } else {
             this.drawNormal()
         }
     }
 
-    requestedAnimationFrame:number|undefined = undefined
+    requestedAnimationFrame: number | undefined = undefined
     updateAndDraw(noUpdate: boolean) {
         if (this.waiting_for_click)
             noUpdate = true
@@ -885,8 +918,8 @@ export class WikiPlayer {
             }
         }
 
-        if(this.isDirty && this.requestedAnimationFrame == undefined){
-            this.requestedAnimationFrame = window.requestAnimationFrame(()=>{
+        if (this.isDirty && this.requestedAnimationFrame == undefined) {
+            this.requestedAnimationFrame = window.requestAnimationFrame(() => {
                 this.requestedAnimationFrame = undefined
                 this.realDraw()
             })
@@ -1744,8 +1777,7 @@ class LayerAdjuster {
     }
 }
 
-let layer_stack_exploded_matched = new RegExp("[&?]anm2Exploded=([^&]+)").exec(window.location.href)
-let layer_stack_exploded = !!(layer_stack_exploded_matched && layer_stack_exploded_matched[1] == "1")
+let layer_stack_exploded = (new URLSearchParams(window.location.search)).get("anm2Exploded") == '1'
 function isLayerStackExploded(): boolean {
     return layer_stack_exploded
 }

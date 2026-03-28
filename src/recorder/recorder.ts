@@ -1,3 +1,4 @@
+import { isRecordingMode } from "../wikiplayer/huiji"
 import type { WikiPlayer } from "../wikiplayer/wikiplayer"
 
 import "./recorder.css"
@@ -129,7 +130,17 @@ export class Anm2Recorder {
         try {
             // 1 我们希望无延迟地启动toBolb函数，所以这一步不能套在promise里面
             this.thisFrameIsCaptured = true;
-            (this.player.backendCanvas || this.player.canvasElement)!.toBlob(_blob => {
+
+            let canvas = this.player.canvasElement!;
+
+            if(this.player.backendCanvas){
+                if(!isRecordingMode()){
+                    // 在非recording mode下，我们无法获取webgl的渲染结果，因此只能获得anm2的绘制结果
+                    canvas = this.player.backendCanvas;
+                }
+            }
+
+            canvas.toBlob(_blob => {
                 // 2 这里和下面哪一个先执行，是未定义行为
                 has_result = true
                 blob = _blob
