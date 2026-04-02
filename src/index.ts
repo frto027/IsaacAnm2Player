@@ -1,4 +1,5 @@
 import { AnmPlayer } from "./player/player"
+import { HuijiDatabaseFetcher } from "./wikiplayer/huiji"
 import { JsonPage } from "./wikiplayer/jsonpage"
 import { Anm2TabGroups } from "./wikiplayer/tabs"
 import { WikiPlayer } from "./wikiplayer/wikiplayer"
@@ -26,10 +27,12 @@ export function setupAnm2Players() {
     window.init_anm2player_canvas = initPlayer
 
     //初始化播放器
+    let huijiDatabaseFetcher = new HuijiDatabaseFetcher()
     let canvases = document.getElementsByClassName('anm2player')
     for (let i = 0; i < canvases.length; i++) {
-        initPlayer(canvases[i] as HTMLElement)
+        window.anm2players?.wikplayers.push(new WikiPlayer(canvases[i] as HTMLElement, huijiDatabaseFetcher))
     }
+    huijiDatabaseFetcher.doAction()
 
     // 初始化json页面
     let pageName = window.mw.config.get("wgPageName")

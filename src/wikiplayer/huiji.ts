@@ -17,32 +17,71 @@ export function isRecordingMode(): boolean {
     return is_recording_mode
 }
 
-export class HuijiDatabaseRequester {
-    filter: any = { "$or": [] }
-    constructor() {
+export class HuijiDatabaseFetcher {
+    anm2Ids: string[] = []
+    onSuccess: (() => void)[] = []
+    onFailed: (() => void)[] = []
 
-    }
+    responseAnm2 = new Map<string, Actor>()
 
     addAnm2File(_id: string) {
-        this.filter["$or"].push({ "_id": _id })
+        this.anm2Ids.push(_id)
     }
 
-    downloadJson(onSuccess: (resources: Map<string, Actor>) => void, onFailed: () => void) {
-        window.$.ajax({
-            url: "/api/rest_v1/namespace/data",
-            method: "GET",
-            data: { filter: JSON.stringify(this.filter) },
-            dataType: "json"
-        }).done(function (msg: any) {
-            var resources = new Map<string, Actor>()
-            for (var i = 0; i < msg._embedded.length; i++) {
-                AnmPlayer.expandActor(msg._embedded[i], keymap)
-                resources.set(msg._embedded[i]._id, msg._embedded[i])
+    getAnm2File(_id: string): Actor | undefined {
+        let result = this.responseAnm2.get(_id)
+        if (result == undefined)
+            return undefined
+        if (structuredClone) {
+            return structuredClone(result)
+        } else {
+            return JSON.parse(JSON.stringify(result))
+        }
+    }
+
+    addListener(onSuccess: () => void, onFailed: () => void) {
+        this.onSuccess.push(onSuccess)
+        this.onFailed.push(onFailed)
+    }
+
+    private request(anm2Ids: string[]): Promise<boolean> {
+        return new Promise<boolean>((resolve, reject) => {
+            let filter = {
+                $or: anm2Ids.map(v => ({
+                    _id: v
+                }))
             }
-            onSuccess(resources)
-        }).fail(function (jqXHR: any, textStatus: any) {
-            onFailed()
-            console.log("anm2 json download failed.", textStatus, jqXHR)
-        })
+            window.$.ajax({
+                url: "/api/rest_v1/namespace/data",
+                method: "GET",
+                data: { filter: JSON.stringify(filter) },
+                dataType: "json"
+            }).done((msg: any) => {
+                for (var i = 0; i < msg._embedded.length; i++) {
+                    AnmPlayer.expandActor(msg._embedded[i], keymap)
+                    this.responseAnm2.set(msg._embedded[i]._id, msg._embedded[i])
+                }
+                resolve(true);
+            }).fail((jqXHR: AnalyserNode, textStatus: any) => {
+                console.log("anm2 json download failed.", textStatus, jqXHR)
+                reject()
+            })
+        });
+    }
+
+    async doAction() {
+        try {
+            const BATCH_SIZE = 50
+            // 一次最多请求50条，别太多
+            for (let i = 0; i < this.anm2Ids.length; i += BATCH_SIZE) {
+                await this.request(this.anm2Ids.slice(i, i + BATCH_SIZE))
+            }
+            await this.request(this.anm2Ids);
+            for (const onSuccess of this.onSuccess)
+                onSuccess()
+        } catch (e) {
+            for (const onFailed of this.onFailed)
+                onFailed()
+        }
     }
 }

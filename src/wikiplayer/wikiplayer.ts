@@ -2,7 +2,7 @@ import { AnmPlayer, WebGLOverlay, type CostumeInfo } from "../player/player"
 import { Anm2Recorder } from "../recorder/recorder"
 import { C_SECTION_FRAME_MAP } from "./datas/datas"
 import type { HtmlRule, HtmlRuleConstructor } from "./htmlRule"
-import { HuijiDatabaseRequester, isRecordingMode } from "./huiji"
+import { HuijiDatabaseFetcher, isRecordingMode } from "./huiji"
 
 enum PlayerPatch {
     Neptunus = "neptunus",
@@ -20,6 +20,10 @@ enum PlayerPatch {
 enum RenderMode {
     Normal,
     Costume
+}
+
+interface ResourceFetcher {
+    getAnm2File(_id:string):Actor | undefined
 }
 
 export class WikiPlayer {
@@ -110,7 +114,7 @@ export class WikiPlayer {
 
     recorder?: Anm2Recorder
 
-    constructor(canvasdiv: HTMLElement) {
+    constructor(canvasdiv: HTMLElement, huijiDatabaseFetcher?:HuijiDatabaseFetcher) {
 
         this.canvasContainer = canvasdiv;
 
@@ -189,21 +193,30 @@ export class WikiPlayer {
             this.players.push(new WikiPlayerSingleAnm2(this, anm, this.players.length));
         }
 
-        let dbRequester = new HuijiDatabaseRequester()
+
+        let standaloneRequester
+        let dbRequester = huijiDatabaseFetcher;
+        if(dbRequester == undefined){
+            dbRequester = standaloneRequester = new HuijiDatabaseFetcher();
+        }
 
         for (let p of this.players) {
             dbRequester.addAnm2File(p.anm2WikiPath)
         }
 
-        dbRequester.downloadJson(
-            (resources) => {
+        dbRequester.addListener(
+            () => {
                 this.init_canvasDiv();
-                this.init_anm(resources);
+                this.init_anm(dbRequester);
             },
             () => {
                 this.canvasContainer.innerHTML = "动画加载失败"
             }
         );
+
+        if(standaloneRequester){
+            standaloneRequester.doAction()
+        }
     }
 
     hasConfirm = false
@@ -408,7 +421,7 @@ export class WikiPlayer {
         }
     }
 
-    init_anm(resources: Map<string, Actor>) {
+    init_anm(fetcher:ResourceFetcher) {
         if (this.renderMode == RenderMode.Costume) {
             for (let player of this.players) {
                 if (player.skincolor)
@@ -417,7 +430,7 @@ export class WikiPlayer {
         }
 
         for (let player of this.players) {
-            player.init(resources)
+            player.init(fetcher)
         }
 
 
@@ -1349,9 +1362,9 @@ class WikiPlayerSingleAnm2 {
         this.hasAltSkin = anm.getAttribute("data-has-skin-alt") == "true"
     }
 
-    init(resources: Map<string, Actor>) {
+    init(fetcher: ResourceFetcher) {
         if (this.parent.renderMode == RenderMode.Costume) {
-            let target: Actor | undefined = resources.get(this.anm2WikiPath)
+            let target: Actor | undefined = fetcher.getAnm2File(this.anm2WikiPath)
             if (!target)
                 return;
 
@@ -1464,7 +1477,7 @@ class WikiPlayerSingleAnm2 {
             this.costumeC.setFrame("WalkDown_Overlay", 0)
 
         } else {
-            this.anm = new AnmPlayer(resources.get(this.anm2WikiPath)!, this.replaceSheetMap, () => {
+            this.anm = new AnmPlayer(fetcher.getAnm2File(this.anm2WikiPath)!, this.replaceSheetMap, () => {
                 this.parent.realDraw()
             })
             this.anm.layerAdjustParameters = this.layerAdjustParameters
