@@ -17,9 +17,9 @@ interface Null {
     Id: number
     Name: string | null
 }
-interface PEvent{
-    Id:number
-    Name:string
+interface PEvent {
+    Id: number
+    Name: string
 }
 interface Content {
     Spritesheets: Spritesheet[]
@@ -28,16 +28,16 @@ interface Content {
     Events: PEvent[]
 }
 interface Frame {
-    Width:number
-    Height:number
+    Width: number
+    Height: number
     XPosition: number
     YPosition: number
     Delay: number
     Visible: boolean
-    XPivot:number
-    YPivot:number
-    XCrop:number
-    YCrop:number
+    XPivot: number
+    YPivot: number
+    XCrop: number
+    YCrop: number
     XScale: number
     YScale: number
     RedTint: number
@@ -51,8 +51,8 @@ interface Frame {
     Interpolated: boolean
 }
 interface LayerAnimation {
-    LayerId:number
-    Visible:boolean
+    LayerId: number
+    Visible: boolean
     frames: Frame[]
 }
 
@@ -62,9 +62,9 @@ interface NullAnimation {
     frames: Frame[]
 }
 
-interface Triggers{
-    EventId:number
-    AtFrame:number
+interface Triggers {
+    EventId: number
+    AtFrame: number
 }
 
 interface PAnimation {
@@ -88,4 +88,3 @@ interface Actor {
     content: Content | null
     animations: PAnimations | null
 }
-

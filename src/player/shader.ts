@@ -4,7 +4,13 @@ import shader_default_vs from "../../src/shaders/default.vs"
 import shader_default_fs from "../../src/shaders/default.fs"
 
 export class ShaderController {
-    static bindArray(gl: WebGLRenderingContext, shaderProgram: WebGLProgram, propertyName: string, dim: number, init: number[]) {
+    static bindArray(
+        gl: WebGLRenderingContext,
+        shaderProgram: WebGLProgram,
+        propertyName: string,
+        dim: number,
+        init: number[]
+    ) {
         let vertex = gl.createBuffer()
         if (!vertex) return
         gl.bindBuffer(gl.ARRAY_BUFFER, vertex)
@@ -12,8 +18,7 @@ export class ShaderController {
         if (init.length == dim) {
             let sinit = []
             for (let i = 0; i < 4; i++) {
-                for (let j = 0; j < 4; j++)
-                    sinit.push(init[j]!)
+                for (let j = 0; j < 4; j++) sinit.push(init[j]!)
             }
             init = sinit
         } else if (init.length == dim * 4) {
@@ -28,7 +33,13 @@ export class ShaderController {
         gl.enableVertexAttribArray(arg)
         return vertex
     }
-    static bindDynamicArray(gl: WebGLRenderingContext, shaderProgram: WebGLProgram, propertyName: string, dim: number, init: number[]) {
+    static bindDynamicArray(
+        gl: WebGLRenderingContext,
+        shaderProgram: WebGLProgram,
+        propertyName: string,
+        dim: number,
+        init: number[]
+    ) {
         let vertex = gl.createBuffer()
         if (!vertex) return
         this.setArray(gl, vertex, dim, init)
@@ -42,8 +53,7 @@ export class ShaderController {
         if (value.length == dim) {
             let sinit = []
             for (let i = 0; i < 4; i++) {
-                for (let j = 0; j < 4; j++)
-                    sinit.push(value[j]!)
+                for (let j = 0; j < 4; j++) sinit.push(value[j]!)
             }
             value = sinit
         } else if (value.length == dim * 4) {
@@ -55,7 +65,12 @@ export class ShaderController {
         gl.bindBuffer(gl.ARRAY_BUFFER, loc)
         gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(value), gl.DYNAMIC_DRAW)
     }
-    static bindDynamicFloat(gl: WebGLRenderingContext, shaderProgram: WebGLProgram, propertyName: string, init: number) {
+    static bindDynamicFloat(
+        gl: WebGLRenderingContext,
+        shaderProgram: WebGLProgram,
+        propertyName: string,
+        init: number
+    ) {
         let vertex = gl.createBuffer()
         if (!vertex) return
         this.setFloat(gl, vertex, init)
@@ -67,6 +82,7 @@ export class ShaderController {
 
     static setFloat(gl: WebGLRenderingContext, loc: WebGLBuffer, value: number) {
         gl.bindBuffer(gl.ARRAY_BUFFER, loc)
+        // prettier-ignore
         gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([
             value, value, value, value
         ]), gl.DYNAMIC_DRAW)
@@ -78,10 +94,8 @@ export class ShaderController {
     fragment() {
         return shader_default_fs
     }
-    init(gl: WebGLRenderingContext, program: WebGLProgram, webglOverlay: WebGLOverlay) {
-    }
-    update(gl: WebGLRenderingContext) {
-    }
+    init(gl: WebGLRenderingContext, program: WebGLProgram, webglOverlay: WebGLOverlay) {}
+    update(gl: WebGLRenderingContext) {}
 
     setParam(name: string, value: any) {
         //注意，name和value可能是不可信任内容，请注意过滤（如果有必要）
@@ -97,10 +111,11 @@ class ShaderPixelation extends ShaderController {
     PixelationAmount?: WebGLBuffer | undefined
     time = 0
     init(gl: WebGLRenderingContext, program: WebGLProgram, webglOverlay: WebGLOverlay) {
+        // prettier-ignore
         ShaderController.bindArray(gl, program, "Color", 4, [
             0, 0, 0, 1
         ])
-
+        // prettier-ignore
         ShaderController.bindArray(gl, program, "ScreenSize", 4, [
             webglOverlay.backend_canvas.width, webglOverlay.backend_canvas.height,
             webglOverlay.backend_canvas.width, webglOverlay.backend_canvas.height
@@ -112,7 +127,6 @@ class ShaderPixelation extends ShaderController {
         this.time += 1
         ShaderController.setFloat(gl, this.PixelationAmount!, (Math.sin(this.time * 0.04) + 1) * 0.5 * 0.1)
     }
-
 }
 
 import shader_dizzy_fs from "../shaders/dizzy.fs"
@@ -124,9 +138,12 @@ class ShaderDizzy extends ShaderController {
     Amount: any
     init(gl: WebGLRenderingContext, program: WebGLProgram, webglOverlay: WebGLOverlay): void {
         ShaderController.bindArray(gl, program, "TextureSize", 2, [
-            webglOverlay.backend_canvas.width, webglOverlay.backend_canvas.height,
+            webglOverlay.backend_canvas.width,
+            webglOverlay.backend_canvas.height,
         ])
-        let rx = 0.1, ry = 0.2
+        let rx = 0.1,
+            ry = 0.2
+        // prettier-ignore
         this.Ratio = ShaderController.bindDynamicArray(gl, program, "Ratio", 4, [
             rx, ry, rx, ry,
             rx, ry, rx, ry,
@@ -147,16 +164,17 @@ class ShaderDizzy extends ShaderController {
 import shader_hall_fs from "../shaders/hall.fs"
 import shader_hall_vs from "../shaders/hall.vs"
 
-
 class ShaderHallucination extends ShaderController {
     Amount: any
     Noise: any
     init(gl: WebGLRenderingContext, program: WebGLProgram, webglOverlay: WebGLOverlay): void {
+        // prettier-ignore
         ShaderController.bindArray(gl, program, "ScreenSize", 4, [
             webglOverlay.backend_canvas.width, webglOverlay.backend_canvas.height,
             webglOverlay.backend_canvas.width, webglOverlay.backend_canvas.height
         ])
         this.Amount = ShaderController.bindDynamicFloat(gl, program, "Amount", 1)
+        // prettier-ignore
         this.Noise = ShaderController.bindDynamicArray(gl, program, "Noise", 2, [
             0, 0,
             0, 1,
@@ -166,6 +184,7 @@ class ShaderHallucination extends ShaderController {
     }
     time = 0
     update(gl: WebGLRenderingContext): void {
+        // prettier-ignore
         ShaderController.setArray(gl, this.Noise, 2, [
             0.2, Math.random(),
             0.2, Math.random(),
@@ -184,6 +203,7 @@ class ShaderOldTV extends ShaderController {
     time = 0
     Time: any
     init(gl: WebGLRenderingContext, program: WebGLProgram, webglOverlay: WebGLOverlay): void {
+        // prettier-ignore
         ShaderController.bindArray(gl, program, "ScreenSize", 4, [
             webglOverlay.backend_canvas.width, webglOverlay.backend_canvas.height,
             webglOverlay.backend_canvas.width, webglOverlay.backend_canvas.height
@@ -214,25 +234,28 @@ class ShaderDogma extends ShaderController {
         // }else{
         //     scale = 1
         // }
-
+        // prettier-ignore
         ShaderController.bindArray(gl, program, "TextureSize", 2, [
             webglOverlay.backend_canvas.width, webglOverlay.backend_canvas.height,
             webglOverlay.backend_canvas.width, webglOverlay.backend_canvas.height,
             webglOverlay.backend_canvas.width, webglOverlay.backend_canvas.height,
             webglOverlay.backend_canvas.width, webglOverlay.backend_canvas.height,
         ])
+        // prettier-ignore
         ShaderController.bindArray(gl, program, "Color", 4, [
             1, 1, 1, 1,
             1, 1, 1, 1,
             1, 1, 1, 1,
             1, 1, 1, 1,
         ])
+        // prettier-ignore
         this.Colorize = ShaderController.bindDynamicArray(gl, program, "ColorizeIn", 4, [
             1, 1, 1, 1,
             1, 1, 1, 1,
             1, 1, 1, 1,
             1, 1, 1, 1,
         ])
+        // prettier-ignore
         ShaderController.bindArray(gl, program, "ColorOffsetIn", 3, [
             0, 0, 0,
             0, 0, 0,
@@ -240,6 +263,7 @@ class ShaderDogma extends ShaderController {
             0, 0, 0,
         ])
         ShaderController.bindDynamicFloat(gl, program, "PixelationAmount", 0)
+        // prettier-ignore
         ShaderController.bindArray(gl, program, "ClipPlane", 3, [
             1, 1, 0,
             1, 1, 0,
@@ -248,7 +272,6 @@ class ShaderDogma extends ShaderController {
         ])
 
         this.WikiScale = ShaderController.bindDynamicFloat(gl, program, "WikiScale", this.scale)
-
     }
     time = 0
     offset = 0
@@ -278,6 +301,7 @@ class ShaderDogma extends ShaderController {
         }
         let offset = this.offset
         let rnd = Math.random()
+        // prettier-ignore
         ShaderController.setArray(gl, this.Colorize, 4, [
             offset, 1, 1, rnd,
             offset, 1, 1, rnd,
@@ -291,14 +315,12 @@ class ShaderDogma extends ShaderController {
     fragment = () => shader_dogma_fs
 }
 
-
 export let PredefinedShaderControllers: { [name: string]: typeof ShaderController | null } = {
     __proto__: null,
-    "default": ShaderController,
-    "pixel": ShaderPixelation,
-    "dizzy": ShaderDizzy,
-    "hallucination": ShaderHallucination,
-    "oldtv": ShaderOldTV,
-    "dogma": ShaderDogma
+    default: ShaderController,
+    pixel: ShaderPixelation,
+    dizzy: ShaderDizzy,
+    hallucination: ShaderHallucination,
+    oldtv: ShaderOldTV,
+    dogma: ShaderDogma,
 }
-

@@ -30,7 +30,6 @@ npm run release -- for release version, use dist/bundle.release.js
 - 爆炸视图，可观察服装渲染过程
 - 基于WebGL的shader渲染支持（例如游戏内的马赛克/教条贴图），超帅的！
 
-
 # License
 
 MIT License

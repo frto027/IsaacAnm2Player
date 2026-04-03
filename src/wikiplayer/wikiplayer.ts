@@ -8,7 +8,7 @@ enum PlayerPatch {
     Neptunus = "neptunus",
     csection = "csection",
     tApollyon = "tApollyon",
-    noCharge = 'nocharge',
+    noCharge = "nocharge",
     randomIdle = "rndIdle",
     blueFilter = "blueFilter",
     noAttack = "noAttack",
@@ -19,7 +19,7 @@ enum PlayerPatch {
 
 enum RenderMode {
     Normal,
-    Costume
+    Costume,
 }
 
 export class WikiPlayer {
@@ -27,7 +27,6 @@ export class WikiPlayer {
 
     buttonDiv: HTMLDivElement | undefined = undefined
     buttons = new Map<string, WikiPlayerButton>()
-
 
     canvasContainer: HTMLElement
     canvasElement?: HTMLCanvasElement
@@ -40,22 +39,26 @@ export class WikiPlayer {
     colorDiv?: HTMLDivElement
     BACKGROUND_COLORS = [
         /* 按键0：透明 */
-        '',
+        "",
         /* 按键1：灰色 */
-        'background-color:gray',
+        "background-color:gray",
         /* 按键2：棋盘格 */
-        'background-image:url("data:image/svg+xml,' + encodeURIComponent('<svg viewBox="0 0 2 2" width="14" height="14" xmlns="http://www.w3.org/2000/svg">' +
-            '    <rect width="1" height="1" fill="#dcdcdc"/>' +
-            '    <rect x="1" y="1" width="1" height="1" fill="#dcdcdc"/>' +
-            '    <rect y="1" width="1" height="1" fill="white"/>' +
-            '    <rect x="1" width="1" height="1" fill="white"/>' +
-            '</svg>') + '")',
+        'background-image:url("data:image/svg+xml,' +
+            encodeURIComponent(
+                '<svg viewBox="0 0 2 2" width="14" height="14" xmlns="http://www.w3.org/2000/svg">' +
+                    '    <rect width="1" height="1" fill="#dcdcdc"/>' +
+                    '    <rect x="1" y="1" width="1" height="1" fill="#dcdcdc"/>' +
+                    '    <rect y="1" width="1" height="1" fill="white"/>' +
+                    '    <rect x="1" width="1" height="1" fill="white"/>' +
+                    "</svg>"
+            ) +
+            '")',
         /* 按键3：绿色 */
-        'background-color:#0F0',
+        "background-color:#0F0",
         /* 按键4：白色 */
-        'background-color:white',
+        "background-color:white",
         /* 按键5：黑色 */
-        'background-color:black',
+        "background-color:black",
     ]
 
     renderMode: RenderMode
@@ -68,7 +71,6 @@ export class WikiPlayer {
     overwriteColor: number | undefined = undefined
 
     //================
-
 
     gameFrameCount: number
 
@@ -96,7 +98,6 @@ export class WikiPlayer {
     costume_walking_frame: number
     layer_stack_exploded_y: number
 
-
     adrenaline_level: number
 
     is_flying: boolean
@@ -107,12 +108,10 @@ export class WikiPlayer {
 
     patch: Set<PlayerPatch>
 
-
     recorder?: Anm2Recorder
 
-    constructor(canvasdiv: HTMLElement, huijiDatabaseFetcher?:HuijiDatabaseFetcher) {
-
-        this.canvasContainer = canvasdiv;
+    constructor(canvasdiv: HTMLElement, huijiDatabaseFetcher?: HuijiDatabaseFetcher) {
+        this.canvasContainer = canvasdiv
 
         //players存储页面描述
         this.players = []
@@ -122,10 +121,10 @@ export class WikiPlayer {
         this.waiting_for_click = canvasdiv.getAttribute("data-waitkey") == "true"
         this.renderMode = canvasdiv.getAttribute("data-costume") == "true" ? RenderMode.Costume : RenderMode.Normal
         this.costumealt = (canvasdiv.getAttribute("data-costume-alt") || "") + ""
-        this.costume_status = 'Walk'
+        this.costume_status = "Walk"
         this.costume_status_reset = false
-        this.costume_leg_dir = 'Down'
-        this.costume_head_dir = 'Down'
+        this.costume_leg_dir = "Down"
+        this.costume_head_dir = "Down"
         this.costume_shooting = { u: false, d: false, l: false, r: false }
         this.costume_walking = { u: false, d: false, l: false, r: false }
         this.costume_shooting_frame = 0
@@ -133,7 +132,7 @@ export class WikiPlayer {
 
         this.is_pausing = false
         this.is_out_of_webbrowser_view = false
-        this.suggest_moving = false; //控制器的建议移动方向
+        this.suggest_moving = false //控制器的建议移动方向
 
         this.layer_stack_exploded_x = 0
         this.layer_stack_exploded_y = 0
@@ -149,21 +148,19 @@ export class WikiPlayer {
         this.patch = new Set<PlayerPatch>()
         this.tapollyon_ring_frame = 0
 
-        for (let patch of (canvasdiv.getAttribute("data-patch") || '').split(',')) {
+        for (let patch of (canvasdiv.getAttribute("data-patch") || "").split(",")) {
             this.patch.add(patch as PlayerPatch)
         }
 
         this.adrenaline_level = 0
-        if (this.hasPatch(PlayerPatch.adrenaline_level))
-            this.adrenaline_level = 6
+        if (this.hasPatch(PlayerPatch.adrenaline_level)) this.adrenaline_level = 6
 
         //在控制台中执行window.enableMoveChara以启用角色移动
         {
-            let oldFunc = window.enableMoveChara;
+            let oldFunc = window.enableMoveChara
             window.enableMoveChara = () => {
-                this.addPatch(PlayerPatch.moveChara);
-                if (oldFunc)
-                    oldFunc();
+                this.addPatch(PlayerPatch.moveChara)
+                if (oldFunc) oldFunc()
             }
 
             let today = new Date()
@@ -172,10 +169,9 @@ export class WikiPlayer {
             }
         }
 
-
         //加载htmlrule
         {
-            let html_rule_attr = canvasdiv.getAttribute('data-html-rule')
+            let html_rule_attr = canvasdiv.getAttribute("data-html-rule")
             if (html_rule_attr && html_rule_attr.length > 0 && window.anm2Rule && window.anm2Rule.has(html_rule_attr)) {
                 this.htmlRuleConstructor = window.anm2Rule.get(html_rule_attr)!
             }
@@ -186,22 +182,21 @@ export class WikiPlayer {
             if (!anm || !anm.hasAttribute("data-anm2")) {
                 continue
             }
-            this.players.push(new WikiPlayerSingleAnm2(this, anm, this.players.length));
+            this.players.push(new WikiPlayerSingleAnm2(this, anm, this.players.length))
         }
 
-
         let standaloneRequester
-        let dbRequester = huijiDatabaseFetcher;
-        if(dbRequester == undefined){
-            dbRequester = standaloneRequester = new HuijiDatabaseFetcher();
+        let dbRequester = huijiDatabaseFetcher
+        if (dbRequester == undefined) {
+            dbRequester = standaloneRequester = new HuijiDatabaseFetcher()
         }
 
         for (let p of this.players) {
             dbRequester.addAnm2File(p.anm2WikiPath)
         }
 
-        for(let player of this.players){
-            if(player.skincolor != undefined || player.hasAltSkin){
+        for (let player of this.players) {
+            if (player.skincolor != undefined || player.hasAltSkin) {
                 dbRequester.dbFetchSuggest = DbFetchSuggest.FetchAltSkin
                 break
             }
@@ -209,15 +204,15 @@ export class WikiPlayer {
 
         dbRequester.addListener(
             () => {
-                this.init_canvasDiv();
-                this.init_anm(dbRequester!);
+                this.init_canvasDiv()
+                this.init_anm(dbRequester!)
             },
             () => {
                 this.canvasContainer.innerHTML = "动画加载失败"
             }
-        );
+        )
 
-        if(standaloneRequester){
+        if (standaloneRequester) {
             standaloneRequester.execute()
         }
     }
@@ -225,8 +220,7 @@ export class WikiPlayer {
     hasConfirm = false
     static recordModeQuestionAnswered = false
     tryCreateRecorder() {
-        if (this.hasConfirm)
-            return
+        if (this.hasConfirm) return
 
         let next = () => {
             window.$dialog.warning({
@@ -248,20 +242,21 @@ export class WikiPlayer {
                     try {
                         if (window.showDirectoryPicker == undefined) {
                             window.$notification.error({
-                                content: "您的浏览器不支持目录相关api（showDirectoryPicker），本功能为浏览器限定功能，请使用其它浏览器。"
+                                content:
+                                    "您的浏览器不支持目录相关api（showDirectoryPicker），本功能为浏览器限定功能，请使用其它浏览器。",
                             })
                             return
                         }
 
                         let dir = await window.showDirectoryPicker({
                             mode: "readwrite",
-                            startIn: "pictures"
-                        });
+                            startIn: "pictures",
+                        })
                         this.recorder = new Anm2Recorder(this, dir)
                     } catch (e) {
-                        console.error(e);
+                        console.error(e)
                         window.$notification.error({
-                            content: "失败或操作已经被取消，请查看控制台。如果是权限问题，可以尝试重试。"
+                            content: "失败或操作已经被取消，请查看控制台。如果是权限问题，可以尝试重试。",
                         })
                     }
 
@@ -272,15 +267,15 @@ export class WikiPlayer {
                 onNegativeClick: (e) => {
                     this.hasConfirm = false
                     return true
-                }
-            });
+                },
+            })
         }
-
 
         if (this.backendCanvas && !WikiPlayer.recordModeQuestionAnswered && !isRecordingMode()) {
             window.$dialog.warning({
                 title: "shader录制模式",
-                content: "当前动画包含shader（着色器）且动画播放器未处于录制模式。\n如果继续，将录制不含shader的原始素材。\n是否要切换至shader录制模式？",
+                content:
+                    "当前动画包含shader（着色器）且动画播放器未处于录制模式。\n如果继续，将录制不含shader的原始素材。\n是否要切换至shader录制模式？",
                 style: "white-space:pre-line",
                 closable: false,
                 closeOnEsc: false,
@@ -298,13 +293,11 @@ export class WikiPlayer {
                     WikiPlayer.recordModeQuestionAnswered = true
                     next()
                     return true
-                }
+                },
             })
         } else {
             next()
         }
-
-
     }
 
     hasPatch(patch: PlayerPatch) {
@@ -319,11 +312,9 @@ export class WikiPlayer {
 
     adrenaline_leven_change_notification: any = undefined
     handleAdrenalineKey(key: string) {
-        if (!this.hasPatch(PlayerPatch.adrenaline_level))
-            return false
-        if (key != '.')
-            return false
-        this.adrenaline_level++;
+        if (!this.hasPatch(PlayerPatch.adrenaline_level)) return false
+        if (key != ".") return false
+        this.adrenaline_level++
         if (this.adrenaline_level >= 24) {
             this.adrenaline_level = 1
         }
@@ -332,16 +323,14 @@ export class WikiPlayer {
         if (this.adrenaline_leven_change_notification) {
             this.adrenaline_leven_change_notification.content = notification
         } else {
-            this.adrenaline_leven_change_notification = window.$notification.create(
-                {
-                    title: '肾上腺素角色形象',
-                    content: notification,
-                    onClose: () => {
-                        this.adrenaline_leven_change_notification = undefined
-                        return true
-                    }
-                }
-            )
+            this.adrenaline_leven_change_notification = window.$notification.create({
+                title: "肾上腺素角色形象",
+                content: notification,
+                onClose: () => {
+                    this.adrenaline_leven_change_notification = undefined
+                    return true
+                },
+            })
         }
     }
 
@@ -351,12 +340,22 @@ export class WikiPlayer {
         this.canvasContainer.appendChild(this.colorDiv)
         if (isLayerStackExploded()) {
             /* 按键6：layer_stack_exploded限定背景色 */
-            this.BACKGROUND_COLORS.push('background-image:url("data:image/svg+xml,' + encodeURIComponent('<svg viewBox="0 0 2 2" width="' + (4 * +this.canvasContainer.getAttribute("data-width")!) + '" height="' + (4 * +this.canvasContainer.getAttribute("data-height")!) + '" xmlns="http://www.w3.org/2000/svg">' +
-                '    <rect width="1" height="1" fill="#dcdcdc"/>' +
-                '    <rect x="1" y="1" width="1" height="1" fill="#dcdcdc"/>' +
-                '    <rect y="1" width="1" height="1" fill="white"/>' +
-                '    <rect x="1" width="1" height="1" fill="white"/>' +
-                '</svg>') + '")')
+            this.BACKGROUND_COLORS.push(
+                'background-image:url("data:image/svg+xml,' +
+                    encodeURIComponent(
+                        '<svg viewBox="0 0 2 2" width="' +
+                            4 * +this.canvasContainer.getAttribute("data-width")! +
+                            '" height="' +
+                            4 * +this.canvasContainer.getAttribute("data-height")! +
+                            '" xmlns="http://www.w3.org/2000/svg">' +
+                            '    <rect width="1" height="1" fill="#dcdcdc"/>' +
+                            '    <rect x="1" y="1" width="1" height="1" fill="#dcdcdc"/>' +
+                            '    <rect y="1" width="1" height="1" fill="white"/>' +
+                            '    <rect x="1" width="1" height="1" fill="white"/>' +
+                            "</svg>"
+                    ) +
+                    '")'
+            )
         }
         this.setBackgroundColor()
         this.UpdateCharaTransform()
@@ -374,7 +373,14 @@ export class WikiPlayer {
         let canvas_style = "max-width:100%;vertical-align:middle;"
         if (this.canvasContainer.getAttribute("data-scale")) {
             let scale = +(this.canvasContainer.getAttribute("data-scale") ?? 1)
-            canvas_style += "transform:scale(" + scale + ");margin:" + (this.canvasElement.height * (scale - 1) / 2) + "px " + (this.canvasElement.width * (scale - 1) / 2) + "px;"
+            canvas_style +=
+                "transform:scale(" +
+                scale +
+                ");margin:" +
+                (this.canvasElement.height * (scale - 1)) / 2 +
+                "px " +
+                (this.canvasElement.width * (scale - 1)) / 2 +
+                "px;"
         }
 
         if (this.canvasContainer.hasAttribute("data-shader")) {
@@ -384,7 +390,11 @@ export class WikiPlayer {
                 this.backendCanvas = document.createElement("canvas")
                 this.backendCanvas.width = this.canvasElement.width
                 this.backendCanvas.height = this.canvasElement.height
-                this.webglOverlay = new WebGLOverlay(this.backendCanvas, this.canvasElement, this.canvasContainer.getAttribute("data-shader") || "")
+                this.webglOverlay = new WebGLOverlay(
+                    this.backendCanvas,
+                    this.canvasElement,
+                    this.canvasContainer.getAttribute("data-shader") || ""
+                )
                 this.webglOverlay.init()
             }
         }
@@ -402,40 +412,37 @@ export class WikiPlayer {
         }
     }
 
-
     setBackgroundColor(color?: string) {
         if (color) {
-            this.colorDiv!.style.cssText = 'margin:0;padding:0;' + color
+            this.colorDiv!.style.cssText = "margin:0;padding:0;" + color
         } else {
-            this.colorDiv!.style.cssText = 'margin:0;padding:0;'
+            this.colorDiv!.style.cssText = "margin:0;padding:0;"
         }
     }
 
     moveChara_x: number = 0
     moveChara_y: number = 0
     UpdateCharaTransform() {
-        this.canvasContainer.style.transform = 'translate(' + this.moveChara_x + 'px,' + this.moveChara_y + 'px)'
+        this.canvasContainer.style.transform = "translate(" + this.moveChara_x + "px," + this.moveChara_y + "px)"
     }
 
     handleColorKey(key: any) {
-        if (typeof (key) == 'string' && key.match("^[0-9]$")) {
-            this.setBackgroundColor(this.BACKGROUND_COLORS[+key] || '')
+        if (typeof key == "string" && key.match("^[0-9]$")) {
+            this.setBackgroundColor(this.BACKGROUND_COLORS[+key] || "")
             return true
         }
     }
 
-    init_anm(fetcher:HuijiDatabaseFetcher) {
+    init_anm(fetcher: HuijiDatabaseFetcher) {
         if (this.renderMode == RenderMode.Costume) {
             for (let player of this.players) {
-                if (player.skincolor)
-                    this.overwriteColor = player.skincolor
+                if (player.skincolor) this.overwriteColor = player.skincolor
             }
         }
 
         for (let player of this.players) {
             player.init(fetcher)
         }
-
 
         let commonFps = 1
         if (this.renderMode == RenderMode.Costume) {
@@ -447,7 +454,7 @@ export class WikiPlayer {
                 }
             }
 
-            for (; ;) {
+            for (;;) {
                 let passed = true
                 for (let player of this.players) {
                     if (commonFps % player.anm!.getFps() != 0) {
@@ -462,7 +469,6 @@ export class WikiPlayer {
             }
         }
         this.commonFps = commonFps
-
 
         if (this.renderMode == RenderMode.Normal) {
             this.canvasElement!.onclick = () => {
@@ -497,8 +503,7 @@ export class WikiPlayer {
                     return
                 }
 
-                if (this.handleColorKey(e.key))
-                    e.preventDefault()
+                if (this.handleColorKey(e.key)) e.preventDefault()
             }
 
             this.canvasElement!.onkeyup = (e) => {
@@ -509,10 +514,13 @@ export class WikiPlayer {
             }
 
             if (this.htmlRuleConstructor) {
-                this.htmlRule = this.htmlRuleConstructor(this.players.map(p => p.anm!), this.canvasElement!, this.webglOverlay)
+                this.htmlRule = this.htmlRuleConstructor(
+                    this.players.map((p) => p.anm!),
+                    this.canvasElement!,
+                    this.webglOverlay
+                )
             }
         } else {
-
             let click_callback_removed = true
             let activeWaitForClick = () => {
                 if (this.waiting_for_click) {
@@ -525,7 +533,6 @@ export class WikiPlayer {
                 }
             }
             this.canvasElement!.addEventListener("click", activeWaitForClick)
-
 
             if (this.waiting_for_click) {
                 click_callback_removed = false
@@ -543,12 +550,10 @@ export class WikiPlayer {
                     e.preventDefault()
                     return
                 }
-                if (this.onCostumKeyDown(e.key))
-                    e.preventDefault()
+                if (this.onCostumKeyDown(e.key)) e.preventDefault()
 
-                if (this.handleColorKey(e.key))
-                    e.preventDefault()
-            };
+                if (this.handleColorKey(e.key)) e.preventDefault()
+            }
 
             this.canvasElement!.onkeyup = (e) => {
                 // e.preventDefault()
@@ -556,52 +561,46 @@ export class WikiPlayer {
                 if (this.onCostumKeyUp(e.key)) {
                     e.preventDefault()
                 }
-            };
+            }
 
-            this.canvasElement!.addEventListener('touchstart', (ev) => {
-                if (!ev.cancelable)
-                    return;
+            this.canvasElement!.addEventListener("touchstart", (ev) => {
+                if (!ev.cancelable) return
                 if (this.waiting_for_click) {
                     activeWaitForClick()
                 }
                 this.onCostumeTouchStart(ev)
             })
-            this.canvasElement!.addEventListener('touchmove', ev => {
-                if (!ev.cancelable)
-                    return;
+            this.canvasElement!.addEventListener("touchmove", (ev) => {
+                if (!ev.cancelable) return
                 this.onCostomeTouchMove(ev)
             })
-            this.canvasElement!.addEventListener('touchend', ev => {
-                if (!ev.cancelable)
-                    return;
+            this.canvasElement!.addEventListener("touchend", (ev) => {
+                if (!ev.cancelable) return
                 this.onCostumeTouchEnd(ev)
             })
         }
 
         if (IntersectionObserver) {
-            (new IntersectionObserver((entrys) => {
+            new IntersectionObserver((entrys) => {
                 for (let entry of entrys) {
-                    if (entry.target != this.canvasElement!)
-                        continue
+                    if (entry.target != this.canvasElement!) continue
                     if (entry.isIntersecting) {
                         this.is_out_of_webbrowser_view = false
                         this.startDraw()
                     } else {
                         this.is_out_of_webbrowser_view = true
-                        if (!this.hasPatch(PlayerPatch.moveChara))
-                            this.stopDraw()
+                        if (!this.hasPatch(PlayerPatch.moveChara)) this.stopDraw()
                     }
                 }
-            })).observe(this.canvasElement!)
+            }).observe(this.canvasElement!)
         } else {
             // 我们不知道是否能渲染，所以直接渲染
             this.startDraw()
         }
 
-
         this.canvasContainer.AnmCostumeController = {
             StartDrawAnm: () => {
-                this.startDraw();
+                this.startDraw()
             },
             StopDrawAnm: () => {
                 this.stopDraw()
@@ -625,26 +624,25 @@ export class WikiPlayer {
     }
 
     getFps() {
-        return this.commonFps;
+        return this.commonFps
     }
 
-    pendingAnimationFrame:number|undefined = undefined
+    pendingAnimationFrame: number | undefined = undefined
     startDraw(forceRestart = false) {
         this.isDirty = true
         if (this.pendingAnimationFrame != undefined) {
-            if (!forceRestart)
-                return
+            if (!forceRestart) return
             this.stopDraw()
         }
 
-        if(this.pendingAnimationFrame == undefined){
-            this.pendingAnimationFrame = requestAnimationFrame((time)=>{
+        if (this.pendingAnimationFrame == undefined) {
+            this.pendingAnimationFrame = requestAnimationFrame((time) => {
                 this.onAnimationFrame(time)
             })
         }
     }
     stopDraw() {
-        if(this.pendingAnimationFrame != undefined){
+        if (this.pendingAnimationFrame != undefined) {
             cancelAnimationFrame(this.pendingAnimationFrame)
             this.pendingAnimationFrame = undefined
             this.timeLastAnim = undefined
@@ -652,53 +650,51 @@ export class WikiPlayer {
     }
     accumulatedDirtyDuration = 0
 
-    timeLastAnim:number|undefined = undefined
-    onAnimationFrame(time: DOMHighResTimeStamp){
+    timeLastAnim: number | undefined = undefined
+    onAnimationFrame(time: DOMHighResTimeStamp) {
         // 立即启动下一次绘制循环，如果要停止动画，则稍后取消此循环
-        this.pendingAnimationFrame = requestAnimationFrame((time)=>{
+        this.pendingAnimationFrame = requestAnimationFrame((time) => {
             this.onAnimationFrame(time)
-        });
+        })
 
         let deltaTime
-        if(this.timeLastAnim == undefined){
+        if (this.timeLastAnim == undefined) {
             deltaTime = time
-        }else{
+        } else {
             deltaTime = time - this.timeLastAnim
         }
         this.timeLastAnim = time
 
-        let frameDuration = 1000 / this.getFps();
+        let frameDuration = 1000 / this.getFps()
 
         let renderCount = 0
-        if(deltaTime > 5 * frameDuration)
-        {
+        if (deltaTime > 5 * frameDuration) {
             // 如果间隔太大，就放弃追帧了
             this.accumulatedDirtyDuration = 0
             this.doUpdate(false)
             renderCount++
-        }else{
-            this.accumulatedDirtyDuration += deltaTime;
-            while(this.accumulatedDirtyDuration > frameDuration - frameDuration*0.5 /* 
+        } else {
+            this.accumulatedDirtyDuration += deltaTime
+            while (
+                this.accumulatedDirtyDuration >
+                frameDuration - frameDuration * 0.5 /* 
                 0.5倍容错：
                 我们会提前绘制未来半帧内出现的动画帧，以避免抖动问题。
                 这个容错用于避免在浏览器帧率=动画FPS时出现的跳帧问题
-                */){
-                this.doUpdate(false);
-                this.accumulatedDirtyDuration -= frameDuration;
+                */
+            ) {
+                this.doUpdate(false)
+                this.accumulatedDirtyDuration -= frameDuration
                 renderCount++
             }
         }
 
-
         this.handleMoveCharaPatch(deltaTime)
 
-        if(this.isDirty){
+        if (this.isDirty) {
             this.realDraw()
         }
-
     }
-
-
 
     init_event_emitted = false
     updateNormal() {
@@ -710,8 +706,7 @@ export class WikiPlayer {
         }
 
         for (let player of this.players) {
-            if (this.currentFps % (this.commonFps / player.anm!.getFps()) != 0)
-                continue;
+            if (this.currentFps % (this.commonFps / player.anm!.getFps()) != 0) continue
 
             if (player.sleeping_rule) {
                 player.sleep_remains--
@@ -733,10 +728,9 @@ export class WikiPlayer {
     }
     drawNormal() {
         //apply shader
-        let drawing_canvas = this.backendCanvas || this.canvasElement!;
+        let drawing_canvas = this.backendCanvas || this.canvasElement!
         let ctx = drawing_canvas.getContext("2d")
-        if (!ctx)
-            return
+        if (!ctx) return
         ctx.imageSmoothingEnabled = false
 
         ctx.setTransform(1, 0, 0, 1, 0, 0)
@@ -763,20 +757,26 @@ export class WikiPlayer {
             this.tapollyon_ring_frame += 0.5
         }
         if (this.layer_stack_exploding) {
-            if (this.layer_stack_exploded_x < this.canvasElement!.width / 8) this.layer_stack_exploded_x += 2;
-            if (this.layer_stack_exploded_x > this.canvasElement!.width / 8) this.layer_stack_exploded_x = this.canvasElement!.width / 8;
-            if (this.layer_stack_exploded_y < this.canvasElement!.height / 2) this.layer_stack_exploded_y += 2;
-            if (this.layer_stack_exploded_y > this.canvasElement!.height / 2) this.layer_stack_exploded_y = this.canvasElement!.height / 2;
+            if (this.layer_stack_exploded_x < this.canvasElement!.width / 8) this.layer_stack_exploded_x += 2
+            if (this.layer_stack_exploded_x > this.canvasElement!.width / 8)
+                this.layer_stack_exploded_x = this.canvasElement!.width / 8
+            if (this.layer_stack_exploded_y < this.canvasElement!.height / 2) this.layer_stack_exploded_y += 2
+            if (this.layer_stack_exploded_y > this.canvasElement!.height / 2)
+                this.layer_stack_exploded_y = this.canvasElement!.height / 2
         } else {
-            if (this.layer_stack_exploded_x > 0) this.layer_stack_exploded_x -= 2;
-            if (this.layer_stack_exploded_x < 0) this.layer_stack_exploded_x = 0;
-            if (this.layer_stack_exploded_y > 0) this.layer_stack_exploded_y -= 2;
-            if (this.layer_stack_exploded_y < 0) this.layer_stack_exploded_y = 0;
+            if (this.layer_stack_exploded_x > 0) this.layer_stack_exploded_x -= 2
+            if (this.layer_stack_exploded_x < 0) this.layer_stack_exploded_x = 0
+            if (this.layer_stack_exploded_y > 0) this.layer_stack_exploded_y -= 2
+            if (this.layer_stack_exploded_y < 0) this.layer_stack_exploded_y = 0
         }
 
-
         if (this.costume_status == "Walk") {
-            if (this.costume_shooting.u || this.costume_shooting.d || this.costume_shooting.l || this.costume_shooting.r) {
+            if (
+                this.costume_shooting.u ||
+                this.costume_shooting.d ||
+                this.costume_shooting.l ||
+                this.costume_shooting.r
+            ) {
                 if (this.hasPatch(PlayerPatch.Neptunus)) {
                     this.costume_shooting_frame -= 0.5
                 } else {
@@ -795,8 +795,18 @@ export class WikiPlayer {
                     is_head_idle = true
                 }
             }
-            if (this.suggest_moving || this.is_flying || this.costume_walking.u || this.costume_walking.d || this.costume_walking.l || this.costume_walking.r ||
-                (this.hasPatch(PlayerPatch.csection) && (this.costume_shooting.u || this.costume_shooting.d || this.costume_shooting.l || this.costume_shooting.r))
+            if (
+                this.suggest_moving ||
+                this.is_flying ||
+                this.costume_walking.u ||
+                this.costume_walking.d ||
+                this.costume_walking.l ||
+                this.costume_walking.r ||
+                (this.hasPatch(PlayerPatch.csection) &&
+                    (this.costume_shooting.u ||
+                        this.costume_shooting.d ||
+                        this.costume_shooting.l ||
+                        this.costume_shooting.r))
             ) {
                 this.costume_walking_frame++
             } else {
@@ -804,10 +814,10 @@ export class WikiPlayer {
             }
         }
         for (let player of this.players) {
-            if (this.costume_status == 'Walk') {
-                let target_anm_name_A = 'Head' + this.costume_head_dir
+            if (this.costume_status == "Walk") {
+                let target_anm_name_A = "Head" + this.costume_head_dir
                 if (is_head_idle && player.costumeInfoA!.head_has_idle) {
-                    target_anm_name_A += '_Idle'
+                    target_anm_name_A += "_Idle"
                 }
 
                 if (player.costumeInfoA!.is_tapollyon) {
@@ -823,28 +833,32 @@ export class WikiPlayer {
                 } else if (!is_head_idle && player.costumeInfoA!.head_has_charge) {
                     let head_charge_frame = player.costumeInfoA!.head_charge_frame!
                     if (this.costume_shooting_frame >= head_charge_frame) {
-                        player.costumeA!.setFrame(target_anm_name_A + "ChargeFull", Math.floor(this.costume_shooting_frame - head_charge_frame))
+                        player.costumeA!.setFrame(
+                            target_anm_name_A + "ChargeFull",
+                            Math.floor(this.costume_shooting_frame - head_charge_frame)
+                        )
                     } else {
                         player.costumeA!.setFrame(target_anm_name_A + "Charge", this.costume_shooting_frame)
                     }
-                } else /* original logic */ if (player.costumeA!.getCurrentAnmName() != (target_anm_name_A)) {
-                    player.costumeA!.setFrame(target_anm_name_A, 0)
+                } else if (player.costumeA!.getCurrentAnmName() != target_anm_name_A) {
+                    /* original logic */ player.costumeA!.setFrame(target_anm_name_A, 0)
                 } else {
                     player.costumeA!.update()
                 }
 
-
-
                 if (player.costumeInfoB!.is_csection) {
-                    player.costumeB!.sheet_offsets[0]!.y = C_SECTION_FRAME_MAP[Math.floor(this.costume_shooting_frame * 1.5) % C_SECTION_FRAME_MAP.length]! * 96
+                    player.costumeB!.sheet_offsets[0]!.y =
+                        C_SECTION_FRAME_MAP[
+                            Math.floor(this.costume_shooting_frame * 1.5) % C_SECTION_FRAME_MAP.length
+                        ]! * 96
                 }
-                if (player.costumeB!.getCurrentAnmName() != ('Walk' + this.costume_leg_dir)) {
-                    player.costumeB!.setFrame('Walk' + this.costume_leg_dir, 0)
+                if (player.costumeB!.getCurrentAnmName() != "Walk" + this.costume_leg_dir) {
+                    player.costumeB!.setFrame("Walk" + this.costume_leg_dir, 0)
                 } else {
                     player.costumeB!.update()
                 }
-                if (player.costumeC!.getCurrentAnmName() != ('Head' + this.costume_head_dir + '_Overlay')) {
-                    player.costumeC!.setFrame('Head' + this.costume_head_dir + '_Overlay', 0)
+                if (player.costumeC!.getCurrentAnmName() != "Head" + this.costume_head_dir + "_Overlay") {
+                    player.costumeC!.setFrame("Head" + this.costume_head_dir + "_Overlay", 0)
                 } else {
                     player.costumeC!.update()
                 }
@@ -860,8 +874,6 @@ export class WikiPlayer {
             }
         }
 
-
-
         if (this.hasPatch(PlayerPatch.randomIdle)) {
             let now = new Date().getTime()
             if (now > this.random_idle_last_update) {
@@ -872,10 +884,10 @@ export class WikiPlayer {
         }
     }
 
-    handleMoveCharaPatch(deltaTime:DOMHighResTimeStamp){
-        if (this.hasPatch(PlayerPatch.moveChara) && this.costume_status == 'Walk') {
+    handleMoveCharaPatch(deltaTime: DOMHighResTimeStamp) {
+        if (this.hasPatch(PlayerPatch.moveChara) && this.costume_status == "Walk") {
             if (this.costume_walking.u || this.costume_walking.d || this.costume_walking.l || this.costume_walking.r) {
-                let speed = 4 * deltaTime / 33.33
+                let speed = (4 * deltaTime) / 33.33
                 if (this.costume_walking.u) {
                     this.moveChara_y -= speed
                 }
@@ -914,12 +926,10 @@ export class WikiPlayer {
             if (reUpdate) {
                 this.UpdateCharaTransform()
             }
-
         }
     }
 
     drawCostume() {
-
         let ctx = this.canvasElement!.getContext("2d")!
         ctx.imageSmoothingEnabled = false
         ctx.setTransform(1, 0, 0, 1, 0, 0)
@@ -929,31 +939,87 @@ export class WikiPlayer {
                 elem[1].clearRect(0, 0, 100000, 100000)
             }
         }
-        if (this.costume_status == 'Walk') {
+        if (this.costume_status == "Walk") {
             if (this.hasPatch(PlayerPatch.csection)) {
-                AnmPlayer.renderCostume(this.costumeInfosB, this.costumeInfosA, this.costumeInfosC, ctx, this.canvasElement!, this.players[0]!.x, this.players[0]!.y, 1, 0, Math.floor(this.costume_walking_frame),
-                    this.hasPatch(PlayerPatch.shadowBody), this.gameFrameCount, this.adrenaline_level,
-                    [this.layer_stack_exploded_x, this.layer_stack_exploded_y])
+                AnmPlayer.renderCostume(
+                    this.costumeInfosB,
+                    this.costumeInfosA,
+                    this.costumeInfosC,
+                    ctx,
+                    this.canvasElement!,
+                    this.players[0]!.x,
+                    this.players[0]!.y,
+                    1,
+                    0,
+                    Math.floor(this.costume_walking_frame),
+                    this.hasPatch(PlayerPatch.shadowBody),
+                    this.gameFrameCount,
+                    this.adrenaline_level,
+                    [this.layer_stack_exploded_x, this.layer_stack_exploded_y]
+                )
             } else if (this.render_random_idle) {
                 //this.hasPatch(PlayerPatch.randomIdle)
-                AnmPlayer.renderCostume(this.costumeInfosB, undefined, undefined, ctx, this.canvasElement!, this.players[0]!.x, this.players[0]!.y, 1, Math.floor(this.costume_shooting_frame), Math.floor(this.costume_walking_frame),
-                    this.hasPatch(PlayerPatch.shadowBody), this.gameFrameCount, this.adrenaline_level,
-                    [this.layer_stack_exploded_x, this.layer_stack_exploded_y])
-                this.random_idle_anm?.drawCanvas(ctx, this.canvasElement!, this.players[0]!.x, this.players[0]!.y - 17, 1)
+                AnmPlayer.renderCostume(
+                    this.costumeInfosB,
+                    undefined,
+                    undefined,
+                    ctx,
+                    this.canvasElement!,
+                    this.players[0]!.x,
+                    this.players[0]!.y,
+                    1,
+                    Math.floor(this.costume_shooting_frame),
+                    Math.floor(this.costume_walking_frame),
+                    this.hasPatch(PlayerPatch.shadowBody),
+                    this.gameFrameCount,
+                    this.adrenaline_level,
+                    [this.layer_stack_exploded_x, this.layer_stack_exploded_y]
+                )
+                this.random_idle_anm?.drawCanvas(
+                    ctx,
+                    this.canvasElement!,
+                    this.players[0]!.x,
+                    this.players[0]!.y - 17,
+                    1
+                )
             } else {
-                AnmPlayer.renderCostume(this.costumeInfosB, this.costumeInfosA, this.costumeInfosC, ctx, this.canvasElement!, this.players[0]!.x, this.players[0]!.y, 1, Math.floor(this.costume_shooting_frame), Math.floor(this.costume_walking_frame),
-                    this.hasPatch(PlayerPatch.shadowBody), this.gameFrameCount, this.adrenaline_level,
-                    [this.layer_stack_exploded_x, this.layer_stack_exploded_y])
+                AnmPlayer.renderCostume(
+                    this.costumeInfosB,
+                    this.costumeInfosA,
+                    this.costumeInfosC,
+                    ctx,
+                    this.canvasElement!,
+                    this.players[0]!.x,
+                    this.players[0]!.y,
+                    1,
+                    Math.floor(this.costume_shooting_frame),
+                    Math.floor(this.costume_walking_frame),
+                    this.hasPatch(PlayerPatch.shadowBody),
+                    this.gameFrameCount,
+                    this.adrenaline_level,
+                    [this.layer_stack_exploded_x, this.layer_stack_exploded_y]
+                )
             }
         } else {
-            AnmPlayer.renderCostume(this.costumeInfosA, undefined, undefined, ctx, this.canvasElement!, this.players[0]!.x, this.players[0]!.y, 1, Math.floor(this.costume_shooting_frame), Math.floor(this.costume_walking_frame),
-                this.hasPatch(PlayerPatch.shadowBody), this.gameFrameCount, this.adrenaline_level,
-                [this.layer_stack_exploded_x, this.layer_stack_exploded_y])
+            AnmPlayer.renderCostume(
+                this.costumeInfosA,
+                undefined,
+                undefined,
+                ctx,
+                this.canvasElement!,
+                this.players[0]!.x,
+                this.players[0]!.y,
+                1,
+                Math.floor(this.costume_shooting_frame),
+                Math.floor(this.costume_walking_frame),
+                this.hasPatch(PlayerPatch.shadowBody),
+                this.gameFrameCount,
+                this.adrenaline_level,
+                [this.layer_stack_exploded_x, this.layer_stack_exploded_y]
+            )
         }
         this.gameFrameCount++
-
     }
-
 
     isDirty = false
     realDraw() {
@@ -966,8 +1032,7 @@ export class WikiPlayer {
     }
 
     doUpdate(noUpdate: boolean) {
-        if (this.waiting_for_click)
-            noUpdate = true
+        if (this.waiting_for_click) noUpdate = true
         if (this.renderMode == RenderMode.Costume) {
             if (noUpdate) {
                 this.isDirty = true
@@ -986,24 +1051,23 @@ export class WikiPlayer {
             }
         }
 
-        if (this.waiting_for_click && this.pendingAnimationFrame)
-            this.stopDraw()
+        if (this.waiting_for_click && this.pendingAnimationFrame) this.stopDraw()
     }
 
     ////////////////// costume //////////////
 
     COSTUMEANM_KEYS = new Map<string, string>([
-        ['p', 'Pickup'],
-        ['h', 'Hit'],
+        ["p", "Pickup"],
+        ["h", "Hit"],
         //['A','Appear'],
-        ['k', 'Death'],
-        ['b', 'Sad'],
-        ['o', 'Happy'],
+        ["k", "Death"],
+        ["b", "Sad"],
+        ["o", "Happy"],
         //['t','TeleportUp'],
         //['T','TeleportDown'],
-        ['t', 'Trapdoor'],
+        ["t", "Trapdoor"],
         //['M','MinecartEnter'],
-        ['j', 'Jump'],
+        ["j", "Jump"],
         //['G','Glitch'],
         //['l','LiftItem'],
         //['H','HideItem'],
@@ -1019,30 +1083,30 @@ export class WikiPlayer {
         //['','SuperLeapDown'],
         //['F','ForgottenDeath'],
         //['','DeathTeleport'],
-    ]);
+    ])
 
     onCostumKeyDown(key: string): boolean {
         let catched = false
         if (key.length == 1) {
             key = key.toLowerCase()
         }
-        if (key == 'ArrowUp') {
-            this.costume_head_dir = 'Up'
+        if (key == "ArrowUp") {
+            this.costume_head_dir = "Up"
             this.costume_shooting.u = true
             catched = true
         }
-        if (key == 'ArrowDown') {
-            this.costume_head_dir = 'Down'
+        if (key == "ArrowDown") {
+            this.costume_head_dir = "Down"
             this.costume_shooting.d = true
             catched = true
         }
-        if (key == 'ArrowLeft') {
-            this.costume_head_dir = 'Left'
+        if (key == "ArrowLeft") {
+            this.costume_head_dir = "Left"
             this.costume_shooting.l = true
             catched = true
         }
-        if (key == 'ArrowRight') {
-            this.costume_head_dir = 'Right'
+        if (key == "ArrowRight") {
+            this.costume_head_dir = "Right"
             this.costume_shooting.r = true
             catched = true
         }
@@ -1053,44 +1117,72 @@ export class WikiPlayer {
             this.costume_shooting.r = false
         }
 
-        if (key == 'w') {
-            this.costume_status = 'Walk'
-            this.costume_leg_dir = 'Up'
+        if (key == "w") {
+            this.costume_status = "Walk"
+            this.costume_leg_dir = "Up"
             this.costume_walking.u = true
             catched = true
-            if (!(this.costume_shooting.u || this.costume_shooting.d || this.costume_shooting.l || this.costume_shooting.r)) {
-                this.costume_head_dir = 'Up'
+            if (
+                !(
+                    this.costume_shooting.u ||
+                    this.costume_shooting.d ||
+                    this.costume_shooting.l ||
+                    this.costume_shooting.r
+                )
+            ) {
+                this.costume_head_dir = "Up"
             }
         }
-        if (key == 's') {
-            this.costume_leg_dir = 'Down'
+        if (key == "s") {
+            this.costume_leg_dir = "Down"
             this.costume_walking.d = true
             catched = true
-            if (!(this.costume_shooting.u || this.costume_shooting.d || this.costume_shooting.l || this.costume_shooting.r)) {
-                this.costume_head_dir = 'Down'
+            if (
+                !(
+                    this.costume_shooting.u ||
+                    this.costume_shooting.d ||
+                    this.costume_shooting.l ||
+                    this.costume_shooting.r
+                )
+            ) {
+                this.costume_head_dir = "Down"
             }
         }
-        if (key == 'a') {
-            this.costume_leg_dir = 'Left'
+        if (key == "a") {
+            this.costume_leg_dir = "Left"
             this.costume_walking.l = true
             catched = true
-            if (!(this.costume_shooting.u || this.costume_shooting.d || this.costume_shooting.l || this.costume_shooting.r)) {
-                this.costume_head_dir = 'Left'
+            if (
+                !(
+                    this.costume_shooting.u ||
+                    this.costume_shooting.d ||
+                    this.costume_shooting.l ||
+                    this.costume_shooting.r
+                )
+            ) {
+                this.costume_head_dir = "Left"
             }
         }
-        if (key == 'd') {
-            this.costume_leg_dir = 'Right'
+        if (key == "d") {
+            this.costume_leg_dir = "Right"
             this.costume_walking.r = true
             catched = true
-            if (!(this.costume_shooting.u || this.costume_shooting.d || this.costume_shooting.l || this.costume_shooting.r)) {
-                this.costume_head_dir = 'Right'
+            if (
+                !(
+                    this.costume_shooting.u ||
+                    this.costume_shooting.d ||
+                    this.costume_shooting.l ||
+                    this.costume_shooting.r
+                )
+            ) {
+                this.costume_head_dir = "Right"
             }
         }
-        if (key == 'r') {
-            this.costume_status = 'Walk'
+        if (key == "r") {
+            this.costume_status = "Walk"
             catched = true
         }
-        if (key == '`' && isLayerStackExploded()) {
+        if (key == "`" && isLayerStackExploded()) {
             this.layer_stack_exploding = !this.layer_stack_exploding
             catched = true
         }
@@ -1100,11 +1192,9 @@ export class WikiPlayer {
             this.costume_status_reset = true
             catched = true
         }
-        if (key == 'x') {
-            if (this.pendingAnimationFrame == undefined)
-                this.startDraw()
-            else
-                this.stopDraw()
+        if (key == "x") {
+            if (this.pendingAnimationFrame == undefined) this.startDraw()
+            else this.stopDraw()
             catched = true
         }
         if (this.handleColorKey(key)) {
@@ -1120,42 +1210,42 @@ export class WikiPlayer {
         if (key.length == 1) {
             key = key.toLowerCase()
         }
-        if (key == 'ArrowUp') {
+        if (key == "ArrowUp") {
             this.costume_shooting.u = false
             catched = true
         }
-        if (key == 'ArrowDown') {
+        if (key == "ArrowDown") {
             this.costume_shooting.d = false
             catched = true
         }
-        if (key == 'ArrowLeft') {
+        if (key == "ArrowLeft") {
             this.costume_shooting.l = false
             catched = true
         }
-        if (key == 'ArrowRight') {
+        if (key == "ArrowRight") {
             this.costume_shooting.r = false
             catched = true
         }
-        if (key == 'w') {
+        if (key == "w") {
             this.costume_walking.u = false
             catched = true
         }
-        if (key == 's') {
+        if (key == "s") {
             this.costume_walking.d = false
             catched = true
         }
-        if (key == 'a') {
+        if (key == "a") {
             this.costume_walking.l = false
             catched = true
         }
-        if (key == 'd') {
+        if (key == "d") {
             this.costume_walking.r = false
             catched = true
         }
         return catched
     }
     touchData: {
-        x: number,
+        x: number
         y: number
     }[] = []
     onCostumeTouchStart(ev: TouchEvent) {
@@ -1168,13 +1258,14 @@ export class WikiPlayer {
             if (id == undefined) {
                 id = -1
             }
-            let x = touch.pageX, y = touch.pageY
+            let x = touch.pageX,
+                y = touch.pageY
             this.touchData[id] = { x: x, y: y }
             if (!this.hasPatch(PlayerPatch.noAttack)) {
-                this.costume_shooting.u = (this.costume_head_dir == "Up")
-                this.costume_shooting.l = (this.costume_head_dir == "Left")
-                this.costume_shooting.r = (this.costume_head_dir == "Right")
-                this.costume_shooting.d = (this.costume_head_dir == "Down")
+                this.costume_shooting.u = this.costume_head_dir == "Up"
+                this.costume_shooting.l = this.costume_head_dir == "Left"
+                this.costume_shooting.r = this.costume_head_dir == "Right"
+                this.costume_shooting.d = this.costume_head_dir == "Down"
             }
         }
     }
@@ -1186,10 +1277,10 @@ export class WikiPlayer {
             if (id == undefined) {
                 id = -1
             }
-            let x = touch.pageX, y = touch.pageY
+            let x = touch.pageX,
+                y = touch.pageY
             let axis = this.touchData[id]
-            if (axis == undefined)
-                return
+            if (axis == undefined) return
             let dx = x - axis.x
             let dy = y - axis.y
             let len = dx * dx + dy * dy
@@ -1205,28 +1296,27 @@ export class WikiPlayer {
 
                 if (dx > dy) {
                     if (dx > -dy) {
-                        this.costume_head_dir = 'Right'
-                        this.costume_leg_dir = 'Right'
+                        this.costume_head_dir = "Right"
+                        this.costume_leg_dir = "Right"
                         this.costume_walking.r = true
                     } else {
-                        this.costume_head_dir = 'Up'
-                        this.costume_leg_dir = 'Up'
+                        this.costume_head_dir = "Up"
+                        this.costume_leg_dir = "Up"
                         this.costume_walking.u = true
                     }
                 } else {
                     if (dx > -dy) {
-                        this.costume_head_dir = 'Down'
-                        this.costume_leg_dir = 'Down'
+                        this.costume_head_dir = "Down"
+                        this.costume_leg_dir = "Down"
                         this.costume_walking.d = true
                     } else {
-                        this.costume_head_dir = 'Left'
-                        this.costume_leg_dir = 'Left'
+                        this.costume_head_dir = "Left"
+                        this.costume_leg_dir = "Left"
                         this.costume_walking.l = true
                     }
                 }
             }
         }
-
     }
     onCostumeTouchEnd(ev: TouchEvent) {
         ev.preventDefault()
@@ -1281,15 +1371,11 @@ class WikiPlayerSingleAnm2 {
     sleeping_event_name: string | undefined
     sleep_remains: number = -1
 
-
-
     constructor(parent: WikiPlayer, anm: Element, index: number) {
         this.parent = parent
         this.index = index
 
-        if (!anm.hasAttribute("data-anm2"))
-            throw new Error("Not supported.");
-
+        if (!anm.hasAttribute("data-anm2")) throw new Error("Not supported.")
 
         let skincolor = anm.getAttribute("data-skincolor")
         if (skincolor != undefined && skincolor.length > 0) {
@@ -1298,22 +1384,23 @@ class WikiPlayerSingleAnm2 {
             this.skincolor = undefined
         }
 
-        this.parent.is_flying ||= anm.getAttribute("data-isflying") == "true";
+        this.parent.is_flying ||= anm.getAttribute("data-isflying") == "true"
 
         //parse rule
         for (let j = 0; j < anm.children.length; j++) {
             let rules_str = anm.children[j]!.getAttribute("data-rule")
             if (rules_str && rules_str.length > 0) {
-                for (let rule_str of rules_str.split('|')) {
+                for (let rule_str of rules_str.split("|")) {
                     // rule_str->   xxx:xxx,xxx:xxx
                     let newrule = new Map<string, string>()
                     if (rule_str.length > 0) {
                         for (let rule_kv of rule_str.split(",")) {
                             if (rule_kv.length > 0) {
                                 // rule_kv->   xxx:xxx
-                                let rule_kv_split = rule_kv.split(':')
+                                let rule_kv_split = rule_kv.split(":")
                                 if (rule_kv_split.length == 2) {
-                                    let rule_k = rule_kv_split[0]!, rule_v = rule_kv_split[1]!
+                                    let rule_k = rule_kv_split[0]!,
+                                        rule_v = rule_kv_split[1]!
                                     if (rule_k.length > 0 && rule_v.length > 0) {
                                         newrule.set(rule_k, rule_v)
                                     }
@@ -1368,21 +1455,26 @@ class WikiPlayerSingleAnm2 {
     init(fetcher: HuijiDatabaseFetcher) {
         if (this.parent.renderMode == RenderMode.Costume) {
             let target: Actor | undefined = fetcher.getAnm2File(this.anm2WikiPath)
-            if (!target)
-                return;
+            if (!target) return
 
             if (this.parent.overwriteColor != undefined && this.index == 0) {
                 AnmPlayer.processSkinAltAndCostumeAlt(target, this.parent.overwriteColor, "", true, fetcher)
             }
 
             if (this.hasAltSkin) {
-                AnmPlayer.processSkinAltAndCostumeAlt(target, this.parent.overwriteColor, this.parent.costumealt, false, fetcher)
+                AnmPlayer.processSkinAltAndCostumeAlt(
+                    target,
+                    this.parent.overwriteColor,
+                    this.parent.costumealt,
+                    false,
+                    fetcher
+                )
             }
 
-
-
             /* 此处ABC共用同一份json，注意确保它们没问题 */
-            this.costumeA = new AnmPlayer(target, this.replaceSheetMap, () => { this.parent.realDraw() })
+            this.costumeA = new AnmPlayer(target, this.replaceSheetMap, () => {
+                this.parent.realDraw()
+            })
             this.costumeB = new AnmPlayer(target, this.replaceSheetMap)
             this.costumeC = new AnmPlayer(target, this.replaceSheetMap)
 
@@ -1406,7 +1498,7 @@ class WikiPlayerSingleAnm2 {
                         cvs.width = width
                         cvs.height = height
                         this.parent.canvasContainer.appendChild(cvs)
-                        let ctx = cvs.getContext('2d')
+                        let ctx = cvs.getContext("2d")
                         if (ctx) {
                             this.parent.spritesheet_canvas_map.set(url, ctx)
                         }
@@ -1418,10 +1510,11 @@ class WikiPlayerSingleAnm2 {
                 this.costumeC.setSpritesheetCanvas(spritesheetProvicer)
             }
 
-
             if (this.parent.hasPatch(PlayerPatch.randomIdle)) {
                 this.parent.random_idle_anm = new AnmPlayer(target, this.replaceSheetMap)
-                this.parent.random_idle_anm.setEndEventListener(() => { this.parent.random_idle_is_playing = false })
+                this.parent.random_idle_anm.setEndEventListener(() => {
+                    this.parent.random_idle_is_playing = false
+                })
             }
 
             this.costumeA.forceLoop = true
@@ -1449,20 +1542,23 @@ class WikiPlayerSingleAnm2 {
                 player: this.costumeA,
                 head_has_idle: head_has_idle,
                 head_has_charge: head_has_charge,
-                head_charge_frame: head_charge_frame
+                head_charge_frame: head_charge_frame,
             }
             this.costumeInfoB = {
-                player: this.costumeB
+                player: this.costumeB,
             }
             this.costumeInfoC = {
-                player: this.costumeC
+                player: this.costumeC,
             }
 
             this.parent.costumeInfosA.push(this.costumeInfoA)
             this.parent.costumeInfosB.push(this.costumeInfoB)
             this.parent.costumeInfosC.push(this.costumeInfoC)
 
-            if (this.parent.hasPatch(PlayerPatch.csection) && this.costumeB.getAnmNames().indexOf("SubAnim_Shoot") != -1) {
+            if (
+                this.parent.hasPatch(PlayerPatch.csection) &&
+                this.costumeB.getAnmNames().indexOf("SubAnim_Shoot") != -1
+            ) {
                 this.costumeB.sheet_offsets[0] = { x: 0, y: 0 }
                 this.costumeInfoB.is_csection = true
             }
@@ -1472,17 +1568,15 @@ class WikiPlayerSingleAnm2 {
                 this.costumeInfoA.is_tapollyon = true
             }
 
-
             this.costumeA.setFrame("HeadDown", 0)
             this.costumeB.setFrame("WalkDown", 0)
             this.costumeC.setFrame("WalkDown_Overlay", 0)
-
         } else {
             this.anm = new AnmPlayer(fetcher.getAnm2File(this.anm2WikiPath)!, this.replaceSheetMap, () => {
                 this.parent.realDraw()
             })
             this.anm.layerAdjustParameters = this.layerAdjustParameters
-            this.anm.setFrame((this.anmName || '').split('.')[0] || "", 0)
+            this.anm.setFrame((this.anmName || "").split(".")[0] || "", 0)
             this.anm.setEndEventListener(() => {
                 this.onAnmEnd()
             })
@@ -1503,8 +1597,7 @@ class WikiPlayerSingleAnm2 {
         let clicked = this.canvasClicked
         if (this.canvasClicked) {
             this.canvasClicked = false
-            if (this.apply_rule("clicknext"))
-                return
+            if (this.apply_rule("clicknext")) return
         }
         this.apply_rule("next")
 
@@ -1516,12 +1609,12 @@ class WikiPlayerSingleAnm2 {
     execute_rule(ename: string, r: Map<string, string>) {
         let target = this as WikiPlayerSingleAnm2
         if (r.has("target")) {
-            target = this.parent.players[+(r.get("target") ?? -1)] || target;
+            target = this.parent.players[+(r.get("target") ?? -1)] || target
         }
         let rename = r.get(ename)
         if (rename) {
             target.anmName = rename
-            if (target.anm?.getAnmNames().indexOf(rename.split('.')[0]!) != -1) {
+            if (target.anm?.getAnmNames().indexOf(rename.split(".")[0]!) != -1) {
                 let frame = 0
                 if (r.has("frame")) {
                     frame = +r.get("frame")!
@@ -1529,7 +1622,7 @@ class WikiPlayerSingleAnm2 {
                         frame = 0
                     }
                 }
-                target.anm!.setFrame(rename.split('.')[0]!, frame)
+                target.anm!.setFrame(rename.split(".")[0]!, frame)
             }
         }
         target.playedFrame = 0
@@ -1538,8 +1631,7 @@ class WikiPlayerSingleAnm2 {
             let btn_names = r.get("whenbtn")!.split("&&&")
             for (let btn_name of btn_names) {
                 let btn = this.parent.buttons.get(btn_name)
-                if (!btn)
-                    continue
+                if (!btn) continue
                 btn.clear(this.index)
             }
         }
@@ -1558,8 +1650,7 @@ class WikiPlayerSingleAnm2 {
             let btnnames = r.get("setbtn")!.split("&&&")
             for (let btn_name of btnnames) {
                 let btn = this.parent.buttons.get(btn_name)
-                if (!btn)
-                    continue
+                if (!btn) continue
                 btn.set_btn_status(ButtonStatus.Pressed)
             }
         }
@@ -1567,8 +1658,7 @@ class WikiPlayerSingleAnm2 {
             let btnnames = r.get("resetbtn")!.split("&&&")
             for (let btn_name of btnnames) {
                 let btn = this.parent.buttons.get(btn_name)
-                if (!btn)
-                    continue
+                if (!btn) continue
                 btn.set_btn_status(ButtonStatus.NotPressed)
             }
         }
@@ -1596,12 +1686,10 @@ class WikiPlayerSingleAnm2 {
                     let _pid = +arg[j]!
                     let _player = this.parent.players[_pid]
                     let _event_name = arg[j + 1]
-                    if (_pid == undefined || _event_name == undefined)
-                        continue
+                    if (_pid == undefined || _event_name == undefined) continue
                     if (!_event_name.startsWith("event_")) {
                         console.log("自定义事件名必须以event_开头:", _event_name)
-                    }
-                    else if (_player == undefined) {
+                    } else if (_player == undefined) {
                         console.log("player not found for also:", r)
                     } else {
                         try {
@@ -1620,21 +1708,18 @@ class WikiPlayerSingleAnm2 {
         for (let r of this.rule) {
             rule_index++
 
-            if (r.has("when") && r.get("when") != this.anmName)
-                continue
+            if (r.has("when") && r.get("when") != this.anmName) continue
             if (r.has("whendelay") && this.playedFrame < +(r.get("whendelay") ?? -1)) {
                 continue
             }
 
-            if (r.has("rate") && Math.random() > +(r.get("rate") ?? 1))
-                continue
+            if (r.has("rate") && Math.random() > +(r.get("rate") ?? 1)) continue
             if (r.has("whenbtn")) {
                 let block = false
                 let btn_names = (r.get("whenbtn") ?? "").split("&&&")
                 for (let btn_name of btn_names) {
                     let btn = this.parent.buttons.get(btn_name)
-                    if (!btn)
-                        continue
+                    if (!btn) continue
                     if (btn.peek(this.index) == ButtonStatus.NotPressed) {
                         block = true
                         break
@@ -1650,8 +1735,7 @@ class WikiPlayerSingleAnm2 {
                 let btn_names = (r.get("whenbtnN") ?? "").split("&&&")
                 for (let btn_name of btn_names) {
                     let btn = this.parent.buttons.get(btn_name)
-                    if (!btn)
-                        continue
+                    if (!btn) continue
                     if (btn.peek(this.index) == ButtonStatus.Pressed) {
                         block = true
                         break
@@ -1664,7 +1748,7 @@ class WikiPlayerSingleAnm2 {
             }
             if (r.has(ename)) {
                 //注意：我们依赖外侧for循环不再继续，来满足action的闭包合法性
-                if (r.has("sleep")/* && !r.has("pause") */) {
+                if (r.has("sleep") /* && !r.has("pause") */) {
                     if (this.sleeping_rule && r == this.sleeping_rule) {
                         //don't set rule
                     } else {
@@ -1680,13 +1764,11 @@ class WikiPlayerSingleAnm2 {
         }
         return false
     }
-
-
 }
 
 enum ButtonStatus {
     Pressed,
-    NotPressed
+    NotPressed,
 }
 
 class WikiPlayerButton {
@@ -1705,18 +1787,18 @@ class WikiPlayerButton {
         this.parent = parent
         this.btnreset_count = +(buttonDesc.getAttribute("data-reset") ?? 1)
         this.btn_istoggle = buttonDesc.getAttribute("data-toggle") == "true"
-        this.btn_groupname = (buttonDesc.getAttribute("data-group") ?? "")
+        this.btn_groupname = buttonDesc.getAttribute("data-group") ?? ""
         this.btn_initial_status = buttonDesc.getAttribute("data-init") == "true"
         this.btn_hide = buttonDesc.getAttribute("data-hide") == "true"
 
         this.nbtn = document.createElement("a")
-        this.nbtn.href = 'javascript:void(0)'
+        this.nbtn.href = "javascript:void(0)"
         this.nbtn.innerText = buttonDesc.getAttribute("data-btnname")!
 
         if (this.btn_hide) {
             this.nbtn.style.cssText = "display:none"
         } else {
-            this.nbtn.style.cssText = 'text-decoration:none;border-radius:4px;'
+            this.nbtn.style.cssText = "text-decoration:none;border-radius:4px;"
         }
 
         this.nbtn.onclick = () => {
@@ -1730,12 +1812,11 @@ class WikiPlayerButton {
     private set_active(target: boolean) {
         this.is_active = target
         this.active_handled_by_anm = []
-        if (this.btn_hide)
-            return
+        if (this.btn_hide) return
         if (this.is_active) {
-            this.nbtn.style.cssText = 'text-decoration:none;border-radius:4px;background-color:#d5d4c963'
+            this.nbtn.style.cssText = "text-decoration:none;border-radius:4px;background-color:#d5d4c963"
         } else {
-            this.nbtn.style.cssText = 'text-decoration:none;border-radius:4px;'
+            this.nbtn.style.cssText = "text-decoration:none;border-radius:4px;"
         }
     }
 
@@ -1752,8 +1833,7 @@ class WikiPlayerButton {
             }
         } else {
             for (let btn of this.parent.buttons.values()) {
-                if (btn.btn_groupname != this.btn_groupname)
-                    continue
+                if (btn.btn_groupname != this.btn_groupname) continue
                 if (btn == this) {
                     btn.set_active(true)
                 } else {
@@ -1768,8 +1848,7 @@ class WikiPlayerButton {
             return this.is_active ? ButtonStatus.Pressed : ButtonStatus.NotPressed
         } else {
             if (this.is_active) {
-                if (this.active_handled_by_anm[playerIndex])
-                    return ButtonStatus.NotPressed
+                if (this.active_handled_by_anm[playerIndex]) return ButtonStatus.NotPressed
                 return ButtonStatus.Pressed
             } else {
                 return ButtonStatus.NotPressed
@@ -1785,8 +1864,7 @@ class WikiPlayerButton {
                 this.set_active(true)
             } else {
                 for (let btn of this.parent.buttons.values()) {
-                    if (btn.btn_groupname != this.btn_groupname)
-                        continue
+                    if (btn.btn_groupname != this.btn_groupname) continue
                     if (btn == this) {
                         btn.set_active(true)
                     } else {
@@ -1815,12 +1893,11 @@ class LayerAdjuster {
 
     hide: boolean
     constructor(descElem: Element) {
-        this.layerId = +(descElem.getAttribute("data-layer-adj")!);
+        this.layerId = +descElem.getAttribute("data-layer-adj")!
 
         function getAttr(attr: string) {
-            let v = +(descElem.getAttribute("data-" + attr)!)
-            if (v && isFinite(v))
-                return v
+            let v = +descElem.getAttribute("data-" + attr)!
+            if (v && isFinite(v)) return v
             return undefined
         }
         this.red = getAttr("r")
@@ -1836,8 +1913,7 @@ class LayerAdjuster {
     }
 }
 
-let layer_stack_exploded = (new URLSearchParams(window.location.search)).get("anm2Exploded") == '1'
+let layer_stack_exploded = new URLSearchParams(window.location.search).get("anm2Exploded") == "1"
 function isLayerStackExploded(): boolean {
     return layer_stack_exploded
 }
-

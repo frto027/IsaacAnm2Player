@@ -1,4 +1,4 @@
-.anm2-recorder-indicator{
+.anm2-recorder-indicator {
     position: fixed;
     left: 20px;
     top: 100px;
@@ -8,18 +8,18 @@
     border: dashed 2px #f7f200;
 }
 
-.anm2-recorder-indicator-recording{
+.anm2-recorder-indicator-recording {
     color: #f71d00 !important;
 }
 
-.anm2-recorder-hint-container{
+.anm2-recorder-hint-container {
     width: 0;
     height: 0;
     position: absolute;
     left: 0;
     top: -20px;
 }
-.anm2-recorder-hint{
+.anm2-recorder-hint {
     padding: 0px 4px;
     background: #ff0000;
     color: #ffee00;

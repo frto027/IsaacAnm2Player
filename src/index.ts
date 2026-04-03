@@ -6,7 +6,7 @@ import { WikiPlayer } from "./wikiplayer/wikiplayer"
 
 window.anm2players = {
     wikplayers: [],
-    anm2Tabs: []
+    anm2Tabs: [],
 }
 
 function initPlayer(canvasdiv: HTMLElement) {
@@ -18,17 +18,16 @@ function initAnm2PlayerTabs(target: HTMLElement) {
 }
 function initJsonPage(path: string) {
     let jsonPage = new JsonPage(path)
-    if (window.anm2players)
-        window.anm2players.jsoonPage = jsonPage
+    if (window.anm2players) window.anm2players.jsoonPage = jsonPage
 }
 
 export function setupAnm2Players() {
-    AnmPlayer.setCrossOrigin("anonymous");
+    AnmPlayer.setCrossOrigin("anonymous")
     window.init_anm2player_canvas = initPlayer
 
     //初始化播放器
     let huijiDatabaseFetcher = new HuijiDatabaseFetcher()
-    let canvases = document.getElementsByClassName('anm2player')
+    let canvases = document.getElementsByClassName("anm2player")
     for (let i = 0; i < canvases.length; i++) {
         window.anm2players?.wikplayers.push(new WikiPlayer(canvases[i] as HTMLElement, huijiDatabaseFetcher))
     }
@@ -48,9 +47,8 @@ export function setupAnm2Players() {
     }
 }
 
-if (document.readyState == 'loading') {
-    document.addEventListener('DOMContentLoaded', setupAnm2Players)
+if (document.readyState == "loading") {
+    document.addEventListener("DOMContentLoaded", setupAnm2Players)
 } else {
     setupAnm2Players()
 }
-

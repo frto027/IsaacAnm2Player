@@ -81,10 +81,15 @@ class FrameStatus implements Frame {
 class LayerStatus {
     LayerId: number = 0
     Visible: boolean = false
-    frames: FrameStatus[/* frame id */] = []
+    // prettier-ignore
+    frames: FrameStatus [/* frame id */] = []
 }
 interface LoadedAnms {
-    rootframes: FrameStatus[/* frame id */], frames: LayerStatus[/* layer id */], Loop: boolean,
+    // prettier-ignore
+    rootframes: FrameStatus [ /* frame id */]
+    // prettier-ignore
+    frames: LayerStatus [/* layer id */]
+    Loop: boolean
     FrameNum: number
     events: (string | null)[]
     name: string
@@ -110,8 +115,8 @@ interface LayerAdjustParameter {
     hide?: boolean | undefined
 }
 
-interface SkinAltProvider{
-    getAltSkin(url:string, chara:string, color:string):string 
+interface SkinAltProvider {
+    getAltSkin(url: string, chara: string, color: string): string
 }
 
 import { huijiUrlBuilder, isRecordingMode } from "../wikiplayer/huiji"
@@ -128,15 +133,18 @@ export class AnmPlayer {
 
     sprites: string[] = new Array() /* spriteid -> sprite path */
     sprites_htmlimg: HTMLImageElement[] = new Array()
-    layers: Layer[/* layer id */] = new Array()
-    events: string[/* event id */] = new Array()
+    // prettier-ignore
+    layers: Layer [/* layer id */] = new Array()
+    // prettier-ignore
+    events: string [/* event id */] = new Array()
 
-    layerAdjustParameters: LayerAdjustParameter[/* layer id */] = new Array()
+    // prettier-ignore
+    layerAdjustParameters: LayerAdjustParameter [/* layer id */] = new Array()
 
     currentFrame: number = -1
     currentAnm?: LoadedAnms | undefined
 
-    frames: Map</* anim name */string, LoadedAnms> = new Map()
+    frames: Map</* anim name */ string, LoadedAnms> = new Map()
 
     forceLoop: boolean = false
     flipX: boolean = false
@@ -144,8 +152,8 @@ export class AnmPlayer {
     revert: boolean = false
     visible: boolean = true
 
-    sheet_offsets: { x: number, y: number }[/* sheet id */] = []
-
+    // prettier-ignore
+    sheet_offsets: { x: number; y: number } [/* sheet id */] = []
 
     eventListener?: (eventName: string) => void
     anmEndEventListener?: () => void
@@ -157,7 +165,7 @@ export class AnmPlayer {
         this.anm2 = json
 
         for (let sheet of this.anm2.content?.Spritesheets || []) {
-            this.sprites[sheet.Id] = sheet.Path || 'unknown'
+            this.sprites[sheet.Id] = sheet.Path || "unknown"
         }
 
         for (let layer of this.anm2.content?.Layers || []) {
@@ -168,23 +176,18 @@ export class AnmPlayer {
             this.events[evt.Id] = evt.Name
         }
 
-
         for (let anm of this.anm2.animations?.animation || []) {
             this.loadAnmObject(anm)
         }
-        this.setFrame(this.anm2.animations?.DefaultAnimation || '', 0)
-        if (replaceSheetMap)
-            this.replaceSheetMap = replaceSheetMap
+        this.setFrame(this.anm2.animations?.DefaultAnimation || "", 0)
+        if (replaceSheetMap) this.replaceSheetMap = replaceSheetMap
 
         if (!AnmPlayer.lazyLoadSpritesheet) {
             for (let i = 0; i < (this.anm2.content?.Spritesheets?.length || 0); i++) {
                 this.loadSpritesheet(i)
             }
-
         }
-        if (onloadimg)
-            this.imgLoadListener = onloadimg
-
+        if (onloadimg) this.imgLoadListener = onloadimg
     }
 
     private loadAnimationFrames(anms: Frame[], length: number): FrameStatus[] {
@@ -212,7 +215,15 @@ export class AnmPlayer {
     }
 
     static svgRoot?: Element
-    public static createSvgFilterElement(R: number, G: number, B: number, A: number, RO: number, GO: number, BO: number) {
+    public static createSvgFilterElement(
+        R: number,
+        G: number,
+        B: number,
+        A: number,
+        RO: number,
+        GO: number,
+        BO: number
+    ) {
         let NS = "http://www.w3.org/2000/svg"
         if (AnmPlayer.svgRoot == undefined) {
             AnmPlayer.svgRoot = document.createElementNS(NS, "svg")
@@ -220,7 +231,7 @@ export class AnmPlayer {
             document.body.appendChild(AnmPlayer.svgRoot)
         }
         let filter = document.createElementNS(NS, "filter")
-        let id = "AnmPlayerSvgFilter_" + (AnmPlayer.svgfilter_incrid++)
+        let id = "AnmPlayerSvgFilter_" + AnmPlayer.svgfilter_incrid++
         filter.setAttribute("id", id)
         let colormat = document.createElementNS(NS, "feColorMatrix")
         colormat.setAttribute("in", "SourceGraphic")
@@ -268,8 +279,8 @@ export class AnmPlayer {
             Loop: anm.Loop,
             FrameNum: anm.FrameNum,
             events: events,
-            name: anm.Name || '',
-            nullFrames: nullframes
+            name: anm.Name || "",
+            nullFrames: nullframes,
         })
     }
 
@@ -313,8 +324,20 @@ export class AnmPlayer {
     }
 
     spritesheet_canvas?: Array<CanvasRenderingContext2D>
-    spritesheetCanvasProvider?: (spritesheed: Spritesheet, url: string, width: number, height: number) => CanvasRenderingContext2D
-    public setSpritesheetCanvas(canvasProvider: (spritesheed: Spritesheet, url: string, width: number, height: number) => CanvasRenderingContext2D) {
+    spritesheetCanvasProvider?: (
+        spritesheed: Spritesheet,
+        url: string,
+        width: number,
+        height: number
+    ) => CanvasRenderingContext2D
+    public setSpritesheetCanvas(
+        canvasProvider: (
+            spritesheed: Spritesheet,
+            url: string,
+            width: number,
+            height: number
+        ) => CanvasRenderingContext2D
+    ) {
         this.spritesheetCanvasProvider = canvasProvider
     }
 
@@ -364,9 +387,9 @@ export class AnmPlayer {
             let imgpath = "Anm2/" + this.sprites[i]!
 
             img = document.createElement("img")
-            img.setAttribute('style', "image-rendering: pixelated; display:none;")
+            img.setAttribute("style", "image-rendering: pixelated; display:none;")
             if (AnmPlayer.crossOrigin != undefined) {
-                img.setAttribute('crossorigin', AnmPlayer.crossOrigin)
+                img.setAttribute("crossorigin", AnmPlayer.crossOrigin)
             }
 
             if (this.replaceSheetMap?.has(i)) {
@@ -376,8 +399,7 @@ export class AnmPlayer {
             }
 
             img.onload = () => {
-                if (!img)
-                    throw new Error("impossible");
+                if (!img) throw new Error("impossible")
                 img.setAttribute("img_loaded", "true")
                 if (this.imgLoadListener) {
                     this.imgLoadListener()
@@ -386,7 +408,12 @@ export class AnmPlayer {
                     this.spritesheet_canvas = this.spritesheet_canvas || []
                     let sprite = this.anm2.content?.Spritesheets
                     if (sprite && sprite[i]) {
-                        this.spritesheet_canvas[i] = this.spritesheetCanvasProvider(sprite[i]!, img.src, img.width, img.height)
+                        this.spritesheet_canvas[i] = this.spritesheetCanvasProvider(
+                            sprite[i]!,
+                            img.src,
+                            img.width,
+                            img.height
+                        )
                     }
                 }
             }
@@ -402,8 +429,19 @@ export class AnmPlayer {
 
     debug_anchor: boolean = false
 
-
-    public drawCanvas(ctx: CanvasRenderingContext2D, canvas: HTMLCanvasElement, centerX?: number, centerY?: number, rootScale?: number, layer_name?: string, transformFrame?: FrameStatus, blackPatch?: boolean /* 用于渲染犹大之影的身体 */, extraScaleX?: number, extraScaleY?: number, extraOffsetY?: number) {
+    public drawCanvas(
+        ctx: CanvasRenderingContext2D,
+        canvas: HTMLCanvasElement,
+        centerX?: number,
+        centerY?: number,
+        rootScale?: number,
+        layer_name?: string,
+        transformFrame?: FrameStatus,
+        blackPatch?: boolean /* 用于渲染犹大之影的身体 */,
+        extraScaleX?: number,
+        extraScaleY?: number,
+        extraOffsetY?: number
+    ) {
         ctx.save()
 
         ctx.setTransform(1, 0, 0, 1, 0, 0)
@@ -431,7 +469,6 @@ export class AnmPlayer {
             extraOffsetY = 0
         }
 
-
         let rootframe = this.currentAnm?.rootframes[this.currentFrame]
 
         ctx.translate(centerX, centerY)
@@ -444,28 +481,25 @@ export class AnmPlayer {
 
         if (rootframe) {
             ctx.translate(rootframe.XPosition, rootframe.YPosition)
-            ctx.rotate(rootframe.Rotation * Math.PI / 180)
+            ctx.rotate((rootframe.Rotation * Math.PI) / 180)
             ctx.scale(rootframe.XScale / 100, rootframe.YScale / 100)
         }
 
         if (transformFrame) {
             ctx.translate(transformFrame.XPosition, transformFrame.YPosition)
-            ctx.rotate(transformFrame.Rotation * Math.PI / 180)
+            ctx.rotate((transformFrame.Rotation * Math.PI) / 180)
             ctx.scale(transformFrame.XScale / 100, transformFrame.YScale / 100)
         }
-
 
         if (this.debug_anchor) {
             ctx.beginPath()
             ctx.arc(0, 0, 5, 0, Math.PI / 2)
-            ctx.fillStyle = 'blue'
+            ctx.fillStyle = "blue"
             ctx.fill()
         }
 
-
         //layer transform
         for (let i = 0; this.visible && i < (this.currentAnm?.frames.length || 0); i++) {
-
             let layer = this.currentAnm?.frames[i]
             if (layer_name) {
                 if (this.getLayerName(layer ? layer.LayerId : -1) != layer_name) {
@@ -484,7 +518,7 @@ export class AnmPlayer {
                     let img = this.loadSpritesheet(sprite_sheet_id)
 
                     ctx.translate(frame.XPosition, frame.YPosition)
-                    ctx.rotate(frame.Rotation * Math.PI / 180)
+                    ctx.rotate((frame.Rotation * Math.PI) / 180)
                     // ctx.translate(-canvas.width/2,-canvas.height/2)
                     ctx.scale(frame.XScale / 100, frame.YScale / 100)
                     if (layerAdjuster) {
@@ -501,48 +535,75 @@ export class AnmPlayer {
                     if (!frame.filterGenerated) {
                         frame.filterGenerated = true
                         if (layerAdjuster) {
-                            frame.filterId = 'url(#' + AnmPlayer.createSvgFilterElement(
-                                (rootframe?.RedTint || 255) * frame.RedTint * ((layerAdjuster.red || 255) / 255) / (255 * 255),
-                                (rootframe?.GreenTint || 255) * frame.GreenTint * ((layerAdjuster.green || 255) / 255) / (255 * 255),
-                                (rootframe?.BlueTint || 255) * frame.BlueTint * ((layerAdjuster.blue || 255) / 255) / (255 * 255),
-                                ((layerAdjuster.alpha || 255) / 255), //(rootframe?.AlphaTint || 255) * frame.AlphaTint     /(255*255),
-                                frame.RedOffset + (layerAdjuster.redOffset || 0) / 255,
-                                frame.GreenOffset + (layerAdjuster.greenOffset || 0) / 255,
-                                frame.BlueOffset + (layerAdjuster.blueOffset || 0) / 255
-                            ) + ')'
+                            frame.filterId =
+                                "url(#" +
+                                AnmPlayer.createSvgFilterElement(
+                                    ((rootframe?.RedTint || 255) * frame.RedTint * ((layerAdjuster.red || 255) / 255)) /
+                                        (255 * 255),
+                                    ((rootframe?.GreenTint || 255) *
+                                        frame.GreenTint *
+                                        ((layerAdjuster.green || 255) / 255)) /
+                                        (255 * 255),
+                                    ((rootframe?.BlueTint || 255) *
+                                        frame.BlueTint *
+                                        ((layerAdjuster.blue || 255) / 255)) /
+                                        (255 * 255),
+                                    (layerAdjuster.alpha || 255) / 255, //(rootframe?.AlphaTint || 255) * frame.AlphaTint     /(255*255),
+                                    frame.RedOffset + (layerAdjuster.redOffset || 0) / 255,
+                                    frame.GreenOffset + (layerAdjuster.greenOffset || 0) / 255,
+                                    frame.BlueOffset + (layerAdjuster.blueOffset || 0) / 255
+                                ) +
+                                ")"
                         } else if (blackPatch) {
-                            frame.filterId = 'url(#' + AnmPlayer.createSvgFilterElement(
-                                (rootframe?.RedTint || 255) * frame.RedTint / (255 * 255),
-                                (rootframe?.GreenTint || 255) * frame.GreenTint / (255 * 255),
-                                (rootframe?.BlueTint || 255) * frame.BlueTint / (255 * 255),
-                                1, //(rootframe?.AlphaTint || 255) * frame.AlphaTint     /(255*255),
-                                -255 / 255,
-                                -255 / 255,
-                                -255 / 255
-                            ) + ')'
+                            frame.filterId =
+                                "url(#" +
+                                AnmPlayer.createSvgFilterElement(
+                                    ((rootframe?.RedTint || 255) * frame.RedTint) / (255 * 255),
+                                    ((rootframe?.GreenTint || 255) * frame.GreenTint) / (255 * 255),
+                                    ((rootframe?.BlueTint || 255) * frame.BlueTint) / (255 * 255),
+                                    1, //(rootframe?.AlphaTint || 255) * frame.AlphaTint     /(255*255),
+                                    -255 / 255,
+                                    -255 / 255,
+                                    -255 / 255
+                                ) +
+                                ")"
                         } else {
-                            frame.filterId = 'url(#' + AnmPlayer.createSvgFilterElement(
-                                (rootframe?.RedTint || 255) * frame.RedTint / (255 * 255),
-                                (rootframe?.GreenTint || 255) * frame.GreenTint / (255 * 255),
-                                (rootframe?.BlueTint || 255) * frame.BlueTint / (255 * 255),
-                                1, //(rootframe?.AlphaTint || 255) * frame.AlphaTint     /(255*255),
-                                frame.RedOffset / 255,
-                                frame.GreenOffset / 255,
-                                frame.BlueOffset / 255
-                            ) + ')'
+                            frame.filterId =
+                                "url(#" +
+                                AnmPlayer.createSvgFilterElement(
+                                    ((rootframe?.RedTint || 255) * frame.RedTint) / (255 * 255),
+                                    ((rootframe?.GreenTint || 255) * frame.GreenTint) / (255 * 255),
+                                    ((rootframe?.BlueTint || 255) * frame.BlueTint) / (255 * 255),
+                                    1, //(rootframe?.AlphaTint || 255) * frame.AlphaTint     /(255*255),
+                                    frame.RedOffset / 255,
+                                    frame.GreenOffset / 255,
+                                    frame.BlueOffset / 255
+                                ) +
+                                ")"
                         }
                     }
 
-                    ctx.filter = frame.filterId || 'none'
-                    ctx.globalAlpha = (rootframe?.AlphaTint || 255) * frame.AlphaTint / (255 * 255)
+                    ctx.filter = frame.filterId || "none"
+                    ctx.globalAlpha = ((rootframe?.AlphaTint || 255) * frame.AlphaTint) / (255 * 255)
 
-                    let sheet_offset_x = 0, sheet_offset_y = 0
+                    let sheet_offset_x = 0,
+                        sheet_offset_y = 0
                     let sheet_offset = this.sheet_offsets[sprite_sheet_id]
                     if (sheet_offset != undefined) {
                         sheet_offset_x = sheet_offset.x
                         sheet_offset_y = sheet_offset.y
                     }
-                    ctx.drawImage(img, frame.XCrop + sheet_offset_x, frame.YCrop + sheet_offset_y, frame.Width, frame.Height, 0, 0, frame.Width, frame.Height)
+                    ctx.drawImage(
+                        img,
+                        frame.XCrop + sheet_offset_x,
+                        frame.YCrop + sheet_offset_y,
+                        frame.Width,
+                        frame.Height,
+                        0,
+                        0,
+                        frame.Width,
+                        frame.Height
+                    )
                     if (this.layer_frame_color) {
                         ctx.beginPath()
                         ctx.strokeStyle = this.layer_frame_color
@@ -558,7 +619,12 @@ export class AnmPlayer {
                             spritesheet_canvas.beginPath()
                             spritesheet_canvas.strokeStyle = this.layer_frame_color
                             spritesheet_canvas.lineWidth = 1
-                            spritesheet_canvas.strokeRect(frame.XCrop + sheet_offset_x, frame.YCrop + sheet_offset_y, frame.Width, frame.Height)
+                            spritesheet_canvas.strokeRect(
+                                frame.XCrop + sheet_offset_x,
+                                frame.YCrop + sheet_offset_y,
+                                frame.Width,
+                                frame.Height
+                            )
                             spritesheet_canvas.fillStyle = this.layer_frame_color
                             spritesheet_canvas.fill()
                         }
@@ -567,13 +633,12 @@ export class AnmPlayer {
                     if (this.debug_anchor) {
                         ctx.beginPath()
                         ctx.arc(frame.XPivot, frame.YPivot, 5, 0, Math.PI / 2)
-                        ctx.fillStyle = 'green'
+                        ctx.fillStyle = "green"
                         ctx.fill()
                     }
                     ctx.restore()
                 }
             }
-
         }
         ctx.restore()
     }
@@ -582,19 +647,19 @@ export class AnmPlayer {
         let ret: string[] = []
 
         for (let anm of this.anm2.animations?.animation || []) {
-            ret.push(anm.Name || '')
+            ret.push(anm.Name || "")
         }
         return ret
     }
     public getCurrentAnmName(): string {
-        return this.currentAnm?.name || ''
+        return this.currentAnm?.name || ""
     }
     public getFps(): number {
         return this.anm2.info?.Fps || 30
     }
 
     public getDefaultAnmName(): string {
-        return this.anm2.animations?.DefaultAnimation || ''
+        return this.anm2.animations?.DefaultAnimation || ""
     }
     public getLayerName(layerId: number): string | undefined {
         for (let layer of this.anm2.content?.Layers || []) {
@@ -623,7 +688,7 @@ export class AnmPlayer {
         return undefined
     }
     public static expandActor(target: any, keymap: any) {
-        if (typeof (target) != "object") {
+        if (typeof target != "object") {
             return
         }
         for (let i = 0; i < target.length; i++) {
@@ -631,7 +696,7 @@ export class AnmPlayer {
         }
 
         for (let k in keymap) {
-            if (k.length == 1 && typeof (keymap[k]) == "string" && target[k] != undefined) {
+            if (k.length == 1 && typeof keymap[k] == "string" && target[k] != undefined) {
                 this.expandActor(target[k], keymap)
                 target[keymap[k]] = target[k]
                 target[k] = undefined
@@ -642,59 +707,99 @@ export class AnmPlayer {
     public static setCrossOrigin(origin?: string) {
         AnmPlayer.crossOrigin = origin
     }
-    private static SKIN_ALT_NAME = ['white', 'black', 'blue', 'red', 'green', 'grey']
+    private static SKIN_ALT_NAME = ["white", "black", "blue", "red", "green", "grey"]
 
-    public static processSkinAltAndCostumeAlt(target: Actor, skinAlt: number | undefined, costumeAlt: string | undefined, firstOnly:boolean, skinAltProvider:SkinAltProvider) {
+    public static processSkinAltAndCostumeAlt(
+        target: Actor,
+        skinAlt: number | undefined,
+        costumeAlt: string | undefined,
+        firstOnly: boolean,
+        skinAltProvider: SkinAltProvider
+    ) {
         for (let sprite of target.content?.Spritesheets || []) {
-            if(firstOnly && sprite.Id != 0){
+            if (firstOnly && sprite.Id != 0) {
                 continue
             }
 
-            if (sprite.Path && sprite.Path.endsWith('.png')) {
+            if (sprite.Path && sprite.Path.endsWith(".png")) {
                 console.log(sprite.Path, skinAlt, costumeAlt)
                 // this is a file system operate, so do it outside the anm2 player
-                sprite.Path = skinAltProvider.getAltSkin(sprite.Path, costumeAlt || "", skinAlt == undefined ? "" : this.SKIN_ALT_NAME[skinAlt]!)
+                sprite.Path = skinAltProvider.getAltSkin(
+                    sprite.Path,
+                    costumeAlt || "",
+                    skinAlt == undefined ? "" : this.SKIN_ALT_NAME[skinAlt]!
+                )
                 console.log(sprite.Path)
             }
         }
     }
 
-    private static getAdrenalineAnms(emptyHeart: number /* range: 0 ~ 12, maybe 0 ~ 24 with some item */, frameCount: number)
-        : [HeadOffsetY: number, HeadScaleX: number, HeadScaleY: number, BodyScaleX: number, BodyScaleY: number] {
+    private static getAdrenalineAnms(
+        emptyHeart: number /* range: 0 ~ 12, maybe 0 ~ 24 with some item */,
+        frameCount: number
+    ): [HeadOffsetY: number, HeadScaleX: number, HeadScaleY: number, BodyScaleX: number, BodyScaleY: number] {
         if (emptyHeart == 0) {
             return [0, 1, 1, 1, 1]
         }
 
-        let EmptyHeartCount = emptyHeart / 24.00
+        let EmptyHeartCount = emptyHeart / 24.0
 
-
-        let v582 = 1.0 - ((1.0 - EmptyHeartCount) * (1.0 - EmptyHeartCount));
-        let v601 = ((EmptyHeartCount * EmptyHeartCount * 9.0) + 1.0) * 2 * 3.1415927 / 30.0;
-        let v596 = v582 * 0.5;
-        let v191 = Math.cos(frameCount * v601);
-        let v192 = ((v191 * 0.5) + 0.5) * 1.2 * ((v191 * 0.5) + 0.5) * 1.2
-        let j = ((v192 - 0.2) * v596) + 1.0;
-        let v194 = Math.cos((frameCount - 3) * v601);
-        let v195 = ((v194 * 0.5) + 0.5) * 1.2 * ((v194 * 0.5) + 0.5) * 1.2
-        let v196 = (v195 - 0.2) * (EmptyHeartCount * EmptyHeartCount);
-        let v608 = ((((1.0 / j) - 1.0) * 0.5) + 1.0) + v196;//output
-        let v579 = (v196 * 0.5) + j; //output
-        let v198 = Math.cos((frameCount + 10) * v601);
-        let v199 = ((v198 * 0.5) + 0.5) * 1.2 * ((v198 * 0.5) + 0.5) * 1.2
-        j = (v199 - 0.2) * v596;
-        let v201 = Math.cos((frameCount + 20) * v601);
-        let v202 = ((v201 * 0.5) + 0.5) * 1.2 * ((v201 * 0.5) + 0.5) * 1.2
-        v582 = ((v202 - 0.2) * (v582 * 0.1)) + 1.0;//output
-        let SomeVariable = 1.0 / v582;//output
+        let v582 = 1.0 - (1.0 - EmptyHeartCount) * (1.0 - EmptyHeartCount)
+        let v601 = ((EmptyHeartCount * EmptyHeartCount * 9.0 + 1.0) * 2 * 3.1415927) / 30.0
+        let v596 = v582 * 0.5
+        let v191 = Math.cos(frameCount * v601)
+        let v192 = (v191 * 0.5 + 0.5) * 1.2 * (v191 * 0.5 + 0.5) * 1.2
+        let j = (v192 - 0.2) * v596 + 1.0
+        let v194 = Math.cos((frameCount - 3) * v601)
+        let v195 = (v194 * 0.5 + 0.5) * 1.2 * (v194 * 0.5 + 0.5) * 1.2
+        let v196 = (v195 - 0.2) * (EmptyHeartCount * EmptyHeartCount)
+        let v608 = (1.0 / j - 1.0) * 0.5 + 1.0 + v196 //output
+        let v579 = v196 * 0.5 + j //output
+        let v198 = Math.cos((frameCount + 10) * v601)
+        let v199 = (v198 * 0.5 + 0.5) * 1.2 * (v198 * 0.5 + 0.5) * 1.2
+        j = (v199 - 0.2) * v596
+        let v201 = Math.cos((frameCount + 20) * v601)
+        let v202 = (v201 * 0.5 + 0.5) * 1.2 * (v201 * 0.5 + 0.5) * 1.2
+        v582 = (v202 - 0.2) * (v582 * 0.1) + 1.0 //output
+        let SomeVariable = 1.0 / v582 //output
 
         return [j * 10, SomeVariable, v582, v608, v579]
     }
 
-    private static COSTUME_STEP = ["glow", "back", "body", "body0", "body1", "head", "head0", "head1", "head2", "head3", "head4", "head5", "top0", "extra", "ghost"]
+    private static COSTUME_STEP = [
+        "glow",
+        "back",
+        "body",
+        "body0",
+        "body1",
+        "head",
+        "head0",
+        "head1",
+        "head2",
+        "head3",
+        "head4",
+        "head5",
+        "top0",
+        "extra",
+        "ghost",
+    ]
 
-    public static renderCostume(anmA: CostumeInfo[], anmB: CostumeInfo[] | undefined, anmC: CostumeInfo[] | undefined, ctx: CanvasRenderingContext2D, canvas: HTMLCanvasElement, centerX: number, centerY: number, rootScale: number, shootFrame: number, walkFrame: number,
-        blackBody: boolean /* 犹大之影 */, gameFrameCount: number, adrenalineLevel: number /* 肾上腺素 */
-        , layer_stack_offset: [number, number]) {
+    public static renderCostume(
+        anmA: CostumeInfo[],
+        anmB: CostumeInfo[] | undefined,
+        anmC: CostumeInfo[] | undefined,
+        ctx: CanvasRenderingContext2D,
+        canvas: HTMLCanvasElement,
+        centerX: number,
+        centerY: number,
+        rootScale: number,
+        shootFrame: number,
+        walkFrame: number,
+        blackBody: boolean /* 犹大之影 */,
+        gameFrameCount: number,
+        adrenalineLevel: number /* 肾上腺素 */,
+        layer_stack_offset: [number, number]
+    ) {
         //anmA is leg,anmB is head
         let step_draw_candidates = new Map<string, (CostumeInfo | undefined)[]>()
 
@@ -726,7 +831,6 @@ export class AnmPlayer {
                     }
                 }
                 /* end:HeadTransform*/
-
             }
         }
         //setup steps for anmB
@@ -742,7 +846,7 @@ export class AnmPlayer {
                             }
                             if (layer.frames[0]) {
                                 if (step_draw_candidates.has(step)) {
-                                    (step_draw_candidates.get(step) || [])[1] = info
+                                    ;(step_draw_candidates.get(step) || [])[1] = info
                                 } else {
                                     step_draw_candidates.set(step, [undefined, info])
                                 }
@@ -761,7 +865,7 @@ export class AnmPlayer {
                             //动画中包含目标图层
                             if (layer.frames[0]) {
                                 if (step_draw_candidates.has(step)) {
-                                    (step_draw_candidates.get(step) || [])[2] = info
+                                    ;(step_draw_candidates.get(step) || [])[2] = info
                                 } else {
                                     step_draw_candidates.set(step, [undefined, undefined, info])
                                 }
@@ -773,8 +877,13 @@ export class AnmPlayer {
         }
         let head_transform = undefined
 
-        let [adrenalineHeadOffsetY, adrenalineHeadScaleX, adrenalineHeadScaleY, adrenalineBodyScaleX, adrenalineBodyScaleY] =
-            this.getAdrenalineAnms(adrenalineLevel, gameFrameCount)
+        let [
+            adrenalineHeadOffsetY,
+            adrenalineHeadScaleX,
+            adrenalineHeadScaleY,
+            adrenalineBodyScaleX,
+            adrenalineBodyScaleY,
+        ] = this.getAdrenalineAnms(adrenalineLevel, gameFrameCount)
 
         let layer_stack_id = 0
         for (let step of this.COSTUME_STEP) {
@@ -797,7 +906,11 @@ export class AnmPlayer {
                         }
                         if (step.startsWith("head") && !player.currentAnm?.Loop) {
                             old_frame = player.currentFrame
-                            if (draw_anm == 1 /* draw head */ && head_has_charge && !(players && players[draw_anm])?.head_has_charge) {
+                            if (
+                                draw_anm == 1 /* draw head */ &&
+                                head_has_charge &&
+                                !(players && players[draw_anm])?.head_has_charge
+                            ) {
                                 player.play(shootFrame % 2)
                             } else {
                                 player.play(shootFrame % (player.currentAnm?.FrameNum || 100000))
@@ -808,18 +921,43 @@ export class AnmPlayer {
                         if (players && players[draw_anm]?.head_has_idle && step == "head") {
                             let frames = player.getLayerByName("head")?.frames
                             //c340
-                            if (frames != undefined && (player.currentFrame < frames.length && frames[player.currentFrame]!.Visible == false)) {
+                            if (
+                                frames != undefined &&
+                                player.currentFrame < frames.length &&
+                                frames[player.currentFrame]!.Visible == false
+                            ) {
                                 fallback_restore = player.currentAnm
                                 player.setFrame(player.getCurrentAnmName() + "_Idle", player.currentFrame)
                             }
                         }
                         if (step.startsWith("head")) {
-                            player.drawCanvas(ctx, canvas, centerX + layer_stack_xoffset, centerY + layer_stack_yoffset, rootScale, step, head_transform, false,
-                                adrenalineHeadScaleX, adrenalineHeadScaleY, adrenalineHeadOffsetY)
+                            player.drawCanvas(
+                                ctx,
+                                canvas,
+                                centerX + layer_stack_xoffset,
+                                centerY + layer_stack_yoffset,
+                                rootScale,
+                                step,
+                                head_transform,
+                                false,
+                                adrenalineHeadScaleX,
+                                adrenalineHeadScaleY,
+                                adrenalineHeadOffsetY
+                            )
                         } else {
                             let step_is_body = step.startsWith("body")
-                            player.drawCanvas(ctx, canvas, centerX + layer_stack_xoffset, centerY + layer_stack_yoffset, rootScale, step, undefined, blackBody && step_is_body,
-                                adrenalineBodyScaleX, adrenalineBodyScaleY, 0
+                            player.drawCanvas(
+                                ctx,
+                                canvas,
+                                centerX + layer_stack_xoffset,
+                                centerY + layer_stack_yoffset,
+                                rootScale,
+                                step,
+                                undefined,
+                                blackBody && step_is_body,
+                                adrenalineBodyScaleX,
+                                adrenalineBodyScaleY,
+                                0
                             )
                         }
 
@@ -865,72 +1003,59 @@ export class WebGLOverlay {
     }
 
     loadShader(gl: WebGLRenderingContext, type: GLenum, source: string) {
-        const shader = gl.createShader(type);
-        if (!shader)
-            return
+        const shader = gl.createShader(type)
+        if (!shader) return
         // Send the source to the shader object
-        gl.shaderSource(shader, source);
+        gl.shaderSource(shader, source)
         // Compile the shader program
-        gl.compileShader(shader);
+        gl.compileShader(shader)
         // See if it compiled successfully
         if (!gl.getShaderParameter(shader, gl.COMPILE_STATUS)) {
-            console.error(
-                `An error occurred compiling the shaders: ${gl.getShaderInfoLog(shader)}`,
-            );
-            gl.deleteShader(shader);
-            return null;
+            console.error(`An error occurred compiling the shaders: ${gl.getShaderInfoLog(shader)}`)
+            gl.deleteShader(shader)
+            return null
         }
 
-        return shader;
+        return shader
     }
 
     initShaderProgram(gl: WebGLRenderingContext, vsSource: string, fsSource: string) {
-        const vertexShader = this.loadShader(gl, gl.VERTEX_SHADER, vsSource);
-        const fragmentShader = this.loadShader(gl, gl.FRAGMENT_SHADER, fsSource);
-        if (!vertexShader || !fragmentShader) return;
+        const vertexShader = this.loadShader(gl, gl.VERTEX_SHADER, vsSource)
+        const fragmentShader = this.loadShader(gl, gl.FRAGMENT_SHADER, fsSource)
+        if (!vertexShader || !fragmentShader) return
         // Create the shader program
 
-        const shaderProgram = gl.createProgram();
-        if (!shaderProgram) return;
-        gl.attachShader(shaderProgram, vertexShader);
-        gl.attachShader(shaderProgram, fragmentShader);
-        gl.linkProgram(shaderProgram);
+        const shaderProgram = gl.createProgram()
+        if (!shaderProgram) return
+        gl.attachShader(shaderProgram, vertexShader)
+        gl.attachShader(shaderProgram, fragmentShader)
+        gl.linkProgram(shaderProgram)
 
         // If creating the shader program failed, alert
 
         if (!gl.getProgramParameter(shaderProgram, gl.LINK_STATUS)) {
-            console.error(
-                `Unable to initialize the shader program: ${gl.getProgramInfoLog(
-                    shaderProgram,
-                )}`,
-            );
-            return null;
+            console.error(`Unable to initialize the shader program: ${gl.getProgramInfoLog(shaderProgram)}`)
+            return null
         }
 
-        return shaderProgram;
+        return shaderProgram
     }
 
     init() {
         let gl = this.webgl_canvas.getContext("webgl", {
-            preserveDrawingBuffer: isRecordingMode()
+            preserveDrawingBuffer: isRecordingMode(),
         })
-        if (!gl) return;
-        const shaderProgram = this.initShaderProgram(gl, this.shaderController.vertex(), this.shaderController.fragment());
-        if (!shaderProgram) return;
+        if (!gl) return
+        const shaderProgram = this.initShaderProgram(
+            gl,
+            this.shaderController.vertex(),
+            this.shaderController.fragment()
+        )
+        if (!shaderProgram) return
 
-        ShaderController.bindArray(gl, shaderProgram, "Position", 2, [
-            -1, -1,
-            -1, 1,
-            1, -1,
-            1, 1
-        ])
+        ShaderController.bindArray(gl, shaderProgram, "Position", 2, [-1, -1, -1, 1, 1, -1, 1, 1])
 
-        ShaderController.bindArray(gl, shaderProgram, "TexCoord", 2, [
-            0, 1,
-            0, 0,
-            1, 1,
-            1, 0
-        ])
+        ShaderController.bindArray(gl, shaderProgram, "TexCoord", 2, [0, 1, 0, 0, 1, 1, 1, 0])
 
         this.shaderController.init(gl, shaderProgram, this)
 
@@ -942,23 +1067,19 @@ export class WebGLOverlay {
             gl.bindTexture(gl.TEXTURE_2D, this.texture)
         }
 
-        gl.uniform1i(
-            gl.getUniformLocation(shaderProgram, "Texture0"), 0
-        )
-        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
-        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
-        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
+        gl.uniform1i(gl.getUniformLocation(shaderProgram, "Texture0"), 0)
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE)
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE)
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST)
         gl.enable(gl.BLEND)
         gl.blendFunc(gl.SRC_ALPHA, gl.ZERO)
-
     }
 
     render() {
         var gl = this.webgl_canvas.getContext("webgl")
         if (gl == null) return
         this.shaderController.update(gl)
-        if (this.texture)
-            gl.bindTexture(gl.TEXTURE_2D, this.texture)
+        if (this.texture) gl.bindTexture(gl.TEXTURE_2D, this.texture)
         gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, this.backend_canvas)
         gl.clearColor(0, 0, 0, 0)
         gl.clear(gl.COLOR_BUFFER_BIT)

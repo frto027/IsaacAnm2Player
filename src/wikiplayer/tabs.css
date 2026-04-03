@@ -1,47 +1,95 @@
-.anm2-tab-group-select-panel{
+.anm2-tab-group-select-panel {
     border-top: groove #595959 1px;
 }
 
-.anm2-sub-player-first{
+.anm2-sub-player-first {
     display: inline-block;
 }
 
-.anm2-sub-player-others{
+.anm2-sub-player-others {
     display: inline-block;
     position: absolute;
     left: 0;
     top: 0;
 }
 
-.anm2-sub-player-unk-chara{
+.anm2-sub-player-unk-chara {
     display: none;
 }
 
-.anm2-sub-player-button{
+.anm2-sub-player-button {
     /* border-radius: 3px; */
     margin: 0 -4px;
 }
 
-.anm2-tab-btn-selected{
+.anm2-tab-btn-selected {
     box-shadow: inset #777777 0px -2px 0px 0px;
 }
-.anm2-tab-btn-not-selected{
+.anm2-tab-btn-not-selected {
     border-bottom: none;
 }
-.anm2-tab-btn-chara-player-hide{
+.anm2-tab-btn-chara-player-hide {
     filter: brightness(0.4);
 }
 
-
-
-@keyframes showCharaPlayerAnmL{ from { transform:translate(-100%,0);opacity:0 } to { transform:translate(0%,0);opacity:1 } }
-@keyframes hideCharaPlayerAnmL{ from { transform:translate(0%,0);opacity:1 } to { transform:translate(-100%,0);opacity:0 } }
-@keyframes showCharaPlayerAnmR{ from { transform:translate(100%,0);opacity:0 } to { transform:translate(0%,0);opacity:1 } }
-@keyframes hideCharaPlayerAnmR{ from { transform:translate(0%,0);opacity:1 } to { transform:translate(100%,0);opacity:0 } }
-.chara-player-show-l{animation-name: showCharaPlayerAnmL; animation-duration:0.2s; } 
-.chara-player-show-r{animation-name: showCharaPlayerAnmR; animation-duration:0.2s; } 
-.chara-player-hide-l{animation-name: hideCharaPlayerAnmL; animation-duration:0.2s;animation-fill-mode: forwards;} 
-.chara-player-hide-r{animation-name: hideCharaPlayerAnmR; animation-duration:0.2s;animation-fill-mode: forwards;} 
+@keyframes showCharaPlayerAnmL {
+    from {
+        transform: translate(-100%, 0);
+        opacity: 0;
+    }
+    to {
+        transform: translate(0%, 0);
+        opacity: 1;
+    }
+}
+@keyframes hideCharaPlayerAnmL {
+    from {
+        transform: translate(0%, 0);
+        opacity: 1;
+    }
+    to {
+        transform: translate(-100%, 0);
+        opacity: 0;
+    }
+}
+@keyframes showCharaPlayerAnmR {
+    from {
+        transform: translate(100%, 0);
+        opacity: 0;
+    }
+    to {
+        transform: translate(0%, 0);
+        opacity: 1;
+    }
+}
+@keyframes hideCharaPlayerAnmR {
+    from {
+        transform: translate(0%, 0);
+        opacity: 1;
+    }
+    to {
+        transform: translate(100%, 0);
+        opacity: 0;
+    }
+}
+.chara-player-show-l {
+    animation-name: showCharaPlayerAnmL;
+    animation-duration: 0.2s;
+}
+.chara-player-show-r {
+    animation-name: showCharaPlayerAnmR;
+    animation-duration: 0.2s;
+}
+.chara-player-hide-l {
+    animation-name: hideCharaPlayerAnmL;
+    animation-duration: 0.2s;
+    animation-fill-mode: forwards;
+}
+.chara-player-hide-r {
+    animation-name: hideCharaPlayerAnmR;
+    animation-duration: 0.2s;
+    animation-fill-mode: forwards;
+}
 .chara-player-show {
     filter: none;
 }

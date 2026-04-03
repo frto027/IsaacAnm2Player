@@ -1,29 +1,32 @@
 {
-  "name": "isaac_anm2_player",
-  "version": "1.0.0",
-  "description": "",
-  "license": "ISC",
-  "author": "",
-  "type": "module",
-  "main": "index.js",
-  "scripts": {
-    "serve": "npx webpack serve",
-    "build": "npx webpack",
-    "release": "npx webpack --env production && node dev/gen.cjs"
-  },
-  "devDependencies": {
-    "@babel/core": "^7.16.0",
-    "@babel/preset-env": "^7.16.4",
-    "@babel/traverse": "^7.16.3",
-    "@types/node": "^25.5.0",
-    "babel": "^6.23.0",
-    "css-loader": "^7.1.4",
-    "style-loader": "^4.0.0",
-    "ts-loader": "^9.5.4",
-    "ts-node": "^10.9.2",
-    "typescript": "5.3.3",
-    "webpack": "^5.105.4",
-    "webpack-cli": "^7.0.2",
-    "webpack-dev-server": "^5.2.3"
-  }
+    "name": "isaac_anm2_player",
+    "version": "1.0.0",
+    "description": "",
+    "license": "ISC",
+    "author": "",
+    "type": "module",
+    "main": "index.js",
+    "scripts": {
+        "serve": "npx webpack serve",
+        "build": "npx webpack",
+        "release": "npx webpack --env production && node dev/gen.cjs",
+        "checkfmt": "npx prettier . --check",
+        "fmt": "npx prettier . --write"
+    },
+    "devDependencies": {
+        "@babel/core": "^7.16.0",
+        "@babel/preset-env": "^7.16.4",
+        "@babel/traverse": "^7.16.3",
+        "@types/node": "^25.5.0",
+        "babel": "^6.23.0",
+        "css-loader": "^7.1.4",
+        "prettier": "3.8.1",
+        "style-loader": "^4.0.0",
+        "ts-loader": "^9.5.4",
+        "ts-node": "^10.9.2",
+        "typescript": "5.3.3",
+        "webpack": "^5.105.4",
+        "webpack-cli": "^7.0.2",
+        "webpack-dev-server": "^5.2.3"
+    }
 }

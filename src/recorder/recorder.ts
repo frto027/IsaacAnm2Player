@@ -3,40 +3,38 @@ import type { WikiPlayer } from "../wikiplayer/wikiplayer"
 
 import "./recorder.css"
 
-class RecorderIndicator{
+class RecorderIndicator {
     recording_count = 0
-    elem:HTMLElement
-    constructor(){
+    elem: HTMLElement
+    constructor() {
         this.elem = document.createElement("div")
         this.elem.classList.add("anm2-recorder-indicator")
         document.body.appendChild(this.elem)
         this.flush()
     }
 
-    flush(){
+    flush() {
         this.elem.innerText = this.recording_count + "个播放器正在录制(shift+R开关)"
-        if(this.recording_count == 0){
+        if (this.recording_count == 0) {
             this.elem.classList.remove("anm2-recorder-indicator-recording")
-        }else{
+        } else {
             this.elem.classList.add("anm2-recorder-indicator-recording")
         }
     }
-    inc(){
+    inc() {
         this.recording_count++
         this.flush()
     }
-    dec(){
+    dec() {
         this.recording_count--
         this.flush()
     }
-    static instance?:RecorderIndicator
-    static getInstatnce():RecorderIndicator{
-        if(RecorderIndicator.instance == undefined)
-            RecorderIndicator.instance = new RecorderIndicator()
+    static instance?: RecorderIndicator
+    static getInstatnce(): RecorderIndicator {
+        if (RecorderIndicator.instance == undefined) RecorderIndicator.instance = new RecorderIndicator()
         return RecorderIndicator.instance
     }
 }
-
 
 export class Anm2Recorder {
     player: WikiPlayer
@@ -49,14 +47,14 @@ export class Anm2Recorder {
 
     thisFrameIsCaptured = false
 
-    recorder_hint_container:HTMLElement
-    recorder_hint:HTMLElement
+    recorder_hint_container: HTMLElement
+    recorder_hint: HTMLElement
 
     constructor(player: WikiPlayer, dir: FileSystemDirectoryHandle) {
         this.player = player
         this.dir = dir
 
-        RecorderIndicator.getInstatnce();
+        RecorderIndicator.getInstatnce()
 
         this.recorder_hint_container = document.createElement("div")
         this.recorder_hint_container.classList.add("anm2-recorder-hint-container")
@@ -72,8 +70,7 @@ export class Anm2Recorder {
 
     update() {
         if (this.isRecording) {
-            if(this.player.isDirty)
-                this.player.realDraw()
+            if (this.player.isDirty) this.player.realDraw()
             this.thisFrameIsCaptured = false
             this.record() // 虽然record是异步的，但是它在异步操作之前应当启动捕获
             console.assert(this.thisFrameIsCaptured)
@@ -82,10 +79,8 @@ export class Anm2Recorder {
 
     handleKey(key: string): boolean {
         if (key.toLowerCase() == "r") {
-            if (this.isRecording)
-                this.stopRecord()
-            else
-                this.startRecord()
+            if (this.isRecording) this.stopRecord()
+            else this.startRecord()
             return true
         }
 
@@ -93,17 +88,14 @@ export class Anm2Recorder {
     }
 
     startRecord() {
-        if(!this.isRecording)
-            RecorderIndicator.getInstatnce().inc()
+        if (!this.isRecording) RecorderIndicator.getInstatnce().inc()
         this.isRecording = true
         this.recorder_hint_container.style.display = "block"
     }
     stopRecord() {
-        if(this.isRecording)
-            RecorderIndicator.getInstatnce().dec()
+        if (this.isRecording) RecorderIndicator.getInstatnce().dec()
         this.isRecording = false
         this.recorder_hint_container.style.display = "none"
-
     }
 
     captureCanvas(): Promise<Blob> {
@@ -129,18 +121,18 @@ export class Anm2Recorder {
 
         try {
             // 1 我们希望无延迟地启动toBolb函数，所以这一步不能套在promise里面
-            this.thisFrameIsCaptured = true;
+            this.thisFrameIsCaptured = true
 
-            let canvas = this.player.canvasElement!;
+            let canvas = this.player.canvasElement!
 
-            if(this.player.backendCanvas){
-                if(!isRecordingMode()){
+            if (this.player.backendCanvas) {
+                if (!isRecordingMode()) {
                     // 在非recording mode下，我们无法获取webgl的渲染结果，因此只能获得anm2的绘制结果
-                    canvas = this.player.backendCanvas;
+                    canvas = this.player.backendCanvas
                 }
             }
 
-            canvas.toBlob(_blob => {
+            canvas.toBlob((_blob) => {
                 // 2 这里和下面哪一个先执行，是未定义行为
                 has_result = true
                 blob = _blob
@@ -162,32 +154,31 @@ export class Anm2Recorder {
 
     async saveFile(blobPromise: Promise<Blob>, fileId: number) {
         try {
-            let blob = await blobPromise;
+            let blob = await blobPromise
             let file = await this.dir.getFileHandle(fileId + ".png", {
-                create: true
-            });
+                create: true,
+            })
             let stream = await file.createWritable({
-                keepExistingData: false
-            });
-            await stream.write(blob);
-            await stream.close();
+                keepExistingData: false,
+            })
+            await stream.write(blob)
+            await stream.close()
         } catch (e) {
-            console.error(e);
+            console.error(e)
             window.alert("我们无法完成录制保存，相关错误信息已展示在控制台，录制已停止")
-            this.stopRecord();
+            this.stopRecord()
         }
     }
-
 
     record() {
         let fileId = this.nextFileId++
         try {
-            let blob = this.captureCanvas();
-            this.saveFile(blob, fileId)// start async save file task
+            let blob = this.captureCanvas()
+            this.saveFile(blob, fileId) // start async save file task
         } catch (e) {
-            console.error(e);
+            console.error(e)
             window.alert("我们无法完成录制，相关错误信息已展示在控制台，录制已停止")
-            this.stopRecord();
+            this.stopRecord()
         }
     }
 }
