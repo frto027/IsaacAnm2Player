@@ -32,4 +32,4 @@ npm run release -- for release version, use dist/bundle.release.js
 
 # License
 
-MIT License
+MIT License (Excluding Shaders)
