@@ -1053,9 +1053,20 @@ export class WebGLOverlay {
         )
         if (!shaderProgram) return
 
-        ShaderController.bindArray(gl, shaderProgram, "Position", 2, [-1, -1, -1, 1, 1, -1, 1, 1])
-
-        ShaderController.bindArray(gl, shaderProgram, "TexCoord", 2, [0, 1, 0, 0, 1, 1, 1, 0])
+        // prettier-ignore
+        ShaderController.bindArray(gl, shaderProgram, "Position", 2, [
+            -1, -1,
+            -1,  1,
+             1, -1,
+             1,  1,
+        ])
+        // prettier-ignore
+        ShaderController.bindArray(gl, shaderProgram, "TexCoord", 2, [
+            0, 1,
+            0, 0,
+            1, 1,
+            1, 0,
+        ])
 
         this.shaderController.init(gl, shaderProgram, this)
 
