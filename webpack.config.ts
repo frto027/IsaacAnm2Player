@@ -1,7 +1,7 @@
 import * as path from "path"
 import { fileURLToPath } from "url"
-import * as webpack from "webpack"
 
+// import TerserPlugin from "terser-webpack-plugin"
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = path.dirname(__filename)
 
@@ -39,6 +39,13 @@ export default function (env: any, argv: any) /*: webpack.Configuration*/ {
         mode: IS_DEV ? "development" : "production",
         optimization: {
             minimize: IS_DEV ? false : true,
+            // minimizer: [new TerserPlugin({
+            //     terserOptions: {
+            //         compress: {
+            //         },
+            //         format: { comments: false}
+            //     }
+            // })],
         },
         devServer: {
             allowedHosts: "all",
