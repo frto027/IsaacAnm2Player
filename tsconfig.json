@@ -9,7 +9,7 @@
     // Environment Settings
     // See also https://aka.ms/tsconfig/module
     "module": "es2020",
-    "target": "es3",
+    "target": "es2015",
     "types": ["node"],
     "ignoreDeprecations":"5.0",
     // For nodejs:

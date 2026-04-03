@@ -32,7 +32,7 @@ export function setupAnm2Players() {
     for (let i = 0; i < canvases.length; i++) {
         window.anm2players?.wikplayers.push(new WikiPlayer(canvases[i] as HTMLElement, huijiDatabaseFetcher))
     }
-    huijiDatabaseFetcher.doAction()
+    huijiDatabaseFetcher.execute()
 
     // 初始化json页面
     let pageName = window.mw.config.get("wgPageName")

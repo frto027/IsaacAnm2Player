@@ -2,7 +2,7 @@ import { AnmPlayer, WebGLOverlay, type CostumeInfo } from "../player/player"
 import { Anm2Recorder } from "../recorder/recorder"
 import { C_SECTION_FRAME_MAP } from "./datas/datas"
 import type { HtmlRule, HtmlRuleConstructor } from "./htmlRule"
-import { HuijiDatabaseFetcher, isRecordingMode } from "./huiji"
+import { DbFetchSuggest, HuijiDatabaseFetcher, isRecordingMode } from "./huiji"
 
 enum PlayerPatch {
     Neptunus = "neptunus",
@@ -20,10 +20,6 @@ enum PlayerPatch {
 enum RenderMode {
     Normal,
     Costume
-}
-
-interface ResourceFetcher {
-    getAnm2File(_id:string):Actor | undefined
 }
 
 export class WikiPlayer {
@@ -204,10 +200,17 @@ export class WikiPlayer {
             dbRequester.addAnm2File(p.anm2WikiPath)
         }
 
+        for(let player of this.players){
+            if(player.skincolor != undefined || player.hasAltSkin){
+                dbRequester.dbFetchSuggest = DbFetchSuggest.FetchAltSkin
+                break
+            }
+        }
+
         dbRequester.addListener(
             () => {
                 this.init_canvasDiv();
-                this.init_anm(dbRequester);
+                this.init_anm(dbRequester!);
             },
             () => {
                 this.canvasContainer.innerHTML = "动画加载失败"
@@ -215,7 +218,7 @@ export class WikiPlayer {
         );
 
         if(standaloneRequester){
-            standaloneRequester.doAction()
+            standaloneRequester.execute()
         }
     }
 
@@ -421,7 +424,7 @@ export class WikiPlayer {
         }
     }
 
-    init_anm(fetcher:ResourceFetcher) {
+    init_anm(fetcher:HuijiDatabaseFetcher) {
         if (this.renderMode == RenderMode.Costume) {
             for (let player of this.players) {
                 if (player.skincolor)
@@ -1362,20 +1365,18 @@ class WikiPlayerSingleAnm2 {
         this.hasAltSkin = anm.getAttribute("data-has-skin-alt") == "true"
     }
 
-    init(fetcher: ResourceFetcher) {
+    init(fetcher: HuijiDatabaseFetcher) {
         if (this.parent.renderMode == RenderMode.Costume) {
             let target: Actor | undefined = fetcher.getAnm2File(this.anm2WikiPath)
             if (!target)
                 return;
 
             if (this.parent.overwriteColor != undefined && this.index == 0) {
-                AnmPlayer.processSkinAlt(target, this.parent.overwriteColor, true)
+                AnmPlayer.processSkinAltAndCostumeAlt(target, this.parent.overwriteColor, "", true, fetcher)
             }
 
-            if (this.parent.overwriteColor != undefined && this.hasAltSkin) {
-                AnmPlayer.processSkinAltAndCostumeAlt(target, this.parent.overwriteColor, this.parent.costumealt)
-            } else {
-                AnmPlayer.processCostumeAlt(target, this.parent.costumealt)
+            if (this.hasAltSkin) {
+                AnmPlayer.processSkinAltAndCostumeAlt(target, this.parent.overwriteColor, this.parent.costumealt, false, fetcher)
             }
 
 

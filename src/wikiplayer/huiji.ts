@@ -17,12 +17,22 @@ export function isRecordingMode(): boolean {
     return is_recording_mode
 }
 
+export enum DbFetchSuggest{
+    Unk,
+    DontFetchAltSkin,
+    FetchAltSkin
+}
+
 export class HuijiDatabaseFetcher {
     anm2Ids: string[] = []
     onSuccess: (() => void)[] = []
     onFailed: (() => void)[] = []
 
     responseAnm2 = new Map<string, Actor>()
+
+    respCharaCostumes = new Map<string /* png url */, Set<string>>()
+
+    dbFetchSuggest = DbFetchSuggest.DontFetchAltSkin
 
     addAnm2File(_id: string) {
         this.anm2Ids.push(_id)
@@ -38,45 +48,132 @@ export class HuijiDatabaseFetcher {
             return JSON.parse(JSON.stringify(result))
         }
     }
+    // ------------------------->       1           2            3                   4        5     6
+    static ALT_SKIN_RE = new RegExp("^(resources)(-dlc3)?(/gfx/characters/costumes)([_a-z]*)(/.*)(\\.png)")
+    static getCleanURL(url:string){
+        let m = HuijiDatabaseFetcher.ALT_SKIN_RE.exec(url)
+        if(!m)
+            return url
+        let clean_url = m[1]! + m[3]! + m[5]!
+        return clean_url
+    }
+
+    getAltSkin(url:string, chara:string, color:string):string {
+        let m = HuijiDatabaseFetcher.ALT_SKIN_RE.exec(url)
+        if(!m)
+            return url
+        let clean_url = m[1]!+m[3]!+m[5]!+m[6]
+
+        let obj = this.respCharaCostumes.get(clean_url)
+        if(obj == undefined)
+            return url
+
+        let pchara = chara.length > 0 ? ("_"+chara) : ""
+        let pcolor = color.length > 0 ? ("_"+color) : ""
+        if(obj.has("dlc3:" + chara + ":" + color))
+            return m[1]!+"-dlc3" + m[3]! + pchara + m[5]! + pcolor + m[6]!
+        if(obj.has(":" + chara + ":" + color))
+            return m[1]! + m[3]! + pchara + m[5]! + pcolor + m[6]!
+        return url
+    }
+
 
     addListener(onSuccess: () => void, onFailed: () => void) {
         this.onSuccess.push(onSuccess)
         this.onFailed.push(onFailed)
     }
 
-    private request(anm2Ids: string[]): Promise<boolean> {
+    private request(filter:any): Promise<any> {
         return new Promise<boolean>((resolve, reject) => {
-            let filter = {
-                $or: anm2Ids.map(v => ({
-                    _id: v
-                }))
-            }
             window.$.ajax({
                 url: "/api/rest_v1/namespace/data",
                 method: "GET",
                 data: { filter: JSON.stringify(filter) },
                 dataType: "json"
             }).done((msg: any) => {
-                for (var i = 0; i < msg._embedded.length; i++) {
-                    AnmPlayer.expandActor(msg._embedded[i], keymap)
-                    this.responseAnm2.set(msg._embedded[i]._id, msg._embedded[i])
-                }
-                resolve(true);
+                resolve(msg);
             }).fail((jqXHR: AnalyserNode, textStatus: any) => {
-                console.log("anm2 json download failed.", textStatus, jqXHR)
+                console.log("request failed", textStatus, jqXHR)
                 reject()
             })
         });
     }
 
-    async doAction() {
+    private async requestAnm2Files(anm2Ids:string[]):Promise<boolean>{
+        let filter = {
+            $or: anm2Ids.map(v => ({
+                _id: v
+            }))
+        }
+
+        let msg = await this.request(filter)
+        for (var i = 0; i < msg._embedded.length; i++) {
+            AnmPlayer.expandActor(msg._embedded[i], keymap)
+            this.responseAnm2.set(msg._embedded[i]._id, msg._embedded[i])
+        }
+
+        return true
+    }
+
+    private async requestCharaCostumes(pngs:string[]){
+        let filter = {
+            $and:[
+                {
+                    _id:{
+                        $regex:"^Data:CharaCostume\\.tabx"
+                    }
+                },
+                {
+                    $or:pngs.map(v=>({
+                        sprite_path:v
+                    }))
+                }
+            ]
+        }        
+
+        let msg = await this.request(filter)
+        for (let i = 0; i < msg._embedded.length; i++) {
+            let obj = msg._embedded[i];
+            if(typeof(obj.sprite_path) != "string")
+                continue
+            if(!this.respCharaCostumes.has(obj.sprite_path))
+                this.respCharaCostumes.set(obj.sprite_path, new Set())
+            let charas = obj.characolors
+            if(typeof(charas) != "object")
+                continue
+            let set = this.respCharaCostumes.get(obj.sprite_path)!
+            for(let i=0;i<charas.length;i++){
+                let combo = charas[i]
+                if(typeof(combo) != "string")
+                    continue
+                set.add(combo)
+            }
+        }
+        return true
+    }
+
+    async execute() {
         try {
             const BATCH_SIZE = 50
             // 一次最多请求50条，别太多
             for (let i = 0; i < this.anm2Ids.length; i += BATCH_SIZE) {
-                await this.request(this.anm2Ids.slice(i, i + BATCH_SIZE))
+                await this.requestAnm2Files(this.anm2Ids.slice(i, i + BATCH_SIZE))
             }
-            await this.request(this.anm2Ids);
+
+            if(this.dbFetchSuggest != DbFetchSuggest.DontFetchAltSkin)
+            {
+                let png_files:string[] = []
+                for(let anm of this.responseAnm2.values()){
+                    for(const sprite of anm.content?.Spritesheets??[]){
+                        if(typeof(sprite.Path) == "string" && sprite.Path.indexOf("/gfx/characters/costumes") > 0)
+                            png_files.push(sprite.Path)
+                    }
+                }
+                if(png_files.length > 0){
+                    await this.requestCharaCostumes(png_files)
+                }
+            }
+
             for (const onSuccess of this.onSuccess)
                 onSuccess()
         } catch (e) {

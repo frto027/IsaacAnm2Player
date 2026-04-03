@@ -110,7 +110,10 @@ interface LayerAdjustParameter {
     hide?: boolean | undefined
 }
 
-import { COSTUME_ALT_DICT } from "./costum_dict"
+interface SkinAltProvider{
+    getAltSkin(url:string, chara:string, color:string):string 
+}
+
 import { huijiUrlBuilder, isRecordingMode } from "../wikiplayer/huiji"
 
 export type ReplaceSheetMap = Map<number, string>
@@ -639,52 +642,19 @@ export class AnmPlayer {
     public static setCrossOrigin(origin?: string) {
         AnmPlayer.crossOrigin = origin
     }
-    private static SKIN_ALT_NAME = ['_white', '_black', '_blue', '_red', '_green', '_grey']
-    public static processSkinAlt(target: Actor, skinAlt: number, firstOnly: boolean = false) {
-        if (skinAlt >= 0 && skinAlt < AnmPlayer.SKIN_ALT_NAME.length) {
-            for (let sprite of target.content?.Spritesheets || []) {
-                if (firstOnly && sprite.Id != 0) {
-                    continue
-                }
-                if (sprite.Path && sprite.Path.endsWith('.png')) {
-                    sprite.Path = sprite.Path.substring(0, sprite.Path.length - 4) + this.SKIN_ALT_NAME[skinAlt] + '.png'
-                }
-            }
-        }
-    }
+    private static SKIN_ALT_NAME = ['white', 'black', 'blue', 'red', 'green', 'grey']
 
-
-    public static processSkinAltAndCostumeAlt(target: Actor, skinAlt: number, costumeAlt: string) {
+    public static processSkinAltAndCostumeAlt(target: Actor, skinAlt: number | undefined, costumeAlt: string | undefined, firstOnly:boolean, skinAltProvider:SkinAltProvider) {
         for (let sprite of target.content?.Spritesheets || []) {
-            if (sprite.Path && sprite.Path.endsWith('.png')) {
-                let path_from = sprite.Path
-                let path_try_skin = sprite.Path.substring(0, sprite.Path.length - 4) + this.SKIN_ALT_NAME[skinAlt] + '.png'
-                if (costumeAlt && costumeAlt.length > 0 && COSTUME_ALT_DICT.has(costumeAlt)) {
-                    let rep_dict = COSTUME_ALT_DICT.get(costumeAlt)
-                    if (rep_dict?.has(path_try_skin)) {
-                        //皮肤颜色变换后，仍然具有角色贴图（使用变换后的角色贴图）
-                        sprite.Path = rep_dict.get(path_try_skin) || sprite.Path
-                    } else if (rep_dict?.has(path_from)) {
-                        //皮肤颜色变换前有角色贴图，但变换后没有（使用变换前的角色贴图）
-                        sprite.Path = rep_dict.get(path_from) || sprite.Path
-                    } else {
-                        //没有角色贴图（使用变换后的皮肤颜色贴图）
-                        sprite.Path = path_try_skin
-                    }
-                } else {
-                    sprite.Path = path_try_skin
-                }
+            if(firstOnly && sprite.Id != 0){
+                continue
             }
-        }
-    }
 
-    public static processCostumeAlt(target: Actor, costumeAlt: string) {
-        if (COSTUME_ALT_DICT.has(costumeAlt)) {
-            let rep_dict = COSTUME_ALT_DICT.get(costumeAlt)
-            for (let sprite of target.content?.Spritesheets || []) {
-                if (sprite.Path && rep_dict?.has(sprite.Path)) {
-                    sprite.Path = rep_dict.get(sprite.Path) || sprite.Path
-                }
+            if (sprite.Path && sprite.Path.endsWith('.png')) {
+                console.log(sprite.Path, skinAlt, costumeAlt)
+                // this is a file system operate, so do it outside the anm2 player
+                sprite.Path = skinAltProvider.getAltSkin(sprite.Path, costumeAlt || "", skinAlt == undefined ? "" : this.SKIN_ALT_NAME[skinAlt]!)
+                console.log(sprite.Path)
             }
         }
     }
