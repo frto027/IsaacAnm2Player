@@ -16,6 +16,16 @@ npm run build -- for debug version, use dist/bundle.js
 npm run release -- for release version, use dist/bundle.release.js
 ```
 
+# 上传
+
+将bundle.js存入Gadget:Anm2Player.bundle.js，并修改Gadget:Anm2Player.js中的版本号。
+
+无需上传bundle.release.js。这是ES3合法的转换结果。我们有dev/loader.js辅助加载，所以不需要符合ES3。
+
+# 调试
+
+在小工具中关闭Anm2播放器，并打开DevServer。然后本地启动`npm run serve`即可在wiki上实时预览效果，并自动热更新。
+
 # 功能描述
 
 - 完整的anm2解析流程
