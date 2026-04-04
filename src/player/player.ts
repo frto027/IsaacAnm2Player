@@ -160,6 +160,8 @@ export class AnmPlayer {
     layers: Layer [/* layer id */] = new Array()
     // prettier-ignore
     events: string [/* event id */] = new Array()
+    // prettier-ignore
+    useShadowMaskForSprite:boolean[/*sprite id*/] = []
 
     // prettier-ignore
     layerAdjustParameters: LayerAdjustParameter [/* layer id */] = new Array()
@@ -404,6 +406,13 @@ export class AnmPlayer {
 
     replaceSheetMap?: ReplaceSheetMap
 
+    // 贴图是否为犹大之影设计？如果不是的话，就要加入黑色滤镜
+    private isBlackTexture(path:string){
+        if(path.indexOf("_shadow") == -1 && path.indexOf("blackjudas") == -1)
+            return false
+        return true
+    }
+
     private loadSpritesheet(i: number) {
         let img = this.sprites_htmlimg[i]
         if (img == undefined) {
@@ -416,9 +425,16 @@ export class AnmPlayer {
             }
 
             if (this.replaceSheetMap?.has(i)) {
-                img.src = huijiUrlBuilder(this.replaceSheetMap.get(i)!)
+                let orig_url = this.replaceSheetMap.get(i)!
+                img.src = huijiUrlBuilder(orig_url)
+                if(!this.isBlackTexture(orig_url)){
+                    this.useShadowMaskForSprite[i] = true
+                }
             } else {
                 img.src = huijiUrlBuilder(imgpath)
+                if(!this.isBlackTexture(imgpath)){
+                    this.useShadowMaskForSprite[i] = true
+                }
             }
 
             img.onload = () => {
@@ -577,7 +593,7 @@ export class AnmPlayer {
                                     frame.BlueOffset + (layerAdjuster.blueOffset || 0) / 255
                                 ) +
                                 ")"
-                        } else if (blackPatch) {
+                        } else if (blackPatch && this.useShadowMaskForSprite[sprite_sheet_id]) {
                             frame.filterId =
                                 "url(#" +
                                 AnmPlayer.createSvgFilterElement(
@@ -745,14 +761,14 @@ export class AnmPlayer {
             }
 
             if (sprite.Path && sprite.Path.endsWith(".png")) {
-                console.log(sprite.Path, skinAlt, costumeAlt)
+                // console.log(sprite.Path, skinAlt, costumeAlt)
                 // this is a file system operate, so do it outside the anm2 player
                 sprite.Path = skinAltProvider.getAltSkin(
                     sprite.Path,
                     costumeAlt || "",
                     skinAlt == undefined ? "" : this.SKIN_ALT_NAME[skinAlt]!
                 )
-                console.log(sprite.Path)
+                // console.log(sprite.Path)
             }
         }
     }
@@ -962,13 +978,12 @@ export class AnmPlayer {
                                 rootScale,
                                 step,
                                 head_transform,
-                                false,
+                                blackBody,
                                 adrenalineHeadScaleX,
                                 adrenalineHeadScaleY,
                                 adrenalineHeadOffsetY
                             )
                         } else {
-                            let step_is_body = step.startsWith("body")
                             player.drawCanvas(
                                 ctx,
                                 canvas,
@@ -977,7 +992,7 @@ export class AnmPlayer {
                                 rootScale,
                                 step,
                                 undefined,
-                                blackBody && step_is_body,
+                                blackBody,
                                 adrenalineBodyScaleX,
                                 adrenalineBodyScaleY,
                                 0

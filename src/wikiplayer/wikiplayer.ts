@@ -1480,19 +1480,13 @@ class WikiPlayerSingleAnm2 {
             let target: Actor | undefined = fetcher.getAnm2File(this.anm2WikiPath)
             if (!target) return
 
-            if (this.parent.overwriteColor != undefined && this.index == 0) {
-                AnmPlayer.processSkinAltAndCostumeAlt(target, this.parent.overwriteColor, "", true, fetcher)
-            }
-
-            if (this.hasAltSkin) {
-                AnmPlayer.processSkinAltAndCostumeAlt(
-                    target,
-                    this.parent.overwriteColor,
-                    this.parent.costumealt,
-                    false,
-                    fetcher
-                )
-            }
+            AnmPlayer.processSkinAltAndCostumeAlt(
+                target,
+                this.parent.overwriteColor,
+                this.parent.costumealt,
+                false,
+                fetcher
+            )
 
             /* 此处ABC共用同一份json，注意确保它们没问题 */
             this.costumeA = new AnmPlayer(target, this.replaceSheetMap, () => {

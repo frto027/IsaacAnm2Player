@@ -1,5 +1,13 @@
+.anm2-tab-group-select-panel-container {
+    max-width: 106px;
+    margin: auto;
+    overflow: hidden;
+}
 .anm2-tab-group-select-panel {
     border-top: groove #595959 1px;
+    width: max-content;
+    display: block;
+    transition: margin-left 0.2s ease-in-out;
 }
 
 .anm2-sub-player-first {
