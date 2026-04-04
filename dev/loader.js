@@ -1,6 +1,6 @@
 var version = "20260402"
 
-var load_url = "/index.php?title=Gadget:Anm2Player.bundle.js&action=raw"
+var load_url = "/index.php?title=Gadget:Anm2Player.bundle.js&action=raw&ctype=text%2Fjavascript"
 
 function load() {
     console.log("加载Anm2播放器...")
@@ -25,6 +25,7 @@ if (localStorage.getItem("anm2player-ver") != version || localStorage.getItem("a
         v.text().then(function (v) {
             console.log("Anm2播放器源码获取成功")
             localStorage.setItem("anm2player-script", v)
+            localStorage.setItem("anm2player-ver", version)
             load()
         })
     })
