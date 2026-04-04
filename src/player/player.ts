@@ -730,7 +730,7 @@ export class AnmPlayer {
     public static setCrossOrigin(origin?: string) {
         AnmPlayer.crossOrigin = origin
     }
-    private static SKIN_ALT_NAME = ["white", "black", "blue", "red", "green", "grey"]
+    public static SKIN_ALT_NAME = ["white", "black", "blue", "red", "green", "grey"]
 
     public static processSkinAltAndCostumeAlt(
         target: Actor,

@@ -70,27 +70,29 @@ export class HuijiDatabaseFetcher {
             return JSON.parse(JSON.stringify(result))
         }
     }
-    // ------------------------->       1           2            3                   4        5     6
-    static ALT_SKIN_RE = new RegExp("^(resources)(-dlc3)?(/gfx/characters/costumes)([_a-z]*)(/.*)(\\.png)")
-    static getCleanURL(url: string) {
-        let m = HuijiDatabaseFetcher.ALT_SKIN_RE.exec(url)
-        if (!m) return url
-        let clean_url = m[1]! + m[3]! + m[5]!
-        return clean_url
-    }
+    // ------------------------->      1                                         2       3    4
+    static ALT_SKIN_RE = new RegExp("^(resources-repp/gfx/characters/costumes)([a-z_]*)(/.*)(\\.png)$")
 
     getAltSkin(url: string, chara: string, color: string): string {
         let m = HuijiDatabaseFetcher.ALT_SKIN_RE.exec(url)
         if (!m) return url
-        let clean_url = m[1]! + m[3]! + m[5]! + m[6]
+        let clean_url = m[1]! + m[3]!
 
-        let obj = this.respCharaCostumes.get(clean_url)
+        // hope we don't need this
+        // for(let color of AnmPlayer.SKIN_ALT_NAME){
+        //     const color_postfix = "_" + color
+        //     if(clean_url.endsWith(color_postfix)){
+        //         clean_url = clean_url.substring(0, clean_url.length - color_postfix.length)
+        //         break
+        //     }
+        // }
+
+        let obj = this.respCharaCostumes.get(clean_url + ".png")
         if (obj == undefined) return url
 
         let pchara = chara.length > 0 ? "_" + chara : ""
         let pcolor = color.length > 0 ? "_" + color : ""
-        if (obj.has("dlc3:" + chara + ":" + color)) return m[1]! + "-dlc3" + m[3]! + pchara + m[5]! + pcolor + m[6]!
-        if (obj.has(":" + chara + ":" + color)) return m[1]! + m[3]! + pchara + m[5]! + pcolor + m[6]!
+        if (obj.has(chara + ":" + color)) return m[1]! + pchara + m[3]! + pcolor + ".png"
         return url
     }
 

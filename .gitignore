@@ -1,3 +1,16 @@
 dist
 node_modules
-CharaCostume.tabx
+
+CharaCostume.tabx.json
+Costumes2.tabx.json
+
+url.locals
+url.onlylocals
+url.remote
+url.onlyremote
+
+offline.png
+online.png
+test.png
+
+__pycache__
