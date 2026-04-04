@@ -58,8 +58,7 @@ export class HuijiDatabaseFetcher {
     dbFetchSuggest = DbFetchSuggest.DontFetchAltSkin
 
     addAnm2File(_id: string) {
-        if(this.anm2Ids.indexOf(_id) == -1)
-            this.anm2Ids.push(_id)
+        if (this.anm2Ids.indexOf(_id) == -1) this.anm2Ids.push(_id)
     }
 
     getAnm2File(_id: string): Actor | undefined {

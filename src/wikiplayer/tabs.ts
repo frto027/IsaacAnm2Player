@@ -68,18 +68,17 @@ interface Anm2TabGroup {
 import "./tabs.css"
 
 export class Anm2TabGroups {
-    select_pannel_container:HTMLDivElement
+    select_pannel_container: HTMLDivElement
     select_pannel: HTMLDivElement
     groups: Anm2TabGroup[] = []
 
     is_animating = false
 
-    shiftButtonTo(index:number){
+    shiftButtonTo(index: number) {
         const BUTTON_WIDTH = 24
         const CONTAINER_WIDTH = 106
 
-        if(this.groups.length < 1)
-            return
+        if (this.groups.length < 1) return
 
         const left_distance = index * BUTTON_WIDTH
         const target_position = CONTAINER_WIDTH / 2 - BUTTON_WIDTH / 2
@@ -88,17 +87,15 @@ export class Anm2TabGroups {
 
         const MIN_LEFT_MOVE = 0
         const MAX_LEFT_MOVE = this.groups.length * BUTTON_WIDTH - CONTAINER_WIDTH
-        if(left_move_distance < MIN_LEFT_MOVE)
-            left_move_distance = MIN_LEFT_MOVE
-        else if(left_move_distance > MAX_LEFT_MOVE)
-            left_move_distance = MAX_LEFT_MOVE
+        if (left_move_distance < MIN_LEFT_MOVE) left_move_distance = MIN_LEFT_MOVE
+        else if (left_move_distance > MAX_LEFT_MOVE) left_move_distance = MAX_LEFT_MOVE
         this.select_pannel.style.marginLeft = -left_move_distance + "px"
     }
 
     constructor(target: HTMLElement) {
         this.select_pannel_container = document.createElement("div")
         this.select_pannel_container.classList.add("anm2-tab-group-select-panel-container")
-        
+
         this.select_pannel = document.createElement("div")
         this.select_pannel.classList.add("anm2-tab-group-select-panel")
 
@@ -144,7 +141,7 @@ export class Anm2TabGroups {
 
         this.select_pannel_container.appendChild(this.select_pannel)
         target.appendChild(this.select_pannel_container)
-        target.style.marginBottom = ''
+        target.style.marginBottom = ""
 
         // set the initial status
         for (let group of this.groups) {

@@ -407,9 +407,8 @@ export class AnmPlayer {
     replaceSheetMap?: ReplaceSheetMap
 
     // 贴图是否为犹大之影设计？如果不是的话，就要加入黑色滤镜
-    private isBlackTexture(path:string){
-        if(path.indexOf("_shadow") == -1 && path.indexOf("blackjudas") == -1)
-            return false
+    private isBlackTexture(path: string) {
+        if (path.indexOf("_shadow") == -1 && path.indexOf("blackjudas") == -1) return false
         return true
     }
 
@@ -427,12 +426,12 @@ export class AnmPlayer {
             if (this.replaceSheetMap?.has(i)) {
                 let orig_url = this.replaceSheetMap.get(i)!
                 img.src = huijiUrlBuilder(orig_url)
-                if(!this.isBlackTexture(orig_url)){
+                if (!this.isBlackTexture(orig_url)) {
                     this.useShadowMaskForSprite[i] = true
                 }
             } else {
                 img.src = huijiUrlBuilder(imgpath)
-                if(!this.isBlackTexture(imgpath)){
+                if (!this.isBlackTexture(imgpath)) {
                     this.useShadowMaskForSprite[i] = true
                 }
             }
