@@ -58,7 +58,8 @@ export class HuijiDatabaseFetcher {
     dbFetchSuggest = DbFetchSuggest.DontFetchAltSkin
 
     addAnm2File(_id: string) {
-        this.anm2Ids.push(_id)
+        if(this.anm2Ids.indexOf(_id) == -1)
+            this.anm2Ids.push(_id)
     }
 
     getAnm2File(_id: string): Actor | undefined {
@@ -77,22 +78,17 @@ export class HuijiDatabaseFetcher {
         let m = HuijiDatabaseFetcher.ALT_SKIN_RE.exec(url)
         if (!m) return url
         let clean_url = m[1]! + m[3]!
-
-        // hope we don't need this
-        // for(let color of AnmPlayer.SKIN_ALT_NAME){
-        //     const color_postfix = "_" + color
-        //     if(clean_url.endsWith(color_postfix)){
-        //         clean_url = clean_url.substring(0, clean_url.length - color_postfix.length)
-        //         break
-        //     }
-        // }
+        // console.log("clean url is ", clean_url)
 
         let obj = this.respCharaCostumes.get(clean_url + ".png")
+        // console.log(obj)
         if (obj == undefined) return url
 
         let pchara = chara.length > 0 ? "_" + chara : ""
         let pcolor = color.length > 0 ? "_" + color : ""
         if (obj.has(chara + ":" + color)) return m[1]! + pchara + m[3]! + pcolor + ".png"
+        if (obj.has(chara + ":")) return m[1]! + pchara + m[3]! + ".png"
+        if (obj.has(":" + color)) return m[1]! + m[3]! + pcolor + ".png"
         return url
     }
 
