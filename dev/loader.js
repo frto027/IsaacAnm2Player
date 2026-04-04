@@ -1,4 +1,4 @@
-var version = "20260402"
+var version = "20260405"
 
 var load_url = "/index.php?title=Gadget:Anm2Player.bundle.js&action=raw&ctype=text%2Fjavascript"
 

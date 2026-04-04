@@ -22,6 +22,7 @@ function initJsonPage(path: string) {
 }
 
 export function setupAnm2Players() {
+    console.log("Anm2播放器正在启动")
     AnmPlayer.setCrossOrigin("anonymous")
     window.init_anm2player_canvas = initPlayer
 
