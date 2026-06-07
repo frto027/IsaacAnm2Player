@@ -143,6 +143,7 @@ interface SkinAltProvider {
 }
 
 import { huijiUrlBuilder, isRecordingMode } from "../wikiplayer/huiji"
+import { PlayerPatch } from "../wikiplayer/wikiplayer"
 
 export type ReplaceSheetMap = Map<number, string>
 
@@ -833,10 +834,10 @@ export class AnmPlayer {
         rootScale: number,
         shootFrame: number,
         walkFrame: number,
-        blackBody: boolean /* 犹大之影 */,
+        patches:Set<PlayerPatch> /* 犹大之影 */,
         gameFrameCount: number,
         adrenalineLevel: number /* 肾上腺素 */,
-        layer_stack_offset: [number, number]
+        layer_stack_offset: [number, number],
     ) {
         //anmA is leg,anmB is head
         let step_draw_candidates = new Map<string, (CostumeInfo | undefined)[]>()
@@ -846,6 +847,8 @@ export class AnmPlayer {
         for (let step of this.COSTUME_STEP) {
             for (let info of anmA) {
                 for (let layer of info.player.currentAnm?.frames || []) {
+                    if(info.ignore_leg)
+                        continue
                     if (info.player.getLayerName(layer.LayerId) == step) {
                         //动画中包含目标图层
                         if (layer.frames[0]) {
@@ -924,6 +927,8 @@ export class AnmPlayer {
         ] = this.getAdrenalineAnms(adrenalineLevel, gameFrameCount)
 
         let layer_stack_id = 0
+
+        let shadowBody = patches.has(PlayerPatch.shadowBody)
         for (let step of this.COSTUME_STEP) {
             layer_stack_id++
             let layer_stack_xoffset = (layer_stack_id % 8) * (layer_stack_offset[0] ?? 0)
@@ -977,7 +982,7 @@ export class AnmPlayer {
                                 rootScale,
                                 step,
                                 head_transform,
-                                blackBody,
+                                shadowBody,
                                 adrenalineHeadScaleX,
                                 adrenalineHeadScaleY,
                                 adrenalineHeadOffsetY
@@ -991,7 +996,7 @@ export class AnmPlayer {
                                 rootScale,
                                 step,
                                 undefined,
-                                blackBody,
+                                shadowBody,
                                 adrenalineBodyScaleX,
                                 adrenalineBodyScaleY,
                                 0
@@ -1019,6 +1024,7 @@ export interface CostumeInfo {
 
     is_csection?: boolean
     is_tapollyon?: boolean
+    ignore_leg?:boolean
     /* steps[step][layer] == anmarray_index */
 }
 

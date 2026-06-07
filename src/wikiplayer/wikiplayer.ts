@@ -27,7 +27,7 @@ import { C_SECTION_FRAME_MAP } from "./datas/datas"
 import type { HtmlRule, HtmlRuleConstructor } from "./htmlRule"
 import { DbFetchSuggest, HuijiDatabaseFetcher, isRecordingMode } from "./huiji"
 
-enum PlayerPatch {
+export enum PlayerPatch {
     Neptunus = "neptunus",
     csection = "csection",
     tApollyon = "tApollyon",
@@ -38,6 +38,7 @@ enum PlayerPatch {
     moveChara = "moveChara",
     shadowBody = "shadowBody",
     adrenaline_level = "adrenaline_level",
+    noLegAnms = "noLegAnms", // 没有body动画，用于lost
 }
 
 enum RenderMode {
@@ -398,7 +399,7 @@ export class WikiPlayer {
             let scale = +(this.canvasContainer.getAttribute("data-scale") ?? 1)
             canvas_style +=
                 "transform:scale(" +
-                scale +
+                (isLayerStackExploded() ? 2.5 *scale : scale) +
                 ");margin:" +
                 (this.canvasElement.height * (scale - 1)) / 2 +
                 "px " +
@@ -975,7 +976,7 @@ export class WikiPlayer {
                     1,
                     0,
                     Math.floor(this.costume_walking_frame),
-                    this.hasPatch(PlayerPatch.shadowBody),
+                    this.patch,
                     this.gameFrameCount,
                     this.adrenaline_level,
                     [this.layer_stack_exploded_x, this.layer_stack_exploded_y]
@@ -993,7 +994,7 @@ export class WikiPlayer {
                     1,
                     Math.floor(this.costume_shooting_frame),
                     Math.floor(this.costume_walking_frame),
-                    this.hasPatch(PlayerPatch.shadowBody),
+                    this.patch,
                     this.gameFrameCount,
                     this.adrenaline_level,
                     [this.layer_stack_exploded_x, this.layer_stack_exploded_y]
@@ -1017,7 +1018,7 @@ export class WikiPlayer {
                     1,
                     Math.floor(this.costume_shooting_frame),
                     Math.floor(this.costume_walking_frame),
-                    this.hasPatch(PlayerPatch.shadowBody),
+                    this.patch,
                     this.gameFrameCount,
                     this.adrenaline_level,
                     [this.layer_stack_exploded_x, this.layer_stack_exploded_y]
@@ -1035,7 +1036,7 @@ export class WikiPlayer {
                 1,
                 Math.floor(this.costume_shooting_frame),
                 Math.floor(this.costume_walking_frame),
-                this.hasPatch(PlayerPatch.shadowBody),
+                this.patch,
                 this.gameFrameCount,
                 this.adrenaline_level,
                 [this.layer_stack_exploded_x, this.layer_stack_exploded_y]
@@ -1583,6 +1584,16 @@ class WikiPlayerSingleAnm2 {
             if (this.parent.hasPatch(PlayerPatch.tApollyon) && this.costumeA.getAnmNames().indexOf("SubAnim") != -1) {
                 this.costumeA.sheet_offsets[2] = { x: 0, y: 0 }
                 this.costumeInfoA.is_tapollyon = true
+            }
+
+            if (this.parent.hasPatch(PlayerPatch.noLegAnms)){
+                if(this.parent.costumeInfosA.length > 1){
+                    this.costumeInfoA.ignore_leg = true
+                }
+                if(this.parent.costumeInfosB.length > 1){
+                    console.log(this.parent.costumeInfosB)
+                    this.costumeInfoB.ignore_leg = true
+                }
             }
 
             this.costumeA.setFrame("HeadDown", 0)
