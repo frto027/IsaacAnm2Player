@@ -338,6 +338,95 @@ class ShaderDogma extends ShaderController {
     fragment = () => shader_dogma_fs
 }
 
+import shader_shockwave_vs from "../shaders/shockwave.vs"
+import shader_shockwave_fs from "../shaders/shockwave.fs"
+
+class ShaderShockwave extends ShaderController {
+    Shockwave1: any
+    Shockwave2: any
+    init(gl: WebGLRenderingContext, program: WebGLProgram, webglOverlay: WebGLOverlay): void {
+        ShaderController.bindArray(gl, program, "Color", 4, [
+            1,1,1,1,
+            1,1,1,1,
+            1,1,1,1,
+            1,1,1,1,
+        ])
+        ShaderController.bindArray(gl, program, "Ratio", 2, [
+            1.2,1.2,
+            1.2,1.2,
+            1.2,1.2,
+            1.2,1.2
+        ])
+
+        this.Shockwave1 =  ShaderController.bindDynamicArray(gl, program, "Shockwave1", 4, [
+            .5,.5,.5,.5,
+            .5,.5,.5,.5,
+            .5,.5,.5,.5,
+            .5,.5,.5,.5,
+        ])
+        this.Shockwave2 =  ShaderController.bindDynamicArray(gl, program, "Shockwave2", 4, [
+            .5,.5,0,0,
+            .5,.5,0,0,
+            .5,.5,0,0,
+            .5,.5,0,0,
+        ])
+    }
+    vertex = ()=>shader_shockwave_vs
+    fragment = ()=> shader_shockwave_fs
+
+    time = 0
+    x = 0
+    y = 0
+    amp = 0.00
+    speed = 1/60
+    update(gl: WebGLRenderingContext): void {
+
+
+        if(this.time < 2){
+            let progress = this.time
+            this.time += this.speed
+            ShaderController.setArray(gl, this.Shockwave1, 4, [
+                this.x,this.y,progress,this.amp,
+                this.x,this.y,progress,this.amp,
+                this.x,this.y,progress,this.amp,
+                this.x,this.y,progress,this.amp,
+            ])
+        }else{
+            ShaderController.setArray(gl, this.Shockwave1, 4, [
+                this.x,this.y,0,0,
+                this.x,this.y,0,0,
+                this.x,this.y,0,0,
+                this.x,this.y,0,0,
+            ])
+        }
+
+        // ShaderController.setArray(gl, this.Shockwave2, 4, [
+        //     .5,.5,x,0.01,
+        //     .5,.5,x,0.01,
+        //     .5,.5,x,0.01,
+        //     .5,.5,x,0.01,
+        // ])
+    }
+
+    setParam(name: string, value: any): void {
+        if(name == "x"){
+            this.x = +value
+        }
+        if(name == "y"){
+            this.y = +value
+        }
+        if(name == "time"){
+            this.time = +value
+        }
+        if(name == "amp"){
+            this.amp = +value
+        }
+        if(name == "speed"){
+            this.speed = +value
+        }
+    }
+}
+
 export let PredefinedShaderControllers: { [name: string]: typeof ShaderController | null } = {
     __proto__: null,
     default: ShaderController,
@@ -346,4 +435,5 @@ export let PredefinedShaderControllers: { [name: string]: typeof ShaderControlle
     hallucination: ShaderHallucination,
     oldtv: ShaderOldTV,
     dogma: ShaderDogma,
+    shockwave: ShaderShockwave,
 }
