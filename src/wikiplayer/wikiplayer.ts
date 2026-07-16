@@ -26,6 +26,7 @@ import { Anm2Recorder } from "../recorder/recorder"
 import { C_SECTION_FRAME_MAP } from "./datas/datas"
 import type { HtmlRule, HtmlRuleConstructor } from "./htmlRule"
 import { DbFetchSuggest, HuijiDatabaseFetcher, isRecordingMode } from "./huiji"
+import { NumberFunction } from "./numberFunction"
 
 export enum PlayerPatch {
     Neptunus = "neptunus",
@@ -133,6 +134,7 @@ export class WikiPlayer {
     patch: Set<PlayerPatch>
 
     recorder?: Anm2Recorder
+
 
     constructor(canvasdiv: HTMLElement, huijiDatabaseFetcher?: HuijiDatabaseFetcher) {
         this.canvasContainer = canvasdiv
@@ -746,6 +748,16 @@ export class WikiPlayer {
                 player.anm!.update()
             }
             player.playedFrame++
+
+            player.scaleX.update()
+            if(player.scaleX.next)
+                player.scaleX = player.scaleX.next
+            player.scaleY.update()
+            if(player.scaleY.next)
+                player.scaleY = player.scaleY.next
+            player.offsetY.update()
+            if(player.offsetY.next)
+                player.offsetY = player.offsetY.next
         }
 
         this.currentFps = (this.currentFps + 1) % this.commonFps
@@ -760,7 +772,7 @@ export class WikiPlayer {
         ctx.setTransform(1, 0, 0, 1, 0, 0)
         ctx.clearRect(0, 0, drawing_canvas.width, drawing_canvas.height)
         for (let i = this.players.length - 1; i >= 0; i--) {
-            this.players[i]!.anm!.drawCanvas(ctx, drawing_canvas, this.players[i]!.x, this.players[i]!.y, 1)
+            this.players[i]!.anm!.drawCanvas(ctx, drawing_canvas, this.players[i]!.x, this.players[i]!.y, 1, undefined, undefined, undefined, this.players[i]!.scaleX.value, this.players[i]!.scaleY.value, this.players[i]!.offsetY.value)
         }
 
         this.webglOverlay?.render()
@@ -1395,6 +1407,10 @@ class WikiPlayerSingleAnm2 {
     sleeping_event_name: string | undefined
     sleep_remains: number = -1
 
+    scaleX: NumberFunction = new NumberFunction(1)
+    scaleY: NumberFunction = new NumberFunction(1)
+    offsetY:NumberFunction = new NumberFunction(0)
+
     constructor(parent: WikiPlayer, anm: Element, index: number) {
         this.parent = parent
         this.index = index
@@ -1705,6 +1721,21 @@ class WikiPlayerSingleAnm2 {
                 }
             }
         }
+
+        if(r.has("scaleX")){
+            this.scaleX = NumberFunction.parse(r.get("scaleX")!, this.scaleX)
+        }
+        if(r.has("scaleY")){
+            this.scaleY = NumberFunction.parse(r.get("scaleY")!, this.scaleY)
+        }
+        if(r.has("scaleXY")){
+            this.scaleX = NumberFunction.parse(r.get("scaleXY")!, this.scaleX)
+            this.scaleY = NumberFunction.parse(r.get("scaleXY")!, this.scaleY)
+        }
+        if(r.has("offsetY")){
+            this.offsetY = NumberFunction.parse(r.get("offsetY")!, this.offsetY)
+        }
+
         if (r.has("also")) {
             let arg = r.get("also")!.split(".")
             if (arg.length % 2 != 0) {
