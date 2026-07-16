@@ -396,7 +396,7 @@ export class WikiPlayer {
         }
         this.colorDiv.appendChild(this.canvasElement)
 
-        let canvas_style = "max-width:100%;vertical-align:middle;"
+        let canvas_style = "vertical-align:middle;"
         if (this.canvasContainer.getAttribute("data-scale")) {
             let scale = +(this.canvasContainer.getAttribute("data-scale") ?? 1)
             canvas_style +=
