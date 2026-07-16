@@ -737,8 +737,9 @@ export class WikiPlayer {
             if (player.sleeping_rule) {
                 player.sleep_remains--
                 if (player.sleep_remains <= 0) {
-                    player.execute_rule(player.sleeping_event_name!, player.sleeping_rule)
+                    const rule_to_be_exec = player.sleeping_rule
                     player.sleeping_rule = undefined
+                    player.execute_rule(player.sleeping_event_name!, rule_to_be_exec)
                 }
             }
 
