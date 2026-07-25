@@ -135,6 +135,8 @@ interface LayerAdjustParameter {
     xoffset?: number | undefined
     yoffset?: number | undefined
 
+    rot?: number | undefined
+
     hide?: boolean | undefined
 }
 
@@ -479,7 +481,8 @@ export class AnmPlayer {
         blackPatch?: boolean /* 用于渲染犹大之影的身体 */,
         extraScaleX?: number,
         extraScaleY?: number,
-        extraOffsetY?: number
+        extraOffsetY?: number,
+        extraRotate?:number
     ) {
         ctx.save()
 
@@ -558,6 +561,14 @@ export class AnmPlayer {
 
                     ctx.translate(frame.XPosition, frame.YPosition)
                     ctx.rotate((frame.Rotation * Math.PI) / 180)
+
+                    if (layerAdjuster){
+                        ctx.rotate((layerAdjuster.rot ?? 0) * Math.PI/ 180)
+                    }
+                    if(extraRotate != undefined){
+                        ctx.rotate((extraRotate) * Math.PI / 180)
+                    }
+
                     // ctx.translate(-canvas.width/2,-canvas.height/2)
                     ctx.scale(frame.XScale / 100, frame.YScale / 100)
                     if (layerAdjuster) {

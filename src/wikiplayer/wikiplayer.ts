@@ -803,6 +803,9 @@ export class WikiPlayer {
             player.offsetY.update()
             if(player.offsetY.next)
                 player.offsetY = player.offsetY.next
+            if(player.rotFunc.next)
+                player.rotFunc = player.rotFunc.next
+            player.rotFunc.update()
         }
 
         this.currentFps = (this.currentFps + 1) % this.commonFps
@@ -817,7 +820,7 @@ export class WikiPlayer {
         ctx.setTransform(1, 0, 0, 1, 0, 0)
         ctx.clearRect(0, 0, drawing_canvas.width, drawing_canvas.height)
         for (let i = this.players.length - 1; i >= 0; i--) {
-            this.players[i]!.anm!.drawCanvas(ctx, drawing_canvas, this.players[i]!.x, this.players[i]!.y, 1, undefined, undefined, undefined, this.players[i]!.scaleX.value, this.players[i]!.scaleY.value, this.players[i]!.offsetY.value)
+            this.players[i]!.anm!.drawCanvas(ctx, drawing_canvas, this.players[i]!.x, this.players[i]!.y, 1, undefined, undefined, undefined, this.players[i]!.scaleX.value, this.players[i]!.scaleY.value, this.players[i]!.offsetY.value, this.players[i]!.rotFunc.value)
         }
 
         this.webglOverlay?.render()
@@ -830,7 +833,7 @@ export class WikiPlayer {
         ctx.imageSmoothingEnabled = false
         
         for (let i = this.players.length - 1; i >= 0; i--) {
-            this.players[i]!.anm!.drawCanvas(ctx, drawing_canvas, this.players[i]!.x, this.players[i]!.y, 1, undefined, undefined, undefined, this.players[i]!.scaleX.value, this.players[i]!.scaleY.value, this.players[i]!.offsetY.value)
+            this.players[i]!.anm!.drawCanvas(ctx, drawing_canvas, this.players[i]!.x, this.players[i]!.y, 1, undefined, undefined, undefined, this.players[i]!.scaleX.value, this.players[i]!.scaleY.value, this.players[i]!.offsetY.value, this.players[i]!.rotFunc.value)
         }
 
         this.webglOverlay?.render()
@@ -1515,6 +1518,7 @@ class WikiPlayerSingleAnm2 {
     scaleX: NumberFunction = new NumberFunction(1)
     scaleY: NumberFunction = new NumberFunction(1)
     offsetY:NumberFunction = new NumberFunction(0)
+    rotFunc:NumberFunction = new NumberFunction(0)
 
     constructor(parent: WikiPlayer, anm: Element, index: number) {
         this.parent = parent
@@ -1840,6 +1844,9 @@ class WikiPlayerSingleAnm2 {
         if(r.has("offsetY")){
             this.offsetY = NumberFunction.parse(r.get("offsetY")!, this.offsetY)
         }
+        if(r.has("rot")){
+            this.rotFunc = NumberFunction.parse(r.get("rot")!, this.rotFunc)
+        }
 
         if (r.has("also")) {
             let arg = r.get("also")!.split(".")
@@ -1910,6 +1917,29 @@ class WikiPlayerSingleAnm2 {
                     continue
                 }
             }
+
+            function whenScaleXYPass(propName:string,thisValue:number){
+                if(!r.has(propName))
+                    return true
+                const v = r.get(propName)!
+                const value = +v.substring(2)
+                if(v.startsWith("gt"))
+                    return thisValue > value
+                if(v.startsWith("lt"))
+                    return thisValue < value
+                if(v.startsWith("ge"))
+                    return thisValue >= value
+                if(v.startsWith("le"))
+                    return thisValue <= value
+                return true
+            }
+            if(!whenScaleXYPass("whenScaleX", this.scaleX.value))
+                continue
+            if(!whenScaleXYPass("whenScaleY", this.scaleY.value))
+                continue
+            if(!whenScaleXYPass("whenRot", this.rotFunc.value))
+                continue
+
             if (r.has(ename)) {
                 //注意：我们依赖外侧for循环不再继续，来满足action的闭包合法性
                 if (r.has("sleep") /* && !r.has("pause") */) {
@@ -2055,6 +2085,8 @@ class LayerAdjuster {
     xscale: number | undefined
     yscale: number | undefined
 
+    rot: number | undefined
+
     hide: boolean
     constructor(descElem: Element) {
         this.layerId = +descElem.getAttribute("data-layer-adj")!
@@ -2073,6 +2105,7 @@ class LayerAdjuster {
         this.blueOffset = getAttr("bo")
         this.xscale = getAttr("xs")
         this.yscale = getAttr("ys")
+        this.rot = getAttr("rot")
         this.hide = descElem.getAttribute("data-hide") == "1"
     }
 }

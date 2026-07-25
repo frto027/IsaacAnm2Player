@@ -47,7 +47,7 @@ class ForwardFunction extends NumberFunction{
 }
 
 class ContiniousFunction extends NumberFunction{
-    static pattern = /^continue\(([\d\.\\]+)\)$/
+    static pattern = /^continue\+?\(([\+\-\d\.\\]+)\)$/
     args:number[] = []
     values:number[] = []
     constructor(match:RegExpExecArray, old?:NumberFunction){
@@ -58,6 +58,10 @@ class ContiniousFunction extends NumberFunction{
             return
         }else{
             this.values.push(+vstrs[0]!)
+        }
+
+        if(match[0].startsWith("continue+")){
+            this.values[0]! += old?.value ?? 0
         }
 
         for(let i=1;i<vstrs.length;i++){
