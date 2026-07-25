@@ -45,7 +45,16 @@ export enum PlayerPatch {
 enum RenderMode {
     Normal,
     Costume,
+    CostumeAdditional, /* this likes a Normal render mode */
 }
+
+enum CostumeAdditionalPosition{
+    None,
+    Background,
+    Foreground
+}
+
+let lastCreatedCostumePlayer:WikiPlayer|undefined
 
 export class WikiPlayer {
     players: WikiPlayerSingleAnm2[]
@@ -136,6 +145,11 @@ export class WikiPlayer {
     recorder?: Anm2Recorder
 
 
+    costumeAdditionals:Record<CostumeAdditionalPosition, WikiPlayer[]> = [[],[],[]] // for costume player
+    costumeAdditionalPosition:CostumeAdditionalPosition = CostumeAdditionalPosition.None
+
+    costumeAdditionalTarget?:WikiPlayer // for Additional player
+
     constructor(canvasdiv: HTMLElement, huijiDatabaseFetcher?: HuijiDatabaseFetcher) {
         this.canvasContainer = canvasdiv
 
@@ -145,7 +159,28 @@ export class WikiPlayer {
         this.gameFrameCount = 0 // 用于某些效果渲染（肾上腺素）
 
         this.waiting_for_click = canvasdiv.getAttribute("data-waitkey") == "true"
-        this.renderMode = canvasdiv.getAttribute("data-costume") == "true" ? RenderMode.Costume : RenderMode.Normal
+        this.renderMode = RenderMode.Normal
+        if(canvasdiv.getAttribute("data-costume") == "true")
+            this.renderMode = RenderMode.Costume
+        {
+            const costume_additional = canvasdiv.getAttribute("data-costume-additional")
+            if(costume_additional == "background"){
+                this.renderMode = RenderMode.CostumeAdditional
+                this.costumeAdditionalPosition = CostumeAdditionalPosition.Background
+            }else if(costume_additional == "foreground"){
+                this.renderMode = RenderMode.CostumeAdditional
+                this.costumeAdditionalPosition = CostumeAdditionalPosition.Foreground
+            }
+        }
+
+        if(this.renderMode == RenderMode.Costume){
+            lastCreatedCostumePlayer = this
+        }else if(this.renderMode == RenderMode.CostumeAdditional && lastCreatedCostumePlayer != undefined){
+            this.costumeAdditionalTarget = lastCreatedCostumePlayer
+            lastCreatedCostumePlayer.costumeAdditionals[this.costumeAdditionalPosition].push(this)
+            canvasdiv.style.display = "none"
+        }
+
         this.costumealt = (canvasdiv.getAttribute("data-costume-alt") || "") + ""
         this.costume_status = "Walk"
         this.costume_status_reset = false
@@ -386,27 +421,42 @@ export class WikiPlayer {
         this.setBackgroundColor()
         this.UpdateCharaTransform()
 
-        this.canvasElement = document.createElement("canvas")
-        this.canvasElement.tabIndex = 1 // make the canvas focusable
-        this.canvasElement.width = +(this.canvasContainer.getAttribute("data-width") ?? 64)
-        this.canvasElement.height = +(this.canvasContainer.getAttribute("data-height") ?? 64)
-        if (isLayerStackExploded()) {
-            this.canvasElement.width *= 8
-            this.canvasElement.height *= 2
-        }
-        this.colorDiv.appendChild(this.canvasElement)
+        if(this.costumeAdditionalTarget == undefined){
+            this.canvasElement = document.createElement("canvas")
+            this.canvasElement.tabIndex = 1 // make the canvas focusable
+            this.canvasElement.width = +(this.canvasContainer.getAttribute("data-width") ?? 64)
+            this.canvasElement.height = +(this.canvasContainer.getAttribute("data-height") ?? 64)
+            if (isLayerStackExploded()) {
+                this.canvasElement.width *= 8
+                this.canvasElement.height *= 2
+            }
+            this.colorDiv.appendChild(this.canvasElement)
 
-        let canvas_style = "vertical-align:middle;"
-        if (this.canvasContainer.getAttribute("data-scale")) {
-            let scale = +(this.canvasContainer.getAttribute("data-scale") ?? 1)
-            canvas_style +=
-                "transform:scale(" +
-                (isLayerStackExploded() ? 2.5 *scale : scale) +
-                ");margin:" +
-                (this.canvasElement.height * (scale - 1)) / 2 +
-                "px " +
-                (this.canvasElement.width * (scale - 1)) / 2 +
-                "px;"
+            let canvas_style = "vertical-align:middle;"
+            if (this.canvasContainer.getAttribute("data-scale")) {
+                let scale = +(this.canvasContainer.getAttribute("data-scale") ?? 1)
+                canvas_style +=
+                    "transform:scale(" +
+                    (isLayerStackExploded() ? 2.5 *scale : scale) +
+                    ");margin:" +
+                    (this.canvasElement.height * (scale - 1)) / 2 +
+                    "px " +
+                    (this.canvasElement.width * (scale - 1)) / 2 +
+                    "px;"
+            }
+
+            if (this.hasPatch(PlayerPatch.blueFilter)) {
+                canvas_style += "filter:url(#" + AnmPlayer.createSvgFilterElement(1.5, 1.7, 2, 1, 0.05, 0.12, 0.2) + ");"
+            }
+            this.canvasElement.style.cssText = canvas_style
+            if (this.buttonDiv) {
+                let btnContainer = document.createElement("div")
+                btnContainer.style.cssText = "text-align:center"
+                btnContainer.append(this.buttonDiv)
+                this.colorDiv.appendChild(btnContainer)
+            }
+        }else{
+            this.canvasElement = this.costumeAdditionalTarget.canvasElement!
         }
 
         if (this.canvasContainer.hasAttribute("data-shader")) {
@@ -423,18 +473,6 @@ export class WikiPlayer {
                 )
                 this.webglOverlay.init()
             }
-        }
-
-        if (this.hasPatch(PlayerPatch.blueFilter)) {
-            canvas_style += "filter:url(#" + AnmPlayer.createSvgFilterElement(1.5, 1.7, 2, 1, 0.05, 0.12, 0.2) + ");"
-        }
-        this.canvasElement.style.cssText = canvas_style
-
-        if (this.buttonDiv) {
-            let btnContainer = document.createElement("div")
-            btnContainer.style.cssText = "text-align:center"
-            btnContainer.append(this.buttonDiv)
-            this.colorDiv.appendChild(btnContainer)
         }
     }
 
@@ -546,7 +584,7 @@ export class WikiPlayer {
                     this.webglOverlay
                 )
             }
-        } else {
+        } else if(this.renderMode == RenderMode.Costume) {
             let click_callback_removed = true
             let activeWaitForClick = () => {
                 if (this.waiting_for_click) {
@@ -624,28 +662,30 @@ export class WikiPlayer {
             this.startDraw()
         }
 
-        this.canvasContainer.AnmCostumeController = {
-            StartDrawAnm: () => {
-                this.startDraw()
-            },
-            StopDrawAnm: () => {
-                this.stopDraw()
-            },
-            CancelWaitingForClick: () => {
-                this.waiting_for_click = false
-            },
-            // SuggestMoveLeft: () => {
-            //     this.suggest_moving = true
-            //     this.costume_leg_dir = 'Left'
-            // },
-            // SuggestMoveRight: () => {
-            //     this.suggest_moving = true
-            //     this.costume_leg_dir = 'Right'
-            // },
-            // SuggestNoMove: () => {
-            //     this.suggest_moving = false
-            //     this.costume_leg_dir = 'Down'
-            // },
+        if(this.renderMode == RenderMode.Normal || this.renderMode == RenderMode.Costume){
+            this.canvasContainer.AnmCostumeController = {
+                StartDrawAnm: () => {
+                    this.startDraw()
+                },
+                StopDrawAnm: () => {
+                    this.stopDraw()
+                },
+                CancelWaitingForClick: () => {
+                    this.waiting_for_click = false
+                },
+                // SuggestMoveLeft: () => {
+                //     this.suggest_moving = true
+                //     this.costume_leg_dir = 'Left'
+                // },
+                // SuggestMoveRight: () => {
+                //     this.suggest_moving = true
+                //     this.costume_leg_dir = 'Right'
+                // },
+                // SuggestNoMove: () => {
+                //     this.suggest_moving = false
+                //     this.costume_leg_dir = 'Down'
+                // },
+            }
         }
     }
 
@@ -655,6 +695,8 @@ export class WikiPlayer {
 
     pendingAnimationFrame: number | undefined = undefined
     startDraw(forceRestart = false) {
+        if(this.renderMode == RenderMode.CostumeAdditional)
+            return
         this.isDirty = true
         if (this.pendingAnimationFrame != undefined) {
             if (!forceRestart) return
@@ -678,6 +720,7 @@ export class WikiPlayer {
 
     timeLastAnim: number | undefined = undefined
     onAnimationFrame(time: DOMHighResTimeStamp) {
+        console.assert(this.renderMode != RenderMode.CostumeAdditional)
         // 立即启动下一次绘制循环，如果要停止动画，则稍后取消此循环
         this.pendingAnimationFrame = requestAnimationFrame((time) => {
             this.onAnimationFrame(time)
@@ -724,6 +767,7 @@ export class WikiPlayer {
 
     init_event_emitted = false
     updateNormal() {
+        console.assert(this.renderMode == RenderMode.Normal || this.renderMode == RenderMode.CostumeAdditional)
         if (!this.init_event_emitted) {
             this.init_event_emitted = true
             for (let player of this.players) {
@@ -777,6 +821,28 @@ export class WikiPlayer {
         }
 
         this.webglOverlay?.render()
+    }
+    drawAdditional() {
+        //apply shader
+        let drawing_canvas = this.backendCanvas || this.canvasElement!
+        let ctx = drawing_canvas.getContext("2d")
+        if (!ctx) return
+        ctx.imageSmoothingEnabled = false
+        
+        for (let i = this.players.length - 1; i >= 0; i--) {
+            this.players[i]!.anm!.drawCanvas(ctx, drawing_canvas, this.players[i]!.x, this.players[i]!.y, 1, undefined, undefined, undefined, this.players[i]!.scaleX.value, this.players[i]!.scaleY.value, this.players[i]!.offsetY.value)
+        }
+
+        this.webglOverlay?.render()
+    }
+
+    for_each_additonal_player(cb:(player:WikiPlayer)=>void){
+        for(const p of this.costumeAdditionals[CostumeAdditionalPosition.Background]){
+            cb(p)
+        }
+        for(const p of this.costumeAdditionals[CostumeAdditionalPosition.Foreground]){
+            cb(p)
+        }
     }
 
     render_random_idle = false
@@ -883,6 +949,21 @@ export class WikiPlayer {
                     player.costumeA!.update()
                 }
 
+                if(this.costume_shooting.u ||
+                    this.costume_shooting.d ||
+                    this.costume_shooting.l ||
+                    this.costume_shooting.r
+                ){
+                    if(player.costumeA!.currentFrame == 1){
+                        this.for_each_additonal_player(p=>{
+                            for (const pp of p.players){
+                                pp.apply_rule("shoot")
+                                pp.apply_rule("shoot_" + this.costume_head_dir)
+                            }
+                        })
+                    }
+                }
+
                 if (player.costumeInfoB!.is_csection) {
                     player.costumeB!.sheet_offsets[0]!.y =
                         C_SECTION_FRAME_MAP[
@@ -891,6 +972,11 @@ export class WikiPlayer {
                 }
                 if (player.costumeB!.getCurrentAnmName() != "Walk" + this.costume_leg_dir) {
                     player.costumeB!.setFrame("Walk" + this.costume_leg_dir, 0)
+                    this.for_each_additonal_player(p=>{
+                        for(const pp of p.players){
+                            pp.apply_rule("walk_" + this.costume_leg_dir)
+                        }
+                    })
                 } else {
                     player.costumeB!.update()
                 }
@@ -919,6 +1005,8 @@ export class WikiPlayer {
                 this.random_idle_is_playing = true
             }
         }
+
+        this.for_each_additonal_player(p=>p.updateNormal())
     }
 
     handleMoveCharaPatch(deltaTime: DOMHighResTimeStamp) {
@@ -976,6 +1064,11 @@ export class WikiPlayer {
                 elem[1].clearRect(0, 0, 100000, 100000)
             }
         }
+
+        for(const add of this.costumeAdditionals[CostumeAdditionalPosition.Background]){
+            add.drawAdditional()
+        }
+
         if (this.costume_status == "Walk") {
             if (this.hasPatch(PlayerPatch.csection)) {
                 AnmPlayer.renderCostume(
@@ -1055,6 +1148,11 @@ export class WikiPlayer {
                 [this.layer_stack_exploded_x, this.layer_stack_exploded_y]
             )
         }
+
+        for(const add of this.costumeAdditionals[CostumeAdditionalPosition.Foreground]){
+            add.drawAdditional()
+        }
+
         this.gameFrameCount++
     }
 
@@ -1227,6 +1325,12 @@ export class WikiPlayer {
             let target_anm = this.COSTUMEANM_KEYS.get(key)!
             this.costume_status = target_anm
             this.costume_status_reset = true
+            this.for_each_additonal_player(p=>{
+                for(const pp of p.players){
+                    pp.apply_rule("costume_anm")
+                    pp.apply_rule("costume_anm_" + target_anm)
+                }
+            })
             catched = true
         }
         if (key == "x") {
