@@ -805,6 +805,12 @@ export class WikiPlayer {
                 player.offsetY = player.offsetY.next
             if(player.rotFunc.next)
                 player.rotFunc = player.rotFunc.next
+            player.transX.update()
+            if(player.transX.next)
+                player.transX = player.transX.next
+            player.transY.update()
+            if(player.transY.next)
+                player.transY = player.transY.next
             player.rotFunc.update()
         }
 
@@ -820,7 +826,7 @@ export class WikiPlayer {
         ctx.setTransform(1, 0, 0, 1, 0, 0)
         ctx.clearRect(0, 0, drawing_canvas.width, drawing_canvas.height)
         for (let i = this.players.length - 1; i >= 0; i--) {
-            this.players[i]!.anm!.drawCanvas(ctx, drawing_canvas, this.players[i]!.x, this.players[i]!.y, 1, undefined, undefined, undefined, this.players[i]!.scaleX.value, this.players[i]!.scaleY.value, this.players[i]!.offsetY.value, this.players[i]!.rotFunc.value)
+            this.players[i]!.anm!.drawCanvas(ctx, drawing_canvas, this.players[i]!.x + this.players[i]!.transX.value, this.players[i]!.y + this.players[i]!.transY.value, 1, undefined, undefined, undefined, this.players[i]!.scaleX.value, this.players[i]!.scaleY.value, this.players[i]!.offsetY.value, this.players[i]!.rotFunc.value)
         }
 
         this.webglOverlay?.render()
@@ -833,7 +839,7 @@ export class WikiPlayer {
         ctx.imageSmoothingEnabled = false
         
         for (let i = this.players.length - 1; i >= 0; i--) {
-            this.players[i]!.anm!.drawCanvas(ctx, drawing_canvas, this.players[i]!.x, this.players[i]!.y, 1, undefined, undefined, undefined, this.players[i]!.scaleX.value, this.players[i]!.scaleY.value, this.players[i]!.offsetY.value, this.players[i]!.rotFunc.value)
+            this.players[i]!.anm!.drawCanvas(ctx, drawing_canvas, this.players[i]!.x + this.players[i]!.transX.value, this.players[i]!.y + this.players[i]!.transY.value, 1, undefined, undefined, undefined, this.players[i]!.scaleX.value, this.players[i]!.scaleY.value, this.players[i]!.offsetY.value, this.players[i]!.rotFunc.value)
         }
 
         this.webglOverlay?.render()
@@ -1515,6 +1521,8 @@ class WikiPlayerSingleAnm2 {
     sleeping_event_name: string | undefined
     sleep_remains: number = -1
 
+    transX: NumberFunction = new NumberFunction(0)
+    transY: NumberFunction = new NumberFunction(0)
     scaleX: NumberFunction = new NumberFunction(1)
     scaleY: NumberFunction = new NumberFunction(1)
     offsetY:NumberFunction = new NumberFunction(0)
@@ -1841,6 +1849,12 @@ class WikiPlayerSingleAnm2 {
             this.scaleX = NumberFunction.parse(r.get("scaleXY")!, this.scaleX)
             this.scaleY = NumberFunction.parse(r.get("scaleXY")!, this.scaleY)
         }
+        if(r.has("transX")){
+            this.transX = NumberFunction.parse(r.get("transX")!, this.transX)
+        }
+        if(r.has("transY")){
+            this.transY = NumberFunction.parse(r.get("transY")!, this.transY)
+        }
         if(r.has("offsetY")){
             this.offsetY = NumberFunction.parse(r.get("offsetY")!, this.offsetY)
         }
@@ -1936,6 +1950,10 @@ class WikiPlayerSingleAnm2 {
             if(!whenScaleXYPass("whenScaleX", this.scaleX.value))
                 continue
             if(!whenScaleXYPass("whenScaleY", this.scaleY.value))
+                continue
+            if(!whenScaleXYPass("whenTransX", this.transX.value))
+                continue
+            if(!whenScaleXYPass("whenTransY", this.transY.value))
                 continue
             if(!whenScaleXYPass("whenRot", this.rotFunc.value))
                 continue
