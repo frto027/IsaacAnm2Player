@@ -474,6 +474,13 @@ export class WikiPlayer {
                 this.webglOverlay.init()
             }
         }
+
+        if (this.canvasContainer.hasAttribute("data-bg")){
+            const bgIndex = +this.canvasContainer.getAttribute("data-bg")!
+            if(bgIndex >= 0 && bgIndex <= 9){
+                this.setBackgroundColor(this.BACKGROUND_COLORS[bgIndex])
+            }
+        }
     }
 
     setBackgroundColor(color?: string) {
