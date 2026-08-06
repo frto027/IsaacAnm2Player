@@ -23,7 +23,7 @@ export class NumberFunction{
 class ForwardFunction extends NumberFunction{
     // expr:mathjs.MathNode
     // forward(from\to\time\pow)
-    static pattern = /^forward\(([\.\d]+)\\([\.\d]+)\\([\.\d]+)\\([\.\d]+)\)$/
+    static pattern = /^forward\(([\-\.\d]+)\\([\-\.\d]+)\\([\.\d]+)\\([\.\d]+)\)$/
     from:number
     to:number
     time:number
