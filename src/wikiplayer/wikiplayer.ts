@@ -21,6 +21,7 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
+import { MouseCollisionHandler } from "../player/MouseCollisionHandler"
 import { AnmPlayer, WebGLOverlay, type CostumeInfo } from "../player/player"
 import { Anm2Recorder } from "../recorder/recorder"
 import { C_SECTION_FRAME_MAP } from "./datas/datas"
@@ -150,6 +151,9 @@ export class WikiPlayer {
 
     costumeAdditionalTarget?:WikiPlayer // for Additional player
 
+    mouseCollisionHandler = new MouseCollisionHandler()
+    mouseTransparent:boolean = false
+    css_scale:number = 1
     constructor(canvasdiv: HTMLElement, huijiDatabaseFetcher?: HuijiDatabaseFetcher) {
         this.canvasContainer = canvasdiv
 
@@ -160,6 +164,7 @@ export class WikiPlayer {
 
         this.waiting_for_click = canvasdiv.getAttribute("data-waitkey") == "true"
         this.renderMode = RenderMode.Normal
+        this.mouseCollisionHandler.showDebugRect = isShowCollisionBox()
         if(canvasdiv.getAttribute("data-costume") == "true")
             this.renderMode = RenderMode.Costume
         {
@@ -437,7 +442,7 @@ export class WikiPlayer {
                 let scale = +(this.canvasContainer.getAttribute("data-scale") ?? 1)
                 canvas_style +=
                     "transform:scale(" +
-                    (isLayerStackExploded() ? 2.5 *scale : scale) +
+                    (this.css_scale = (isLayerStackExploded() ? 2.5 *scale : scale)) +
                     ");margin:" +
                     (this.canvasElement.height * (scale - 1)) / 2 +
                     "px " +
@@ -481,6 +486,12 @@ export class WikiPlayer {
                 this.setBackgroundColor(this.BACKGROUND_COLORS[bgIndex])
             }
         }
+        if(this.canvasContainer.hasAttribute("data-collision-alpha")){
+            if(this.canvasContainer.getAttribute("data-collision-alpha") == "1"){
+                this.mouseCollisionHandler.enabled = true
+                this.mouseTransparent = true
+            }
+        }
     }
 
     setBackgroundColor(color?: string) {
@@ -501,6 +512,18 @@ export class WikiPlayer {
         if (typeof key == "string" && key.match("^[0-9]$")) {
             this.setBackgroundColor(this.BACKGROUND_COLORS[+key] || "")
             return true
+        }
+    }
+
+    mousePositionForTransparent = {x:0,y:0}
+    UpdateMouseTransparent(){
+        if(this.mouseTransparent){
+            if(this.mouseCollisionHandler.hitTest(this.mousePositionForTransparent.x/this.css_scale,this.mousePositionForTransparent.y/this.css_scale)){
+                // mouse hit
+                this.canvasElement!.style.pointerEvents = "auto"
+            }else{
+                this.canvasElement!.style.pointerEvents = "none"
+            }
         }
     }
 
@@ -542,6 +565,14 @@ export class WikiPlayer {
         this.commonFps = commonFps
 
         if (this.renderMode == RenderMode.Normal) {
+            if(this.mouseTransparent){
+                document.addEventListener("pointermove", ev=>{
+                    const rect = this.canvasElement!.getBoundingClientRect();
+                    this.mousePositionForTransparent.x = ev.clientX - rect.left;
+                    this.mousePositionForTransparent.y = ev.clientY - rect.top;
+                    this.UpdateMouseTransparent()
+                })
+            }
             this.canvasElement!.onclick = () => {
                 if (this.waiting_for_click) {
                     this.waiting_for_click = false
@@ -832,11 +863,14 @@ export class WikiPlayer {
 
         ctx.setTransform(1, 0, 0, 1, 0, 0)
         ctx.clearRect(0, 0, drawing_canvas.width, drawing_canvas.height)
+        this.mouseCollisionHandler.reset()
         for (let i = this.players.length - 1; i >= 0; i--) {
             this.players[i]!.anm!.drawCanvas(ctx, drawing_canvas, this.players[i]!.x + this.players[i]!.transX.value, this.players[i]!.y + this.players[i]!.transY.value, 1, undefined, undefined, undefined, this.players[i]!.scaleX.value, this.players[i]!.scaleY.value, this.players[i]!.offsetY.value, this.players[i]!.rotFunc.value)
         }
 
         this.webglOverlay?.render()
+
+        this.UpdateMouseTransparent()
     }
     drawAdditional() {
         //apply shader
@@ -844,7 +878,6 @@ export class WikiPlayer {
         let ctx = drawing_canvas.getContext("2d")
         if (!ctx) return
         ctx.imageSmoothingEnabled = false
-        
         for (let i = this.players.length - 1; i >= 0; i--) {
             this.players[i]!.anm!.drawCanvas(ctx, drawing_canvas, this.players[i]!.x + this.players[i]!.transX.value, this.players[i]!.y + this.players[i]!.transY.value, 1, undefined, undefined, undefined, this.players[i]!.scaleX.value, this.players[i]!.scaleY.value, this.players[i]!.offsetY.value, this.players[i]!.rotFunc.value)
         }
@@ -1075,6 +1108,7 @@ export class WikiPlayer {
         ctx.imageSmoothingEnabled = false
         ctx.setTransform(1, 0, 0, 1, 0, 0)
         ctx.clearRect(0, 0, this.canvasElement!.width, this.canvasElement!.height)
+        this.mouseCollisionHandler.reset()
         if (this.spritesheet_canvas_map) {
             for (let elem of this.spritesheet_canvas_map) {
                 elem[1].clearRect(0, 0, 100000, 100000)
@@ -1751,6 +1785,7 @@ class WikiPlayerSingleAnm2 {
             this.anm.eventListener = (eventName) => {
                 this.onEvent(eventName)
             }
+            this.anm.mouse_collision_handler = this.parent.mouseCollisionHandler
         }
     }
 
@@ -2138,4 +2173,8 @@ class LayerAdjuster {
 let layer_stack_exploded = new URLSearchParams(window.location.search).get("anm2Exploded") == "1"
 function isLayerStackExploded(): boolean {
     return layer_stack_exploded
+}
+let show_collision_box = new URLSearchParams(window.location.search).get("anm2Collision") == "1"
+function isShowCollisionBox(): boolean {
+    return show_collision_box
 }

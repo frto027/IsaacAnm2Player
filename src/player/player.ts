@@ -146,6 +146,7 @@ interface SkinAltProvider {
 
 import { huijiUrlBuilder, isRecordingMode } from "../wikiplayer/huiji"
 import { PlayerPatch } from "../wikiplayer/wikiplayer"
+import type { MouseCollisionHandler } from "./MouseCollisionHandler"
 
 export type ReplaceSheetMap = Map<number, string>
 
@@ -189,6 +190,7 @@ export class AnmPlayer {
 
     layer_frame_color?: string
 
+    mouse_collision_handler?: MouseCollisionHandler
     constructor(json: Actor, replaceSheetMap?: ReplaceSheetMap, onloadimg?: () => void) {
         this.anm2 = json
 
@@ -654,6 +656,15 @@ export class AnmPlayer {
                         frame.Width,
                         frame.Height
                     )
+                    this.mouse_collision_handler?.addMatrixArea(ctx.getTransform(),0,0,frame.Width, frame.Height)
+                    if(this.mouse_collision_handler?.showDebugRect){
+                        ctx.beginPath()
+                        ctx.strokeStyle = "cyan"
+                        ctx.lineWidth = 1
+                        ctx.strokeRect(0, 0, frame.Width, frame.Height)
+                        ctx.fill()
+                    }
+
                     if (this.layer_frame_color) {
                         ctx.beginPath()
                         ctx.strokeStyle = this.layer_frame_color
