@@ -586,33 +586,39 @@ export class AnmPlayer {
                     //draw frame
                     if (!frame.filterGenerated) {
                         frame.filterGenerated = true
+
+                        function def(value:number|undefined|null, defaultVal:number){
+                            if(value == undefined || value == null) return defaultVal;
+                            return value
+                        }
+
                         if (layerAdjuster) {
                             frame.filterId =
                                 "url(#" +
                                 AnmPlayer.createSvgFilterElement(
-                                    ((rootframe?.RedTint || 255) * frame.RedTint * ((layerAdjuster.red || 255) / 255)) /
+                                    (def(rootframe?.RedTint, 255) * frame.RedTint * (def(layerAdjuster.red, 255) / 255)) /
                                         (255 * 255),
-                                    ((rootframe?.GreenTint || 255) *
+                                    (def(rootframe?.GreenTint, 255) *
                                         frame.GreenTint *
-                                        ((layerAdjuster.green || 255) / 255)) /
+                                        (def(layerAdjuster.green, 255) / 255)) /
                                         (255 * 255),
-                                    ((rootframe?.BlueTint || 255) *
+                                    (def(rootframe?.BlueTint, 255) *
                                         frame.BlueTint *
-                                        ((layerAdjuster.blue || 255) / 255)) /
+                                        (def(layerAdjuster.blue, 255) / 255)) /
                                         (255 * 255),
-                                    (layerAdjuster.alpha || 255) / 255, //(rootframe?.AlphaTint || 255) * frame.AlphaTint     /(255*255),
-                                    frame.RedOffset + (layerAdjuster.redOffset || 0) / 255,
-                                    frame.GreenOffset + (layerAdjuster.greenOffset || 0) / 255,
-                                    frame.BlueOffset + (layerAdjuster.blueOffset || 0) / 255
+                                    def(layerAdjuster.alpha, 255) / 255, //(rootframe?.AlphaTint || 255) * frame.AlphaTint     /(255*255),
+                                    frame.RedOffset + def(layerAdjuster.redOffset, 0) / 255,
+                                    frame.GreenOffset + def(layerAdjuster.greenOffset, 0) / 255,
+                                    frame.BlueOffset + def(layerAdjuster.blueOffset, 0) / 255
                                 ) +
                                 ")"
                         } else if (blackPatch && this.useShadowMaskForSprite[sprite_sheet_id]) {
                             frame.filterId =
                                 "url(#" +
                                 AnmPlayer.createSvgFilterElement(
-                                    ((rootframe?.RedTint || 255) * frame.RedTint) / (255 * 255),
-                                    ((rootframe?.GreenTint || 255) * frame.GreenTint) / (255 * 255),
-                                    ((rootframe?.BlueTint || 255) * frame.BlueTint) / (255 * 255),
+                                    (def(rootframe?.RedTint , 255) * frame.RedTint) / (255 * 255),
+                                    (def(rootframe?.GreenTint , 255) * frame.GreenTint) / (255 * 255),
+                                    (def(rootframe?.BlueTint , 255) * frame.BlueTint) / (255 * 255),
                                     1, //(rootframe?.AlphaTint || 255) * frame.AlphaTint     /(255*255),
                                     -255 / 255,
                                     -255 / 255,
@@ -623,9 +629,9 @@ export class AnmPlayer {
                             frame.filterId =
                                 "url(#" +
                                 AnmPlayer.createSvgFilterElement(
-                                    ((rootframe?.RedTint || 255) * frame.RedTint) / (255 * 255),
-                                    ((rootframe?.GreenTint || 255) * frame.GreenTint) / (255 * 255),
-                                    ((rootframe?.BlueTint || 255) * frame.BlueTint) / (255 * 255),
+                                    (def(rootframe?.RedTint, 255) * frame.RedTint) / (255 * 255),
+                                    (def(rootframe?.GreenTint, 255) * frame.GreenTint) / (255 * 255),
+                                    (def(rootframe?.BlueTint, 255) * frame.BlueTint) / (255 * 255),
                                     1, //(rootframe?.AlphaTint || 255) * frame.AlphaTint     /(255*255),
                                     frame.RedOffset / 255,
                                     frame.GreenOffset / 255,
