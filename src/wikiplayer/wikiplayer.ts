@@ -154,6 +154,8 @@ export class WikiPlayer {
     mouseCollisionHandler = new MouseCollisionHandler()
     mouseTransparent:boolean = false
     css_scale:number = 1
+
+    visble = true
     constructor(canvasdiv: HTMLElement, huijiDatabaseFetcher?: HuijiDatabaseFetcher) {
         this.canvasContainer = canvasdiv
 
@@ -864,11 +866,14 @@ export class WikiPlayer {
         ctx.setTransform(1, 0, 0, 1, 0, 0)
         ctx.clearRect(0, 0, drawing_canvas.width, drawing_canvas.height)
         this.mouseCollisionHandler.reset()
-        for (let i = this.players.length - 1; i >= 0; i--) {
-            this.players[i]!.anm!.drawCanvas(ctx, drawing_canvas, this.players[i]!.x + this.players[i]!.transX.value, this.players[i]!.y + this.players[i]!.transY.value, 1, undefined, undefined, undefined, this.players[i]!.scaleX.value, this.players[i]!.scaleY.value, this.players[i]!.offsetY.value, this.players[i]!.rotFunc.value)
+
+        if(this.visble){
+            for (let i = this.players.length - 1; i >= 0; i--) {
+                this.players[i]!.anm!.drawCanvas(ctx, drawing_canvas, this.players[i]!.x + this.players[i]!.transX.value, this.players[i]!.y + this.players[i]!.transY.value, 1, undefined, undefined, undefined, this.players[i]!.scaleX.value, this.players[i]!.scaleY.value, this.players[i]!.offsetY.value, this.players[i]!.rotFunc.value)
+            }
+            this.webglOverlay?.render()
         }
 
-        this.webglOverlay?.render()
 
         this.UpdateMouseTransparent()
     }
@@ -1847,6 +1852,15 @@ class WikiPlayerSingleAnm2 {
         target.anm!.revert = r.has("revert") && r.get("revert") == "true"
         if (target.anm!.revert) {
             target.anm!.play(target.anm!.currentAnm!.FrameNum - 1)
+        }
+
+        if(r.has("visible")){
+            let visible = r.get("visible")
+            if(visible == "true" || visible == "1"){
+                target.parent.visble = true
+            }else if(visible == "false" || visible == "0"){
+                target.parent.visble = false
+            }
         }
 
         if (r.has("setbtn")) {
