@@ -518,6 +518,10 @@ export class AnmPlayer {
         ctx.translate(centerX, centerY)
 
         ctx.scale(this.flipX ? -rootScale : rootScale, rootScale)
+        
+        if(extraRotate != undefined){
+            ctx.rotate((extraRotate) * Math.PI / 180)
+        }
 
         ctx.translate(0, extraOffsetY)
 
@@ -566,9 +570,6 @@ export class AnmPlayer {
 
                     if (layerAdjuster){
                         ctx.rotate((layerAdjuster.rot ?? 0) * Math.PI/ 180)
-                    }
-                    if(extraRotate != undefined){
-                        ctx.rotate((extraRotate) * Math.PI / 180)
                     }
 
                     // ctx.translate(-canvas.width/2,-canvas.height/2)
