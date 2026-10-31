@@ -1616,6 +1616,43 @@ export class WikiPlayer {
         this.costume_walking.r = false
         this.costume_walking.d = false
     }
+
+    htmlRuleArgFiniteNumber(key:string, default_val:number):number{
+        if(!this.htmlRuleArgs)
+            return default_val
+        if(!this.htmlRuleArgs.has(key))
+            return default_val
+        let ret = this.htmlRuleArgs.get(key);
+        if(typeof(ret) != "string")
+            return default_val
+        let ret_num = +ret;
+        if(!isFinite(ret_num))
+            return default_val;
+        return ret_num
+    }
+    htmlRuleArgBoolean(key:string, default_val:boolean):boolean{
+        if(!this.htmlRuleArgs)
+            return default_val
+        if(!this.htmlRuleArgs.has(key))
+            return default_val
+        let ret = this.htmlRuleArgs.get(key);
+        if(ret == "true" || ret == "1" || ret == true)
+            return true
+        if(ret == "false" || ret == "0" || ret == false)
+            return false
+        return default_val
+    }
+    htmlRuleArgString(key:string, default_val:string):string{
+        if(!this.htmlRuleArgs)
+            return default_val
+        if(!this.htmlRuleArgs.has(key))
+            return default_val
+        let ret = this.htmlRuleArgs.get(key);
+        if(typeof(ret) == "string")
+            return ret
+        return default_val
+    }
+
 }
 
 class WikiPlayerSingleAnm2 {
