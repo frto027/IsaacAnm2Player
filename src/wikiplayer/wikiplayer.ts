@@ -67,6 +67,7 @@ export class WikiPlayer {
     canvasElement?: HTMLCanvasElement
     htmlRuleConstructor?: HtmlRuleConstructor
     htmlRule?: HtmlRule
+    htmlRuleArgs?: Map<string,string | boolean>
 
     backendCanvas?: HTMLCanvasElement
     webglOverlay?: WebGLOverlay
@@ -146,7 +147,7 @@ export class WikiPlayer {
     recorder?: Anm2Recorder
 
 
-    costumeAdditionals:Record<CostumeAdditionalPosition, WikiPlayer[]> = [[],[],[]] // for costume player
+    costumeAdditionals: WikiPlayer[] = [] // for costume player
     costumeAdditionalPosition:CostumeAdditionalPosition = CostumeAdditionalPosition.None
 
     costumeAdditionalTarget?:WikiPlayer // for Additional player
@@ -184,7 +185,7 @@ export class WikiPlayer {
             lastCreatedCostumePlayer = this
         }else if(this.renderMode == RenderMode.CostumeAdditional && lastCreatedCostumePlayer != undefined){
             this.costumeAdditionalTarget = lastCreatedCostumePlayer
-            lastCreatedCostumePlayer.costumeAdditionals[this.costumeAdditionalPosition].push(this)
+            lastCreatedCostumePlayer.costumeAdditionals.push(this)
             canvasdiv.style.display = "none"
         }
 
@@ -494,6 +495,23 @@ export class WikiPlayer {
                 this.mouseTransparent = true
             }
         }
+
+        if(this.canvasContainer.hasAttribute("data-html-rule-args")){
+            const args = this.canvasContainer.getAttribute("data-html-rule-args")
+            if(args != null && args != undefined){
+                this.htmlRuleArgs = new Map()
+                for(let arg of args.split(",")){
+                    let equal_index = arg.indexOf("=")
+                    if(equal_index>= 0){
+                        let key = arg.substring(0, equal_index)
+                        let value = arg.substring(equal_index+1)
+                        this.htmlRuleArgs.set(key, value)
+                    }else{
+                        this.htmlRuleArgs.set(arg, true)
+                    }
+                }
+            }
+        }
     }
 
     setBackgroundColor(color?: string) {
@@ -621,8 +639,24 @@ export class WikiPlayer {
                 this.htmlRule = this.htmlRuleConstructor(
                     this.players.map((p) => p.anm!),
                     this.canvasElement!,
-                    this.webglOverlay
+                    this.webglOverlay,
+                    this
                 )
+
+                if(this.htmlRuleArgs == undefined)
+                    this.htmlRuleArgs = new Map()
+            }
+        } else if(this.renderMode == RenderMode.CostumeAdditional) {
+            if (this.htmlRuleConstructor) {
+                this.htmlRule = this.htmlRuleConstructor(
+                    this.players.map((p) => p.anm!),
+                    this.canvasElement!,
+                    this.webglOverlay,
+                    this
+                )
+
+                if(this.htmlRuleArgs == undefined)
+                    this.htmlRuleArgs = new Map()
             }
         } else if(this.renderMode == RenderMode.Costume) {
             let click_callback_removed = true
@@ -654,6 +688,18 @@ export class WikiPlayer {
                     e.preventDefault()
                     return
                 }
+
+                let additional_handled = false
+                this.for_each_additonal_player(p=>{
+                    if(p.htmlRule?.additional_anm?.onkeydown && p.htmlRule.additional_anm.onkeydown(e.key)){
+                        additional_handled = true
+                    }
+                })
+                if(additional_handled){
+                    e.preventDefault()
+                    return
+                }
+
                 if (this.onCostumKeyDown(e.key)) e.preventDefault()
 
                 if (this.handleColorKey(e.key)) e.preventDefault()
@@ -661,6 +707,16 @@ export class WikiPlayer {
 
             this.canvasElement!.onkeyup = (e) => {
                 // e.preventDefault()
+                let additional_handled = false
+                this.for_each_additonal_player(p=>{
+                    if(p.htmlRule?.additional_anm?.onkeyup && p.htmlRule.additional_anm.onkeyup(e.key)){
+                        additional_handled = true
+                    }
+                })
+                if(additional_handled){
+                    e.preventDefault()
+                    return
+                }
 
                 if (this.onCostumKeyUp(e.key)) {
                     e.preventDefault()
@@ -672,14 +728,20 @@ export class WikiPlayer {
                 if (this.waiting_for_click) {
                     activeWaitForClick()
                 }
+                this.for_each_additonal_player(p=>
+                    p.htmlRule?.additional_anm?.ontouchstart && p.htmlRule?.additional_anm?.ontouchstart(ev))
                 this.onCostumeTouchStart(ev)
             })
             this.canvasElement!.addEventListener("touchmove", (ev) => {
                 if (!ev.cancelable) return
+                this.for_each_additonal_player(p=>
+                    p.htmlRule?.additional_anm?.ontouchmove && p.htmlRule?.additional_anm?.ontouchmove(ev))
                 this.onCostomeTouchMove(ev)
             })
             this.canvasElement!.addEventListener("touchend", (ev) => {
                 if (!ev.cancelable) return
+                this.for_each_additonal_player(p=>
+                    p.htmlRule?.additional_anm?.ontouchend && p.htmlRule?.additional_anm?.ontouchend(ev))
                 this.onCostumeTouchEnd(ev)
             })
         }
@@ -891,15 +953,13 @@ export class WikiPlayer {
     }
 
     for_each_additonal_player(cb:(player:WikiPlayer)=>void){
-        for(const p of this.costumeAdditionals[CostumeAdditionalPosition.Background]){
-            cb(p)
-        }
-        for(const p of this.costumeAdditionals[CostumeAdditionalPosition.Foreground]){
+        for(const p of this.costumeAdditionals){
             cb(p)
         }
     }
 
     render_random_idle = false
+    last_frame_is_shooting =false
     updateCostume() {
         let is_head_idle = false
         if (this.random_idle_is_playing) {
@@ -1003,20 +1063,35 @@ export class WikiPlayer {
                     player.costumeA!.update()
                 }
 
-                if(this.costume_shooting.u ||
+                let this_frame_is_shooting = 
+                    this.costume_shooting.u ||
                     this.costume_shooting.d ||
                     this.costume_shooting.l ||
-                    this.costume_shooting.r
-                ){
-                    if(player.costumeA!.currentFrame == 1){
+                    this.costume_shooting.r;
+                if(player.costumeInfoA!.head_has_charge){
+                    if(this.last_frame_is_shooting && !this_frame_is_shooting){
                         this.for_each_additonal_player(p=>{
-                            for (const pp of p.players){
-                                pp.apply_rule("shoot")
-                                pp.apply_rule("shoot_" + this.costume_head_dir)
+                            let add = p.htmlRule?.additional_anm
+                            if(add && add.onchangerelease){
+                                add.onchangerelease()
                             }
                         })
                     }
+                }else{
+                    if(this_frame_is_shooting){
+                        if(player.costumeA!.currentFrame == 1){
+                            this.for_each_additonal_player(p=>{
+                                let add = p.htmlRule?.additional_anm
+                                if(add && add.onshoot){
+                                    add.onshoot()
+                                }
+                            })
+                        }
+                    }
                 }
+                this.last_frame_is_shooting = this_frame_is_shooting;
+
+
 
                 if (player.costumeInfoB!.is_csection) {
                     player.costumeB!.sheet_offsets[0]!.y =
@@ -1026,11 +1101,11 @@ export class WikiPlayer {
                 }
                 if (player.costumeB!.getCurrentAnmName() != "Walk" + this.costume_leg_dir) {
                     player.costumeB!.setFrame("Walk" + this.costume_leg_dir, 0)
-                    this.for_each_additonal_player(p=>{
-                        for(const pp of p.players){
-                            pp.apply_rule("walk_" + this.costume_leg_dir)
-                        }
-                    })
+                    // this.for_each_additonal_player(p=>{
+                    //     for(const pp of p.players){
+                    //         pp.apply_rule("walk_" + this.costume_leg_dir)
+                    //     }
+                    // })
                 } else {
                     player.costumeB!.update()
                 }
@@ -1120,8 +1195,9 @@ export class WikiPlayer {
             }
         }
 
-        for(const add of this.costumeAdditionals[CostumeAdditionalPosition.Background]){
-            add.drawAdditional()
+        for(const add of this.costumeAdditionals){
+            if(add.costumeAdditionalPosition == CostumeAdditionalPosition.Background)
+                add.drawAdditional()
         }
 
         if (this.costume_status == "Walk") {
@@ -1204,8 +1280,9 @@ export class WikiPlayer {
             )
         }
 
-        for(const add of this.costumeAdditionals[CostumeAdditionalPosition.Foreground]){
-            add.drawAdditional()
+        for(const add of this.costumeAdditionals){
+            if(add.costumeAdditionalPosition == CostumeAdditionalPosition.Foreground)
+                add.drawAdditional()
         }
 
         this.gameFrameCount++
@@ -1378,14 +1455,28 @@ export class WikiPlayer {
         }
         if (this.COSTUMEANM_KEYS.has(key)) {
             let target_anm = this.COSTUMEANM_KEYS.get(key)!
-            this.costume_status = target_anm
-            this.costume_status_reset = true
-            this.for_each_additonal_player(p=>{
-                for(const pp of p.players){
-                    pp.apply_rule("costume_anm")
-                    pp.apply_rule("costume_anm_" + target_anm)
-                }
-            })
+
+            // 让additional player控制动画播放行为
+            let fine_to_change = true
+            // this.for_each_additonal_player(p=>{
+            //     let additional_anm = p.htmlRule?.additional_anm
+            //     if(additional_anm && additional_anm.ontargetanmchanged){
+            //         let result = additional_anm.ontargetanmchanged(target_anm) 
+            //         if(result == false)
+            //             fine_to_change = false
+            //     }
+            // })
+
+            if(fine_to_change){
+                this.costume_status = target_anm
+                this.costume_status_reset = true
+                // this.for_each_additonal_player(p=>{
+                //     for(const pp of p.players){
+                //         pp.apply_rule("costume_anm")
+                //         pp.apply_rule("costume_anm_" + target_anm)
+                //     }
+                // })
+            }
             catched = true
         }
         if (key == "x") {
